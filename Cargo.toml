@@ -1,0 +1,3 @@
+[workspace]
+
+members = ["msvisor", "ms_hostcall", "user/hello_world", "user/ms_std"]
