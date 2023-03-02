@@ -1,6 +1,5 @@
-use core::fmt;
-
 use crate::UserHostCall;
+use core::fmt;
 use ms_hostcall::HostCall;
 
 #[allow(unused)]

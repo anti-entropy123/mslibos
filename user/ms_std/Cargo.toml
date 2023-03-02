@@ -8,6 +8,6 @@ edition = "2021"
 crate-type = ["rlib"]
 
 [dependencies]
-# nix = "*"
 once_cell = "*"
+lazy_static = "*"
 ms_hostcall = { path = "../../ms_hostcall" }

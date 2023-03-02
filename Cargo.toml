@@ -1,3 +1,5 @@
 [workspace]
-
 members = ["msvisor", "ms_hostcall", "user/hello_world", "user/ms_std"]
+
+[workspace.dependencies]
+ms_std = {path = "user/ms_std"}

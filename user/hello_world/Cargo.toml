@@ -8,4 +8,4 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = {path = "../ms_std"}
+ms_std = {workspace = true}

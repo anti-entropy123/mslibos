@@ -1,10 +1,14 @@
 use std::ffi::c_void;
 
-use ms_hostcall::{HostCall, HostCallID};
+use libloading::Symbol;
+use ms_hostcall::{GetHandlerFunc, HostCall, HostCallID, RustMainFunc, SetHandlerFunc};
 use nix::libc::write;
 
-#[no_mangle]
-pub extern "C" fn find_host_call(id: HostCallID) -> usize {
+pub type SetHandlerFuncSybmol<'a> = Symbol<'a, SetHandlerFunc>;
+pub type GetHandlerFuncSybmol<'a> = Symbol<'a, GetHandlerFunc>;
+pub type RustMainFuncSybmol<'a> = Symbol<'a, RustMainFunc>;
+
+pub fn find_host_call(id: HostCallID) -> usize {
     let addr = match id {
         HostCallID::Write => RustHostCall::host_write as usize,
     };
