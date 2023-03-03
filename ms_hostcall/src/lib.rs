@@ -1,13 +1,21 @@
-pub trait HostCall {
-    fn host_write(fd: i32, buf: &str) -> isize;
-}
+pub mod types;
 
+use types::{FindHostCallFunc, HostWriteFunc};
+
+#[derive(Debug)]
 #[repr(C)]
-pub enum HostCallID {
+pub enum CommonHostCall {
     Write,
 }
 
-pub type FindHostCall = fn(HostCallID) -> usize;
-pub type SetHandlerFunc = unsafe extern "C" fn(usize) -> Result<(), ()>;
-pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
-pub type RustMainFunc = unsafe extern "C" fn() -> ();
+#[derive(Debug)]
+#[repr(C)]
+pub enum HostCallID {
+    Common(CommonHostCall),
+    Custom(String),
+}
+
+pub trait Transmutor {
+    fn host_write_func(&self) -> HostWriteFunc;
+    fn find_host_call(&self) -> FindHostCallFunc;
+}

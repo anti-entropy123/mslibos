@@ -1,5 +1,13 @@
 [workspace]
-members = ["msvisor", "ms_hostcall", "user/hello_world", "user/ms_std"]
+members = [
+    "msvisor",
+    "ms_hostcall",
+    "user/hello_world",
+    "user/ms_std",
+    "common_service/fs",
+]
 
 [workspace.dependencies]
-ms_std = {path = "user/ms_std"}
+ms_std = { path = "user/ms_std" }
+ms_hostcall = { path = "ms_hostcall" }
+native_fs = { path = "common_service/fs" }

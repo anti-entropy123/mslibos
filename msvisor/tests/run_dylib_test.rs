@@ -13,7 +13,7 @@ fn run_hello_world(addr: usize) {
         .join("target")
         .join("debug")
         .join("libhello_world.so");
-    let lib = load_dynlib(filename).expect("failed load dynlib");
+    let lib = load_dynlib(&filename).expect("failed load dynlib");
     let set_handler: SetHandlerFuncSybmol = find_symbol(&lib, "set_handler_addr");
     let get_handler: GetHandlerFuncSybmol = find_symbol(&lib, "get_handler_addr");
     let rust_main: RustMainFuncSybmol = find_symbol(&lib, "rust_main");
@@ -22,14 +22,22 @@ fn run_hello_world(addr: usize) {
 
     unsafe {
         set_handler(addr).expect("set hostcall addr failed");
-        assert!(get_handler() == msvisor::find_host_call as usize);
+        assert!(get_handler() == addr);
         rust_main()
     }
 }
 
+unsafe extern "C" fn dummy_write() {
+    return;
+}
+
+unsafe extern "C" fn dummy_find_hostcall() -> usize {
+    dummy_write as usize
+}
+
 #[test]
 fn run_dylib_test() {
-    run_hello_world(msvisor::find_host_call as usize)
+    run_hello_world(dummy_find_hostcall as usize)
 }
 
 #[test]
@@ -52,9 +60,19 @@ fn repeat_set_handler_test() {
 }
 
 #[test]
-fn run_two_dylib_test() {
-    let t1 = thread::spawn(|| run_hello_world(msvisor::find_host_call as usize));
-    let t2 = thread::spawn(|| run_hello_world(msvisor::find_host_call as usize));
-    t1.join().expect("Couldn't join on the associated thread 1");
-    t2.join().expect("Couldn't join on the associated thread 2");
+fn run_multi_dylib_test() {
+    let mut threads = Vec::new();
+    for _ in 0..30 {
+        threads.push(thread::spawn(|| {
+            run_hello_world(dummy_find_hostcall as usize)
+        }));
+    }
+
+    while !threads.is_empty() {
+        threads
+            .pop()
+            .unwrap()
+            .join()
+            .expect("Couldn't join on the associated thread");
+    }
 }

@@ -1,8 +1,7 @@
 mod hostcalls;
 
-pub mod service;
+pub mod isolation;
 pub mod logger;
+pub mod service;
 
-pub use hostcalls::{
-    find_host_call, GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
-};
+pub use hostcalls::{GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol};

@@ -2,7 +2,7 @@ pub use log::{debug, error, info, warn};
 use std::env;
 
 pub fn init() {
-    if let Err(_) = env::var("RUST_LOG") {
+    if  env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "DEBUG");
     }
     env_logger::init();

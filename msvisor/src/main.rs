@@ -1,15 +1,10 @@
-use std::path::PathBuf;
-
-use msvisor::{logger, service::Service};
+use msvisor::{isolation::Isolation, logger};
 
 fn main() {
     logger::init();
 
-    let filename = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("target")
-        .join("debug")
-        .join("libhello_world.so");
-
-    Service::new("hello1", filename).run();
+    let isol1 = Isolation::new();
+    let isol2 = Isolation::new();
+    isol1.run();
+    isol2.run();
 }
