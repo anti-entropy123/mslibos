@@ -1,6 +1,7 @@
 use std::{path::PathBuf, thread};
 
-use libloading::{Library, Symbol};
+use libloading::Library;
+use ms_hostcall::IsolationContext;
 use msvisor::{
     logger,
     service::{find_symbol, load_dynlib},
@@ -21,7 +22,11 @@ fn run_hello_world(addr: usize) {
     logger::debug!("find_host_call_addr = 0x{:x}", addr);
 
     unsafe {
-        set_handler(addr).expect("set hostcall addr failed");
+        set_handler(IsolationContext {
+            isol_id: 1,
+            find_handler: dummy_find_hostcall as usize,
+        })
+        .expect("set hostcall addr failed");
         assert!(get_handler() == addr);
         rust_main()
     }
@@ -49,30 +54,29 @@ fn repeat_set_handler_test() {
         .join("debug")
         .join("libhello_world.so");
     let lib = unsafe { Library::new(filename).expect("load dyn failed") };
-    let set_handler: Symbol<unsafe extern "C" fn(usize) -> Result<(), ()>> = unsafe {
+    let set_handler: SetHandlerFuncSybmol = unsafe {
         lib.get("set_handler_addr".as_bytes())
             .expect("find symbol failed")
     };
     unsafe {
-        set_handler(0x40000).expect("set hostcall addr failed");
-        set_handler(0x80000).expect("set hostcall addr failed");
+        set_handler(IsolationContext {
+            isol_id: 1,
+            find_handler: 0x40000,
+        })
+        .expect("set hostcall addr failed");
+        set_handler(IsolationContext {
+            isol_id: 1,
+            find_handler: 0x80000,
+        })
+        .expect("set hostcall addr failed");
     }
 }
 
 #[test]
 fn run_multi_dylib_test() {
-    let mut threads = Vec::new();
     for _ in 0..30 {
-        threads.push(thread::spawn(|| {
-            run_hello_world(dummy_find_hostcall as usize)
-        }));
-    }
-
-    while !threads.is_empty() {
-        threads
-            .pop()
-            .unwrap()
+        thread::spawn(|| run_hello_world(dummy_find_hostcall as usize))
             .join()
-            .expect("Couldn't join on the associated thread");
+            .expect("join thread failed");
     }
 }

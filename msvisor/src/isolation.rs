@@ -11,7 +11,7 @@ use crate::{
 
 use ms_hostcall::{
     types::{HostWriteFunc, ServiceName},
-    CommonHostCall, HostCallID,
+    CommonHostCall, HostCallID, IsolationContext,
 };
 
 use lazy_static::lazy_static;
@@ -40,6 +40,8 @@ pub struct Isolation {
 
 impl Isolation {
     pub fn new() -> Arc<Self> {
+        let new_id = { ISOL_TABLE.lock().unwrap().len() };
+
         let loader = ServiceLoader::new()
             .register(
                 "hello1".to_string(),
@@ -54,10 +56,16 @@ impl Isolation {
                     .join("libnative_fs.so"),
             );
 
-        let user_app = loader.load_service(&"hello1".to_string());
+        let user_app = loader.load_service(
+            IsolationContext {
+                isol_id: new_id,
+                find_handler: find_host_call as usize,
+            },
+            &"hello1".to_string(),
+        );
 
         let isol = Arc::from(Self {
-            id: 1,
+            id: new_id,
             user_app,
             loader,
             inner: Mutex::new(IsolationInner::default()),
@@ -74,7 +82,8 @@ impl Isolation {
     }
 
     pub fn run(&self) {
-        self.user_app.run()
+        self.user_app.run();
+        ISOL_TABLE.lock().unwrap().remove(&self.id);
     }
 }
 
@@ -82,21 +91,27 @@ impl Isolation {
 /// This is unsafe because it it be a callback function used to lookup the address of
 /// hostcall function symbols, and it should be only invocated by service modules.
 ///
-pub unsafe extern "C" fn find_host_call(id: HostCallID) -> usize {
+pub unsafe extern "C" fn find_host_call(isol_id: usize, hc_id: HostCallID) -> usize {
     // let id = HostCallID::Common(CommonHostCall::Write);
-    logger::debug!("find_host_call, call_id={:?}", id);
+    logger::debug!("find_host_call, isol_id={}, call_id={:?}", isol_id, hc_id);
     let isol = {
         let isol_table = ISOL_TABLE.lock().unwrap();
-        Arc::clone(isol_table.get(&1).unwrap())
+        Arc::clone(isol_table.get(&isol_id).unwrap())
     };
 
-    let addr = match id {
+    let addr = match hc_id {
         HostCallID::Common(CommonHostCall::Write) => {
             let mut isol_inner = isol.inner_access();
             let fs_module = match isol_inner.modules.get("fs") {
                 Some(fs) => Arc::clone(fs),
                 None => {
-                    let fs = isol.loader.load_service(&"fs".to_owned());
+                    let fs = isol.loader.load_service(
+                        IsolationContext {
+                            isol_id,
+                            find_handler: find_host_call as usize,
+                        },
+                        &"fs".to_owned(),
+                    );
                     isol_inner.modules.insert("fs".to_string(), Arc::clone(&fs));
                     fs
                 }

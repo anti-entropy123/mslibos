@@ -1,6 +1,6 @@
 pub mod types;
 
-use types::{FindHostCallFunc, HostWriteFunc};
+use types::{FindHostCallFunc, HostWriteFunc, IsolationID};
 
 #[derive(Debug)]
 #[repr(C)]
@@ -18,4 +18,10 @@ pub enum HostCallID {
 pub trait Transmutor {
     fn host_write_func(&self) -> HostWriteFunc;
     fn find_host_call(&self) -> FindHostCallFunc;
+}
+
+#[derive(Clone, Copy)]
+pub struct IsolationContext {
+    pub isol_id: IsolationID,
+    pub find_handler: usize,
 }

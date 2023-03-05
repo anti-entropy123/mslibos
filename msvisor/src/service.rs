@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use libloading::{Library, Symbol};
-use ms_hostcall::types::{FindHostCallFunc, ServiceName};
+use ms_hostcall::{types::ServiceName, IsolationContext};
 
 use crate::{
     isolation::find_host_call, logger, GetHandlerFuncSybmol, RustMainFuncSybmol,
@@ -24,11 +24,11 @@ impl ServiceLoader {
         self
     }
 
-    pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {
+    pub fn load_service(&self, isol_ctx: IsolationContext, name: &ServiceName) -> Arc<Service> {
         let lib_path = self.registered.get(name).expect("unregistered library!");
 
         let service = Service::new(name, lib_path);
-        service.init(find_host_call);
+        service.init(isol_ctx);
         Arc::from(service)
     }
 }
@@ -53,10 +53,13 @@ impl Service {
         }
     }
 
-    fn init(&self, find_hostcall: FindHostCallFunc) {
-        logger::debug!("find_host_call_addr = 0x{:x}", find_hostcall as usize);
+    fn init(&self, isol_ctx: IsolationContext) {
+        logger::debug!(
+            "find_host_call_addr = 0x{:x}",
+            isol_ctx.find_handler as usize
+        );
         let set_handler: SetHandlerFuncSybmol = self.symbol("set_handler_addr");
-        unsafe { set_handler(find_hostcall as usize) }.expect("service init failed.");
+        unsafe { set_handler(isol_ctx) }.expect("service init failed.");
         logger::info!("set_handler complete.");
 
         let get_handler: GetHandlerFuncSybmol = self.symbol("get_handler_addr");
@@ -69,7 +72,11 @@ impl Service {
 
     pub fn run(&self) {
         let rust_main: RustMainFuncSybmol = self.symbol("rust_main");
-        log::info!("service_{} rust_main={:x}", self.name, (*rust_main) as usize);
+        log::info!(
+            "service_{} rust_main={:x}",
+            self.name,
+            (*rust_main) as usize
+        );
 
         unsafe { rust_main() };
 
