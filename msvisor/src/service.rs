@@ -39,12 +39,37 @@ impl Default for ServiceLoader {
     }
 }
 
-pub struct Service {
+pub enum Service {
+    RustService(RustService),
+}
+
+impl Service {
+    fn new(name: &str, filename: &PathBuf) -> Self {
+        Self::RustService(RustService::new(name, filename))
+    }
+    fn init(&self, isol_ctx: IsolationContext) {
+        match self {
+            Service::RustService(svc) => svc.init(isol_ctx),
+        }
+    }
+    pub fn run(&self) {
+        match self {
+            Service::RustService(svc) => svc.run(),
+        }
+    }
+    pub fn interface<T>(&self, name: &str) -> Symbol<T> {
+        match self {
+            Service::RustService(svc) => svc.symbol(name),
+        }
+    }
+}
+
+pub struct RustService {
     name: String,
     lib: Arc<Library>,
 }
 
-impl Service {
+impl RustService {
     fn new(name: &str, filename: &PathBuf) -> Self {
         let lib = Arc::from(load_dynlib(filename).expect("failed load dynlib"));
         Self {

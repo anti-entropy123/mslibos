@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use crate::{HostCallID, IsolationContext};
 
-pub type IsolationID = usize;
+pub type IsolationID = u64;
 
 pub type FindHostCallFunc = unsafe extern "C" fn(IsolationID, HostCallID) -> usize;
 pub type SetHandlerFunc = unsafe extern "C" fn(IsolationContext) -> HostCallResult;

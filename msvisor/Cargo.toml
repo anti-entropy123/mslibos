@@ -12,3 +12,4 @@ lazy_static = "*"
 ms_hostcall = { workspace = true }
 log = "*"
 env_logger = "*"
+# uuid = { version = "*", features = ["v4", "fast-rng", "macro-diagnostics"] }

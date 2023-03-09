@@ -1,5 +1,4 @@
 #![no_std]
-
 use ms_std::println;
 
 #[no_mangle]

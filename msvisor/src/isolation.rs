@@ -7,18 +7,16 @@ use std::{
 use crate::{
     logger,
     service::{Service, ServiceLoader},
+    utils::gen_new_id,
 };
 
 use ms_hostcall::{
-    types::{HostWriteFunc, ServiceName},
+    types::{HostWriteFunc, IsolationID as IsolID, ServiceName},
     CommonHostCall, HostCallID, IsolationContext,
 };
 
 use lazy_static::lazy_static;
 
-const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target");
-
-type IsolID = usize;
 lazy_static! {
     pub static ref ISOL_TABLE: Mutex<HashMap<IsolID, Arc<Isolation>>> = Mutex::new(HashMap::new());
 }
@@ -30,6 +28,11 @@ pub struct IsolationInner {
 
 impl IsolationInner {}
 
+pub struct IsolationConfig {
+    pub services: Vec<(ServiceName, PathBuf)>,
+    pub app: (ServiceName, PathBuf),
+}
+
 pub struct Isolation {
     id: IsolID,
     user_app: Arc<Service>,
@@ -39,29 +42,20 @@ pub struct Isolation {
 }
 
 impl Isolation {
-    pub fn new() -> Arc<Self> {
-        let new_id = { ISOL_TABLE.lock().unwrap().len() };
+    pub fn new(config: IsolationConfig) -> Arc<Self> {
+        let mut loader = ServiceLoader::new().register(config.app.0.clone(), config.app.1);
+        for svc in config.services {
+            loader = loader.register(svc.0, svc.1);
+        }
 
-        let loader = ServiceLoader::new()
-            .register(
-                "hello1".to_string(),
-                PathBuf::from(TARGET_DIR)
-                    .join("debug")
-                    .join("libhello_world.so"),
-            )
-            .register(
-                "fs".to_string(),
-                PathBuf::from(TARGET_DIR)
-                    .join("debug")
-                    .join("libnative_fs.so"),
-            );
+        let new_id = gen_new_id();
 
         let user_app = loader.load_service(
             IsolationContext {
                 isol_id: new_id,
                 find_handler: find_host_call as usize,
             },
-            &"hello1".to_string(),
+            &config.app.0,
         );
 
         let isol = Arc::from(Self {
@@ -70,10 +64,12 @@ impl Isolation {
             loader,
             inner: Mutex::new(IsolationInner::default()),
         });
+
         ISOL_TABLE
             .lock()
             .unwrap()
             .insert(isol.id, Arc::clone(&isol));
+
         isol
     }
 
@@ -91,9 +87,10 @@ impl Isolation {
 /// This is unsafe because it it be a callback function used to lookup the address of
 /// hostcall function symbols, and it should be only invocated by service modules.
 ///
-pub unsafe extern "C" fn find_host_call(isol_id: usize, hc_id: HostCallID) -> usize {
+#[allow(improper_ctypes_definitions)]
+pub unsafe extern "C" fn find_host_call(isol_id: IsolID, hc_id: HostCallID) -> usize {
     // let id = HostCallID::Common(CommonHostCall::Write);
-    logger::debug!("find_host_call, isol_id={}, call_id={:?}", isol_id, hc_id);
+    logger::debug!("find_host_call, isol_id={:x}, call_id={:?}", isol_id, hc_id);
     let isol = {
         let isol_table = ISOL_TABLE.lock().unwrap();
         Arc::clone(isol_table.get(&isol_id).unwrap())
@@ -116,7 +113,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: usize, hc_id: HostCallID) -> us
                     fs
                 }
             };
-            let func: HostWriteFunc = *fs_module.symbol("host_write");
+            let func: HostWriteFunc = *fs_module.interface("host_write");
             func as usize
         }
         _ => todo!(),
