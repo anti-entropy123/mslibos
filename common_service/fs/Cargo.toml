@@ -9,4 +9,3 @@ crate-type = ["dylib"]
 
 [dependencies]
 nix = "*"
-ms_std = { workspace = true }

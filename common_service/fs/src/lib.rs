@@ -1,6 +1,8 @@
 #![allow(clippy::single_component_path_imports)]
 #![allow(unused_imports)]
-use ms_std;
+/// There needs to use ms_std because msvisor will find symbols like
+/// set_handler_addr that have been defined in ms_std.
+// use ms_std::init_context;
 use nix::libc::write;
 use std::ffi::c_void;
 

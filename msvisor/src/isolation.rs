@@ -12,7 +12,7 @@ use crate::{
 
 use ms_hostcall::{
     types::{HostWriteFunc, IsolationID as IsolID, ServiceName},
-    CommonHostCall, HostCallID, IsolationContext,
+    CommonHostCall, HostCallID,
 };
 
 use lazy_static::lazy_static;
@@ -43,6 +43,7 @@ pub struct Isolation {
 
 impl Isolation {
     pub fn new(config: IsolationConfig) -> Arc<Self> {
+        logger::info!("start build isolation");
         let mut loader = ServiceLoader::new().register(config.app.0.clone(), config.app.1);
         for svc in config.services {
             loader = loader.register(svc.0, svc.1);
@@ -50,13 +51,7 @@ impl Isolation {
 
         let new_id = gen_new_id();
 
-        let user_app = loader.load_service(
-            IsolationContext {
-                isol_id: new_id,
-                find_handler: find_host_call as usize,
-            },
-            &config.app.0,
-        );
+        let user_app = loader.load_service(new_id, &config.app.0);
 
         let isol = Arc::from(Self {
             id: new_id,
@@ -102,13 +97,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolID, hc_id: HostCallID) -> u
             let fs_module = match isol_inner.modules.get("fs") {
                 Some(fs) => Arc::clone(fs),
                 None => {
-                    let fs = isol.loader.load_service(
-                        IsolationContext {
-                            isol_id,
-                            find_handler: find_host_call as usize,
-                        },
-                        &"fs".to_owned(),
-                    );
+                    let fs = isol.loader.load_service(isol_id, &"fs".to_owned());
                     isol_inner.modules.insert("fs".to_string(), Arc::clone(&fs));
                     fs
                 }

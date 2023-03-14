@@ -1,5 +1,10 @@
+#![no_std]
+
+extern crate alloc;
+
 pub mod types;
 
+use alloc::string::String;
 use types::{FindHostCallFunc, HostWriteFunc, IsolationID};
 
 #[derive(Debug)]
@@ -21,7 +26,11 @@ pub trait Transmutor {
 }
 
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct IsolationContext {
     pub isol_id: IsolationID,
     pub find_handler: usize,
+    pub heap_range: (usize, usize),
 }
+
+pub const SERVICE_HEAP_SIZE: usize = 4096 * 8;

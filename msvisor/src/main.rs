@@ -13,10 +13,7 @@ fn main() {
     let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
 
     let config1 = IsolationConfig {
-        services: Vec::from([(
-            "fs".to_owned(),
-            debug_target_dir.join("libnative_fs.so"),
-        )]),
+        services: Vec::from([("fs".to_owned(), debug_target_dir.join("libnative_fs.so"))]),
         app: (
             "hello1".to_owned(),
             debug_target_dir.join("libhello_world.so"),
@@ -29,10 +26,7 @@ fn main() {
     drop(isol1);
 
     let config2 = IsolationConfig {
-        services: Vec::from([(
-            "fs".to_owned(),
-            debug_target_dir.join("libnative_fs.so"),
-        )]),
+        services: Vec::from([("fs".to_owned(), debug_target_dir.join("libnative_fs.so"))]),
         app: (
             "hello2".to_owned(),
             debug_target_dir.join("libhello_world.so"),

@@ -1,4 +1,5 @@
-use thiserror::Error;
+use alloc::string::String;
+// use alloc::
 
 use crate::{HostCallID, IsolationContext};
 
@@ -14,8 +15,7 @@ pub type ServiceName = String;
 pub type SymbolName = String;
 
 pub type HostCallResult = Result<(), HostCallError>;
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum HostCallError {
-    #[error("find_hostcall_handler has been set.")]
     HasBeenSet,
 }
