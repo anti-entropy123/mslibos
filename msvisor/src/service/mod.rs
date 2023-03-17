@@ -3,8 +3,8 @@ pub mod rust_service;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use libloading::Symbol;
-use ms_hostcall::types::{IsolationID, ServiceName};
 
+use ms_hostcall::types::{IsolationID, ServiceName};
 use rust_service::RustService;
 
 pub struct ServiceLoader {
@@ -59,6 +59,12 @@ impl Service {
     pub fn interface<T>(&self, name: &str) -> Symbol<T> {
         match self {
             Service::RustService(svc) => svc.symbol(name),
+        }
+    }
+
+    pub fn name(&self) -> ServiceName {
+        match self {
+            Service::RustService(svc) => svc.name.to_owned(),
         }
     }
 }

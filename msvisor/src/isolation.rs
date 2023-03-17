@@ -11,8 +11,8 @@ use crate::{
 };
 
 use ms_hostcall::{
-    types::{HostWriteFunc, IsolationID as IsolID, ServiceName},
-    CommonHostCall, HostCallID,
+    types::{IsolationID as IsolID, ServiceName},
+    HostCallID,
 };
 
 use lazy_static::lazy_static;
@@ -72,6 +72,18 @@ impl Isolation {
         self.inner.lock().unwrap()
     }
 
+    pub fn service_or_load(&self, name: &ServiceName) -> Arc<Service> {
+        let mut isol_inner = self.inner_access();
+        match isol_inner.modules.get(name) {
+            Some(fs) => Arc::clone(fs),
+            None => {
+                let fs = self.loader.load_service(self.id, name);
+                isol_inner.modules.insert(name.to_owned(), Arc::clone(&fs));
+                fs
+            }
+        }
+    }
+
     pub fn run(&self) {
         self.user_app.run();
         ISOL_TABLE.lock().unwrap().remove(&self.id);
@@ -85,28 +97,51 @@ impl Isolation {
 #[allow(improper_ctypes_definitions)]
 pub unsafe extern "C" fn find_host_call(isol_id: IsolID, hc_id: HostCallID) -> usize {
     // let id = HostCallID::Common(CommonHostCall::Write);
-    logger::debug!("find_host_call, isol_id={:x}, call_id={:?}", isol_id, hc_id);
+    logger::debug!(
+        "find_host_call, isol_id={:x}, call_id={:?}, call_name={}",
+        isol_id,
+        hc_id,
+        hc_id.to_string()
+    );
     let isol = {
         let isol_table = ISOL_TABLE.lock().unwrap();
         Arc::clone(isol_table.get(&isol_id).unwrap())
     };
+    let svc_name = hc_id.belong_to();
+    logger::debug!(
+        "hostcall_{} belong to service: {}",
+        hc_id.to_string(),
+        svc_name
+    );
 
-    let addr = match hc_id {
-        HostCallID::Common(CommonHostCall::Write) => {
-            let mut isol_inner = isol.inner_access();
-            let fs_module = match isol_inner.modules.get("fs") {
-                Some(fs) => Arc::clone(fs),
-                None => {
-                    let fs = isol.loader.load_service(isol_id, &"fs".to_owned());
-                    isol_inner.modules.insert("fs".to_string(), Arc::clone(&fs));
-                    fs
-                }
-            };
-            let func: HostWriteFunc = *fs_module.interface("host_write");
-            func as usize
-        }
-        _ => todo!(),
-    };
+    let service = isol.service_or_load(&svc_name);
+    let addr = *service.interface::<fn()>(&hc_id.to_string()) as usize;
+
     log::debug!("host_write addr = 0x{:x}", addr);
     addr
+}
+
+#[test]
+fn find_host_call_test() {
+    const TARGET_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../target/debug/libnative_fs.so"
+    );
+    let isol = {
+        let mut isol_table = ISOL_TABLE.lock().unwrap();
+        let isol = Isolation::new(IsolationConfig {
+            services: Vec::from([("fs".to_owned(), PathBuf::from(TARGET_DIR))]),
+            app: (String::new(), PathBuf::new()),
+        });
+        isol_table.insert(1, Arc::clone(&isol));
+        isol
+    };
+    let hostcall_id = HostCallID::Common(CommonHostCall::Write);
+    let addr = unsafe { find_host_call(1, hostcall_id) };
+
+    assert!(
+        addr == *isol
+            .service_or_load(&"fs".to_string())
+            .interface("host_write")
+    )
 }

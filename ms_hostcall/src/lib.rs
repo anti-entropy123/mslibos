@@ -3,21 +3,43 @@
 extern crate alloc;
 
 pub mod types;
+use alloc::{borrow::ToOwned, string::String};
+use types::{FindHostCallFunc, HostWriteFunc, IsolationID, ServiceName};
 
-use alloc::string::String;
-use types::{FindHostCallFunc, HostWriteFunc, IsolationID};
+use derive_more::Display;
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 #[repr(C)]
 pub enum CommonHostCall {
+    #[display(fmt = "host_write")]
     Write,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 #[repr(C)]
 pub enum HostCallID {
     Common(CommonHostCall),
     Custom(String),
+}
+impl HostCallID {
+    pub fn belong_to(&self) -> ServiceName {
+        match self {
+            Self::Common(common) => match common {
+                CommonHostCall::Write => "fs".to_owned(),
+            },
+            HostCallID::Custom(_) => todo!(),
+        }
+    }
+}
+
+#[test]
+fn format_hostcall_id() {
+    let result = HostCallID::Common(CommonHostCall::Write).to_string();
+    assert!(
+        result.eq("host_write"),
+        "actual format result is {}",
+        result
+    )
 }
 
 pub trait Transmutor {

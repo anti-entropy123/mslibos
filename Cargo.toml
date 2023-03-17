@@ -1,3 +1,5 @@
+cargo-features = ["profile-rustflags"]
+
 [workspace]
 members = [
     "msvisor",
@@ -11,3 +13,5 @@ members = [
 ms_std = { path = "user/ms_std" }
 ms_hostcall = { path = "ms_hostcall" }
 native_fs = { path = "common_service/fs" }
+
+# [profile.dev.package.hello_world]

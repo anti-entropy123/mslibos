@@ -1,0 +1,5 @@
+[profile.dev]
+rustflags = ["-Crelocation-model=pic"]
+
+[profile.release]
+rustflags = ["-Crelocation-model=pic"]

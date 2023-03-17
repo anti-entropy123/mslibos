@@ -1,12 +1,25 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
+use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
-use ms_hostcall::{types::IsolationID, IsolationContext, SERVICE_HEAP_SIZE};
+
+use ms_hostcall::{
+    types::{IsolationID, ServiceName},
+    IsolationContext, SERVICE_HEAP_SIZE,
+};
 
 use crate::{
     isolation::find_host_call, logger, GetHandlerFuncSybmol, RustMainFuncSybmol,
     SetHandlerFuncSybmol,
 };
+
+lazy_static! {
+    static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
+        let mut hs = HashSet::new();
+        hs.insert("fs".to_owned());
+        hs
+    });
+}
 
 #[repr(C, align(4096))]
 struct ServiceHeap {
@@ -14,7 +27,7 @@ struct ServiceHeap {
 }
 
 pub struct RustService {
-    name: String,
+    pub name: String,
     lib: Arc<Library>,
     heap: Arc<ServiceHeap>,
 }
@@ -31,6 +44,10 @@ impl RustService {
         }
     }
 
+    fn should_set_context(&self) -> bool {
+        !SHOULD_NOT_SET_CONTEXT.contains(&self.name.to_owned())
+    }
+
     pub fn init(&self, isol_id: IsolationID) {
         let heap_start = self.heap.heap.as_ptr() as usize;
         let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
@@ -42,8 +59,8 @@ impl RustService {
             heap_range
         );
 
-        if self.name.contains("fs") {
-            return
+        if !self.should_set_context() {
+            return;
         };
 
         let isol_ctx = IsolationContext {
@@ -51,7 +68,7 @@ impl RustService {
             find_handler: find_host_call as usize,
             heap_range,
         };
-        
+
         let set_handler: SetHandlerFuncSybmol = self.symbol("set_handler_addr");
         logger::info!("start set_handler...");
         unsafe { set_handler(isol_ctx) }.expect("service init failed.");
@@ -82,6 +99,23 @@ impl RustService {
 pub fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
     let lib = unsafe { Library::new(filename) }?;
     anyhow::Ok(lib)
+}
+
+#[test]
+fn test_load_dynlib() {
+    const TARGET_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../target/debug/libhello_world.so"
+    );
+    let filename = PathBuf::from(TARGET_DIR);
+    let lib1 = load_dynlib(&filename).unwrap();
+    let lib2 = load_dynlib(&filename).unwrap();
+    unsafe {
+        let addr1 = (*lib1.get::<fn()>(b"rust_main").unwrap()) as usize;
+        let addr2 = (*lib2.get::<fn()>(b"rust_main").unwrap()) as usize;
+
+        assert!(addr1 != addr2, "addr1:{:x} == addr2:{:x}", addr1, addr2);
+    }
 }
 
 pub fn find_symbol<'a, T>(lib: &'a Library, symbol: &str) -> Symbol<'a, T> {
