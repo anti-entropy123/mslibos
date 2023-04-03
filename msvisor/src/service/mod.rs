@@ -1,11 +1,12 @@
-pub mod rust_service;
+mod elf_service;
+mod rust_service;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use libloading::Symbol;
 
+use elf_service::ELFService;
 use ms_hostcall::types::{IsolationID, ServiceName};
-use rust_service::RustService;
 
 pub struct ServiceLoader {
     registered: HashMap<ServiceName, PathBuf>,
@@ -39,31 +40,35 @@ impl Default for ServiceLoader {
 }
 
 pub enum Service {
+    ElfService(elf_service::ELFService),
     RustService(rust_service::RustService),
 }
 
 impl Service {
     fn new(name: &str, filename: &PathBuf) -> Self {
-        Self::RustService(RustService::new(name, filename))
+        Self::ElfService(ELFService::new(name, filename))
     }
     fn init(&self, isol_id: IsolationID) {
         match self {
+            Service::ElfService(svc) => svc.init(isol_id),
             Service::RustService(svc) => svc.init(isol_id),
         }
     }
     pub fn run(&self) {
         match self {
+            Service::ElfService(svc) => svc.run(),
             Service::RustService(svc) => svc.run(),
         }
     }
     pub fn interface<T>(&self, name: &str) -> Symbol<T> {
         match self {
+            Service::ElfService(svc) => svc.symbol(name),
             Service::RustService(svc) => svc.symbol(name),
         }
     }
-
     pub fn name(&self) -> ServiceName {
         match self {
+            Service::ElfService(svc) => svc.name.to_owned(),
             Service::RustService(svc) => svc.name.to_owned(),
         }
     }

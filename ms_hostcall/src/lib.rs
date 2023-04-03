@@ -52,6 +52,7 @@ pub trait Transmutor {
 pub struct IsolationContext {
     pub isol_id: IsolationID,
     pub find_handler: usize,
+    pub panic_handler: usize,
     pub heap_range: (usize, usize),
 }
 

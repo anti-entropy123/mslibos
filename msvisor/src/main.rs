@@ -35,6 +35,6 @@ fn main() {
 
     let isol2 = Isolation::new(config2);
     isol2.run();
-    log::info!("isol1 has strong count={}", Arc::strong_count(&isol2));
+    log::info!("isol2 has strong count={}", Arc::strong_count(&isol2));
     drop(isol2);
 }

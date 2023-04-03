@@ -33,3 +33,22 @@ fn run_multi_dylib_test() {
             .expect("join thread failed");
     }
 }
+
+#[test]
+#[should_panic]
+fn run_should_panic_test() {
+    logger::init();
+
+    let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
+
+    let config1 = IsolationConfig {
+        services: Vec::new(),
+        app: (
+            "should_panic".to_owned(),
+            debug_target_dir.join("libshould_panic.so"),
+        ),
+    };
+
+    let isol1 = Isolation::new(config1);
+    isol1.run();
+}

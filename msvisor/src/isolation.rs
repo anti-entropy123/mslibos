@@ -145,3 +145,9 @@ fn find_host_call_test() {
             .interface("host_write")
     )
 }
+
+/// A panic handler should be registered into hostcalls. 
+/// It should only be invoked by panic_handler of ms_std.
+pub unsafe extern "C" fn panic_handler() -> ! {
+    panic!()
+}

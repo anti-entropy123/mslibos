@@ -4,9 +4,10 @@ cargo-features = ["profile-rustflags"]
 members = [
     "msvisor",
     "ms_hostcall",
-    "user/hello_world",
-    "user/ms_std",
     "common_service/fs",
+    "user/ms_std",
+    "user/hello_world",
+    "user/should_panic",
 ]
 
 [workspace.dependencies]
