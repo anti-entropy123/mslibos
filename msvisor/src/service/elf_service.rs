@@ -121,7 +121,3 @@ fn test_load_dynlib() {
         assert!(addr1 != addr2, "addr1:{:x} == addr2:{:x}", addr1, addr2);
     }
 }
-
-pub fn find_symbol<'a, T>(lib: &'a Library, symbol: &str) -> Symbol<'a, T> {
-    unsafe { lib.get(symbol.as_bytes()).expect("find symbol failed") }
-}
