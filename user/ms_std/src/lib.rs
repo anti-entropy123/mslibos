@@ -1,6 +1,6 @@
 #![no_std]
 #![feature(lang_items)]
-#![feature(default_alloc_error_handler)]
+// #![feature(default_alloc_error_handler)] // have been stable.
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
 extern crate alloc;
@@ -33,6 +33,6 @@ extern "C" fn eh_personality() {}
 
 #[linkage = "weak"]
 #[no_mangle]
-pub extern "C" fn rust_main() {
+pub fn rust_main() {
     panic!("need real rust_main");
 }

@@ -46,14 +46,15 @@ impl Display for MmapArea {
     }
 }
 
+#[allow(unused)]
 fn mmap_segment(
     elf_base: usize,
     ph: &ProgramHeader,
     prot: ProtFlags,
     fd: i32,
 ) -> nix::Result<MmapArea> {
-    let base = elf_base + round_down!(ph.virtual_addr() as usize);
-    let length = round_up!((ph.virtual_addr() - ph.offset() + ph.mem_size()) as usize);
+    let base = elf_base + round_down!(ph.virtual_addr());
+    let length = round_up!(ph.virtual_addr() - ph.offset() + ph.mem_size());
     let base = unsafe {
         mmap(
             NonZeroUsize::new(base),
@@ -61,7 +62,7 @@ fn mmap_segment(
             prot,
             MapFlags::MAP_PRIVATE | MapFlags::MAP_DENYWRITE | MapFlags::MAP_FIXED,
             fd,
-            round_down!(ph.offset() as usize) as i64,
+            round_down!(ph.offset()) as i64,
         )
     }?;
     Ok(MmapArea {
@@ -73,6 +74,7 @@ fn mmap_segment(
 /// This is a function used to test load dynlib by mmap. But in current implementation,
 /// it still have bugs: free(): invalid pointer.
 /// I guess this is because some range will be free twice. 
+#[allow(unused)]
 pub fn load_pic_dynlib() {
     let mut elf_file =
         File::open("/home/yjn/rust_project/mslibos/target/debug/libhello_world.so").unwrap();
@@ -148,7 +150,7 @@ pub fn load_pic_dynlib() {
     .expect("mmap data segment failed");
     log::debug!("mmap_data: {}", mmap_data);
 
-    let mmap_bss = mmap_segment(
+    let _mmap_bss = mmap_segment(
         mmap_total.base,
         &elf.program_header(bss_idx).unwrap(),
         ProtFlags::PROT_READ | ProtFlags::PROT_WRITE,

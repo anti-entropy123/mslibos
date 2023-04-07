@@ -8,36 +8,59 @@ use libloading::Symbol;
 use elf_service::ELFService;
 use ms_hostcall::types::{IsolationID, ServiceName};
 
+use crate::{
+    isolation::IsolationConfig,
+    metric::{MetricBucket, MetricEvent, SvcMetricBucket},
+};
+
 pub struct ServiceLoader {
+    isol_id: IsolationID,
     registered: HashMap<ServiceName, PathBuf>,
+    metric: Arc<MetricBucket>,
 }
 
 impl ServiceLoader {
-    pub fn new() -> Self {
+    pub fn new(isol_id: IsolationID, metric: Arc<MetricBucket>) -> Self {
         Self {
+            isol_id,
             registered: HashMap::new(),
+            metric,
         }
     }
 
-    pub fn register(mut self, service: ServiceName, lib_path: PathBuf) -> Self {
-        self.registered.insert(service, lib_path);
+    pub fn register(mut self, config: &IsolationConfig) -> Self {
+        self.registered
+            .insert(config.app.0.clone(), config.app.1.clone());
+
+        for svc in &config.services {
+            self.registered.insert(svc.0.clone(), svc.1.clone());
+        }
         self
     }
 
-    pub fn load_service(&self, isol_id: IsolationID, name: &ServiceName) -> Arc<Service> {
+    fn load(&self, name: &ServiceName) -> Arc<Service> {
         let lib_path = self.registered.get(name).expect("unregistered library!");
 
-        let service = Service::new(name, lib_path);
-        service.init(isol_id);
+        let service = Service::new(name, lib_path, self.metric.new_svc_metric(name.clone()));
+        service.init(self.isol_id);
         Arc::from(service)
+    }
+
+    pub fn load_app(&self, name: &ServiceName) -> Arc<Service> {
+        self.load(name)
+    }
+
+    pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {
+        self.metric.mark(MetricEvent::LoadService);
+        self.load(name)
     }
 }
 
-impl Default for ServiceLoader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl Default for ServiceLoader {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
 
 pub enum Service {
     ElfService(elf_service::ELFService),
@@ -45,8 +68,8 @@ pub enum Service {
 }
 
 impl Service {
-    fn new(name: &str, filename: &PathBuf) -> Self {
-        Self::ElfService(ELFService::new(name, filename))
+    fn new(name: &str, filename: &PathBuf, metric: Arc<SvcMetricBucket>) -> Self {
+        Self::ElfService(ELFService::new(name, filename, metric))
     }
     fn init(&self, isol_id: IsolationID) {
         match self {

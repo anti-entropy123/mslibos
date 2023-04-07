@@ -23,6 +23,7 @@ fn main() {
     let isol1 = Isolation::new(config1);
     isol1.run();
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
+    isol1.metric.analyze();
     drop(isol1);
 
     let config2 = IsolationConfig {
@@ -36,5 +37,6 @@ fn main() {
     let isol2 = Isolation::new(config2);
     isol2.run();
     log::info!("isol2 has strong count={}", Arc::strong_count(&isol2));
+    isol2.metric.analyze();
     drop(isol2);
 }
