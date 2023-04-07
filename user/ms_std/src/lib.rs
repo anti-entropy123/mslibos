@@ -33,6 +33,6 @@ extern "C" fn eh_personality() {}
 
 #[linkage = "weak"]
 #[no_mangle]
-pub extern "C" fn rust_main() {
+pub fn rust_main() {
     panic!("need real rust_main");
 }

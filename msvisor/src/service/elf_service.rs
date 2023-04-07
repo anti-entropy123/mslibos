@@ -1,4 +1,4 @@
-//! `elf_service` use POSIX API `dlopen` to create service. 
+//! `elf_service` use POSIX API `dlopen` to create service.
 //! In the future, it will be **discarded**.
 
 use std::{collections::HashSet, path::PathBuf, sync::Arc};
@@ -13,7 +13,9 @@ use ms_hostcall::{
 
 use crate::{
     isolation::{find_host_call, panic_handler},
-    logger, GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
+    logger,
+    metric::{MetricEvent, SvcMetricBucket},
+    GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
 };
 
 lazy_static! {
@@ -33,10 +35,12 @@ pub struct ELFService {
     pub name: String,
     lib: Arc<Library>,
     heap: Arc<ServiceHeap>,
+    metric: Arc<SvcMetricBucket>,
 }
 
 impl ELFService {
-    pub fn new(name: &str, filename: &PathBuf) -> Self {
+    pub fn new(name: &str, filename: &PathBuf, metric: Arc<SvcMetricBucket>) -> Self {
+        metric.mark(MetricEvent::SvcInit);
         let lib = Arc::from(load_dynlib(filename).expect("failed load dynlib"));
         Self {
             name: name.to_string(),
@@ -44,6 +48,7 @@ impl ELFService {
             heap: Arc::new(ServiceHeap {
                 heap: [0; SERVICE_HEAP_SIZE],
             }),
+            metric,
         }
     }
 
@@ -62,6 +67,9 @@ impl ELFService {
             heap_range
         );
 
+        // If this is a common_service that does not dependent on IsolationContext,
+        // then directly return. Because it is not a no_std elf, and not have
+        // symbols `set_handler_addr` and `get_handler_addr`.
         if !self.should_set_context() {
             return;
         };
@@ -94,7 +102,9 @@ impl ELFService {
             (*rust_main) as usize
         );
 
+        self.metric.mark(MetricEvent::SvcRun);
         unsafe { rust_main() };
+        self.metric.mark(MetricEvent::SvcEnd);
 
         logger::info!("{} complete.", self.name);
     }

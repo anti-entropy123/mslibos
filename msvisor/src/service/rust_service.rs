@@ -53,8 +53,8 @@ fn mmap_segment(
     prot: ProtFlags,
     fd: i32,
 ) -> nix::Result<MmapArea> {
-    let base = elf_base + round_down!(ph.virtual_addr() as usize);
-    let length = round_up!((ph.virtual_addr() - ph.offset() + ph.mem_size()) as usize);
+    let base = elf_base + round_down!(ph.virtual_addr());
+    let length = round_up!(ph.virtual_addr() - ph.offset() + ph.mem_size());
     let base = unsafe {
         mmap(
             NonZeroUsize::new(base),
@@ -62,7 +62,7 @@ fn mmap_segment(
             prot,
             MapFlags::MAP_PRIVATE | MapFlags::MAP_DENYWRITE | MapFlags::MAP_FIXED,
             fd,
-            round_down!(ph.offset() as usize) as i64,
+            round_down!(ph.offset()) as i64,
         )
     }?;
     Ok(MmapArea {

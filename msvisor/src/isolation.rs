@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     logger,
+    metric::MetricBucket,
     service::{Service, ServiceLoader},
     utils::gen_new_id,
 };
@@ -17,8 +18,13 @@ use ms_hostcall::{
 
 use lazy_static::lazy_static;
 
+type IsolTable = HashMap<IsolID, Arc<Isolation>>;
 lazy_static! {
-    pub static ref ISOL_TABLE: Mutex<HashMap<IsolID, Arc<Isolation>>> = Mutex::new(HashMap::new());
+    pub static ref ISOL_TABLE: Mutex<IsolTable> = Mutex::new(HashMap::new());
+}
+
+fn get_isol_table() -> MutexGuard<'static, IsolTable> {
+    ISOL_TABLE.lock().unwrap()
 }
 
 #[derive(Default)]
@@ -37,33 +43,31 @@ pub struct Isolation {
     id: IsolID,
     user_app: Arc<Service>,
     loader: ServiceLoader,
+    pub metric: Arc<MetricBucket>,
 
     inner: Mutex<IsolationInner>,
 }
 
 impl Isolation {
     pub fn new(config: IsolationConfig) -> Arc<Self> {
-        logger::info!("start build isolation");
-        let mut loader = ServiceLoader::new().register(config.app.0.clone(), config.app.1);
-        for svc in config.services {
-            loader = loader.register(svc.0, svc.1);
-        }
-
         let new_id = gen_new_id();
+        logger::info!("start build isolation_{new_id}");
 
-        let user_app = loader.load_service(new_id, &config.app.0);
+        let metric = Arc::from(MetricBucket::new());
+
+        let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(&config);
+
+        let user_app = loader.load_app(&config.app.0);
 
         let isol = Arc::from(Self {
             id: new_id,
             user_app,
             loader,
+            metric,
             inner: Mutex::new(IsolationInner::default()),
         });
 
-        ISOL_TABLE
-            .lock()
-            .unwrap()
-            .insert(isol.id, Arc::clone(&isol));
+        get_isol_table().insert(isol.id, Arc::clone(&isol));
 
         isol
     }
@@ -77,7 +81,7 @@ impl Isolation {
         match isol_inner.modules.get(name) {
             Some(fs) => Arc::clone(fs),
             None => {
-                let fs = self.loader.load_service(self.id, name);
+                let fs = self.loader.load_service(name);
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&fs));
                 fs
             }
@@ -123,6 +127,8 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolID, hc_id: HostCallID) -> u
 
 #[test]
 fn find_host_call_test() {
+    // use libloading::Symbol;
+
     const TARGET_DIR: &str = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../target/debug/libnative_fs.so"
@@ -136,17 +142,18 @@ fn find_host_call_test() {
         isol_table.insert(1, Arc::clone(&isol));
         isol
     };
-    let hostcall_id = HostCallID::Common(CommonHostCall::Write);
-    let addr = unsafe { find_host_call(1, hostcall_id) };
 
-    assert!(
-        addr == *isol
-            .service_or_load(&"fs".to_string())
-            .interface("host_write")
-    )
+    let hostcall_id = HostCallID::Common(ms_hostcall::CommonHostCall::Write);
+    let addr = unsafe { find_host_call(1, hostcall_id) };
+    let binding = isol.service_or_load(&"fs".to_string());
+    let symbol = binding.interface::<fn()>("host_write");
+
+    assert!(addr == *symbol as usize)
 }
 
-/// A panic handler should be registered into hostcalls. 
+/// A panic handler that should be registered into hostcalls.
+///
+/// # Safety
 /// It should only be invoked by panic_handler of ms_std.
 pub unsafe extern "C" fn panic_handler() -> ! {
     panic!()
