@@ -18,17 +18,33 @@ pub fn gen_new_id() -> u64 {
 #[macro_export]
 macro_rules! round_up {
     ($x:expr) => {{
-        use crate::utils::PAGE_SIZE;
-        ($x + PAGE_SIZE - 1) & (!PAGE_SIZE + 1)
+        use $crate::utils::PAGE_SIZE;
+        ($x as usize + PAGE_SIZE - 1) & (!PAGE_SIZE + 1)
     }};
 }
 
 #[macro_export]
 macro_rules! round_down {
     ($x:expr) => {{
-        use crate::utils::PAGE_SIZE;
-        $x & (!PAGE_SIZE + 1)
+        use $crate::utils::PAGE_SIZE;
+        ($x as usize) & (!PAGE_SIZE + 1)
     }};
+}
+
+#[macro_export]
+macro_rules! now_millis {
+    () => {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis()
+    };
+}
+
+#[test]
+fn test_now_millis() {
+    let now = now_millis!();
+    assert!(now > 0, "now:{} not > 0", now)
 }
 
 #[test]

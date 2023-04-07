@@ -11,6 +11,8 @@ anyhow = "*"
 lazy_static = "*"
 ms_hostcall = { workspace = true }
 log = "*"
-env_logger = "*" 
-xmas-elf = "*"   # use to parse dynlib elf file.
-nix = "*"        # use to call mmap.
+env_logger = "*"
+xmas-elf = "*"                                   # use to parse dynlib elf file.
+nix = "*"                                        # use to call mmap.
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
