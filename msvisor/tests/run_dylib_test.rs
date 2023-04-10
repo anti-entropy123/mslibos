@@ -9,7 +9,7 @@ const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target");
 
 #[test]
 fn run_dylib_test() {
-    logger::init();
+    // logger::init();
 
     let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
 
@@ -33,7 +33,6 @@ fn run_multi_dylib_test() {
             .expect("join thread failed");
     }
 }
-
 #[test]
 #[should_panic]
 fn run_should_panic_test() {
