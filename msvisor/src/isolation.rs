@@ -41,7 +41,6 @@ pub struct IsolationConfig {
 
 pub struct Isolation {
     id: IsolID,
-    user_app: Arc<Service>,
     loader: ServiceLoader,
     pub metric: Arc<MetricBucket>,
 
@@ -57,11 +56,8 @@ impl Isolation {
 
         let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(&config);
 
-        let user_app = loader.load_app(&config.app.0);
-
         let isol = Arc::from(Self {
             id: new_id,
-            user_app,
             loader,
             metric,
             inner: Mutex::new(IsolationInner::default()),
@@ -89,8 +85,14 @@ impl Isolation {
     }
 
     pub fn run(&self) {
-        self.user_app.run();
-        ISOL_TABLE.lock().unwrap().remove(&self.id);
+        let user_app = self.loader.load_app();
+        user_app.run();
+    }
+}
+
+impl Drop for Isolation {
+    fn drop(&mut self) {
+        get_isol_table().remove(&self.id);
     }
 }
 
@@ -127,31 +129,47 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolID, hc_id: HostCallID) -> u
 
 #[test]
 fn find_host_call_test() {
-    // use libloading::Symbol;
+    // logger::init();
 
-    const TARGET_DIR: &str = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../target/debug/libnative_fs.so"
-    );
+    const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target/debug/");
     let isol = {
-        let mut isol_table = ISOL_TABLE.lock().unwrap();
+        // let mut isol_table = ISOL_TABLE.lock().unwrap();
+        let services = {
+            let mut s = Vec::new();
+            s.push((
+                "fs".to_owned(),
+                PathBuf::from(TARGET_DIR).join("libnative_fs.so"),
+            ));
+            s
+        };
+        log::debug!("services={:#?}", services);
+
         let isol = Isolation::new(IsolationConfig {
-            services: Vec::from([("fs".to_owned(), PathBuf::from(TARGET_DIR))]),
-            app: (String::new(), PathBuf::new()),
+            services,
+            app: (
+                "hello1".to_owned(),
+                PathBuf::from(TARGET_DIR).join("libhello_world.so"),
+            ),
         });
-        isol_table.insert(1, Arc::clone(&isol));
+        // isol_table.insert(1, Arc::clone(&isol));
         isol
     };
 
     let hostcall_id = HostCallID::Common(ms_hostcall::CommonHostCall::Write);
     let addr = unsafe { find_host_call(1, hostcall_id) };
-    let binding = isol.service_or_load(&"fs".to_string());
-    let symbol = binding.interface::<fn()>("host_write");
+
+    let fs_svc = isol.service_or_load(&"fs".to_string());
+    let symbol = fs_svc.interface::<fn()>("host_write");
 
     assert!(addr == *symbol as usize)
 }
 
 /// A panic handler that should be registered into hostcalls.
+/// 
+/// # TODO 
+/// This is a bad implementation because had better just make 
+/// threads of app exit gracefully. So maybe better call `pthread_exit`
+/// rather than `panic!`. 
 ///
 /// # Safety
 /// It should only be invoked by panic_handler of ms_std.

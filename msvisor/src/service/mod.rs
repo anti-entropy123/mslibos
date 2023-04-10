@@ -10,6 +10,7 @@ use ms_hostcall::types::{IsolationID, ServiceName};
 
 use crate::{
     isolation::IsolationConfig,
+    logger,
     metric::{MetricBucket, MetricEvent, SvcMetricBucket},
 };
 
@@ -17,6 +18,7 @@ pub struct ServiceLoader {
     isol_id: IsolationID,
     registered: HashMap<ServiceName, PathBuf>,
     metric: Arc<MetricBucket>,
+    app_name: ServiceName,
 }
 
 impl ServiceLoader {
@@ -25,10 +27,12 @@ impl ServiceLoader {
             isol_id,
             registered: HashMap::new(),
             metric,
+            app_name: Default::default(),
         }
     }
 
     pub fn register(mut self, config: &IsolationConfig) -> Self {
+        self.app_name = config.app.0.clone();
         self.registered
             .insert(config.app.0.clone(), config.app.1.clone());
 
@@ -46,8 +50,8 @@ impl ServiceLoader {
         Arc::from(service)
     }
 
-    pub fn load_app(&self, name: &ServiceName) -> Arc<Service> {
-        self.load(name)
+    pub fn load_app(&self) -> Arc<Service> {
+        self.load(&self.app_name)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {
@@ -56,12 +60,6 @@ impl ServiceLoader {
     }
 }
 
-// impl Default for ServiceLoader {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
-
 pub enum Service {
     ElfService(elf_service::ELFService),
     RustService(rust_service::RustService),
@@ -69,6 +67,7 @@ pub enum Service {
 
 impl Service {
     fn new(name: &str, filename: &PathBuf, metric: Arc<SvcMetricBucket>) -> Self {
+        logger::debug!("Service::new, name={name}");
         Self::ElfService(ELFService::new(name, filename, metric))
     }
     fn init(&self, isol_id: IsolationID) {
