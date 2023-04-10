@@ -3,6 +3,7 @@
 
 use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
+use anyhow::anyhow;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
@@ -26,6 +27,14 @@ lazy_static! {
     });
 }
 
+#[test]
+fn test_should_not_set_context() {
+    assert!(
+        SHOULD_NOT_SET_CONTEXT.contains("fs"),
+        "SHOULD_NOT_SET_CONTEXT do not have 'fs'"
+    )
+}
+
 #[repr(C, align(4096))]
 struct ServiceHeap {
     heap: [u8; SERVICE_HEAP_SIZE],
@@ -42,6 +51,7 @@ impl ELFService {
     pub fn new(name: &str, filename: &PathBuf, metric: Arc<SvcMetricBucket>) -> Self {
         metric.mark(MetricEvent::SvcInit);
         let lib = Arc::from(load_dynlib(filename).expect("failed load dynlib"));
+        logger::debug!("ELFService::new, name={name}");
         Self {
             name: name.to_string(),
             lib,
@@ -87,6 +97,7 @@ impl ELFService {
         logger::info!("set_handler complete.");
 
         let get_handler: GetHandlerFuncSybmol = self.symbol("get_handler_addr");
+        logger::debug!("service_{} get_hander addr=0x{:x}.", self.name, *get_handler as usize);
         assert!(unsafe { get_handler() } == find_host_call as usize)
     }
 
@@ -111,6 +122,13 @@ impl ELFService {
 }
 
 fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
+    if !filename.is_file() {
+        return Err(anyhow!(
+            "load dynlib failed. filename is invaild: {}",
+            filename.to_str().unwrap()
+        ));
+    }
+
     let lib = unsafe { Library::new(filename) }?;
     anyhow::Ok(lib)
 }
