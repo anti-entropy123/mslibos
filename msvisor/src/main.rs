@@ -1,42 +1,31 @@
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
+
+use clap::{arg, Parser};
 
 use msvisor::{
-    isolation::{Isolation, IsolationConfig},
+    isolation::{config::IsolationConfig, Isolation},
     logger,
 };
 
-const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target");
+/// A memory-safe LibOS runtime for serverless.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    // Config file path.
+    #[arg(short, long, default_value_t = String::from("config.json"))]
+    file: String,
+}
 
 fn main() {
     logger::init();
 
-    let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
+    let args = Args::parse();
 
-    let config1 = IsolationConfig {
-        services: Vec::from([("fs".to_owned(), debug_target_dir.join("libnative_fs.so"))]),
-        app: (
-            "hello1".to_owned(),
-            debug_target_dir.join("libhello_world.so"),
-        ),
-    };
+    let config1 = IsolationConfig::from_file(args.file.into()).expect("Open config file failed.");
 
     let isol1 = Isolation::new(config1);
     isol1.run();
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
     isol1.metric.analyze();
     drop(isol1);
-
-    let config2 = IsolationConfig {
-        services: Vec::from([("fs".to_owned(), debug_target_dir.join("libnative_fs.so"))]),
-        app: (
-            "hello2".to_owned(),
-            debug_target_dir.join("libhello_world.so"),
-        ),
-    };
-
-    let isol2 = Isolation::new(config2);
-    isol2.run();
-    log::info!("isol2 has strong count={}", Arc::strong_count(&isol2));
-    isol2.metric.analyze();
-    drop(isol2);
 }
