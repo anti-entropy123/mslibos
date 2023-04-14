@@ -9,7 +9,7 @@ use elf_service::ELFService;
 use ms_hostcall::types::{IsolationID, ServiceName};
 
 use crate::{
-    isolation::IsolationConfig,
+    isolation::config::IsolationConfig,
     logger,
     metric::{MetricBucket, MetricEvent, SvcMetricBucket},
 };

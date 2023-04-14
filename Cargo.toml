@@ -3,14 +3,18 @@
 [workspace]
 members = [
     "msvisor",
+    "gen-file",
     "ms_hostcall",
     "common_service/fs",
     "user/ms_std",
     "user/hello_world",
     "user/should_panic",
 ]
+default-members = ["msvisor"]
+
 
 [workspace.dependencies]
+msvisor = { path = "msvisor" }
 ms_std = { path = "user/ms_std" }
 ms_hostcall = { path = "ms_hostcall" }
 native_fs = { path = "common_service/fs" }
