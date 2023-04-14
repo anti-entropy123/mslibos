@@ -16,3 +16,4 @@ xmas-elf = "*"                                   # use to parse dynlib elf file.
 nix = "*"                                        # use to call mmap.
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+clap = { version = "*", features = ["derive"] }

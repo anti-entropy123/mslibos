@@ -1,7 +1,7 @@
 use std::{path::PathBuf, thread};
 
 use msvisor::{
-    isolation::{Isolation, IsolationConfig},
+    isolation::{Isolation, config::IsolationConfig},
     logger,
 };
 
