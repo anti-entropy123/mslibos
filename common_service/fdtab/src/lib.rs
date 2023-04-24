@@ -15,7 +15,10 @@ lazy_static! {
 #[no_mangle]
 pub fn host_write(fd: i32, buf: &str) -> isize {
     match fd {
-        1 => stdout(buf),
+        1 => {
+            ms_std::wrapper::UserHostCall::stdout(buf);
+            buf.len() as isize
+        }
         _ => panic!(),
     }
 }

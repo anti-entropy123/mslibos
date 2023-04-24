@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use ms_hostcall::{
-    types::{FindHostCallFunc, HostWriteFunc},
+    types::{FindHostCallFunc, HostStdioFunc, HostWriteFunc},
     CommonHostCall, HostCallID, IsolationContext, Transmutor,
 };
 
@@ -15,8 +15,8 @@ pub struct UserHostCall {
 impl UserHostCall {
     fn new() -> Self {
         UserHostCall {
-            write_addr: None,
             isolation_ctx: None,
+            write_addr: None,
             stdout_addr: None,
         }
     }
@@ -30,6 +30,10 @@ lazy_static! {
 impl Transmutor for UserHostCall {
     fn host_write_func(&self) -> HostWriteFunc {
         unsafe { core::mem::transmute(self.write_addr.unwrap()) }
+    }
+
+    fn host_stdio(&self) -> HostStdioFunc {
+        unsafe { core::mem::transmute(self.stdout_addr.unwrap()) }
     }
 
     fn find_host_call(&self) -> FindHostCallFunc {
@@ -55,5 +59,19 @@ impl UserHostCall {
         };
 
         write(fd, buf)
+    }
+
+    pub fn stdout(buf: &str) {
+        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+        if hostcall_table.stdout_addr.is_none() {
+            let find_host_call: FindHostCallFunc = hostcall_table.find_host_call();
+            let stdout_addr = unsafe {
+                find_host_call(
+                    hostcall_table.isolation_ctx.unwrap().isol_id,
+                    HostCallID::Common(CommonHostCall::Stdout),
+                )
+            };
+            hostcall_table.stdout_addr = Some(stdout_addr);
+        }
     }
 }

@@ -10,6 +10,7 @@ pub type SetHandlerFunc = unsafe extern "C" fn(IsolationContext) -> HostCallResu
 pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
 pub type RustMainFunc = unsafe fn() -> ();
 pub type HostWriteFunc = fn(i32, &str) -> isize;
+pub type HostStdioFunc = fn(&str) -> isize;
 
 pub type ServiceName = String;
 pub type SymbolName = String;

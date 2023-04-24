@@ -1,6 +1,6 @@
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
-use crate::{syscall_wrapper::USER_HOST_CALL, heap_alloc::init_heap};
+use crate::{wrapper::USER_HOST_CALL, heap_alloc::init_heap};
 
 #[allow(improper_ctypes_definitions)]
 #[no_mangle]

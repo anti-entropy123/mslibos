@@ -1,6 +1,6 @@
 use alloc::format;
 
-use crate::UserHostCall;
+use crate::wrapper::UserHostCall;
 use core::fmt;
 
 #[allow(unused)]

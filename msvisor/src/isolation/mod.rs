@@ -1,7 +1,7 @@
 pub mod config;
 mod isolation;
 
-use std::sync::Arc;
+use std::{sync::Arc, thread, time::Duration};
 
 use ms_hostcall::{types::IsolationID, HostCallID};
 
@@ -15,6 +15,8 @@ pub use isolation::Isolation;
 #[allow(improper_ctypes_definitions)]
 pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID) -> usize {
     // let id = HostCallID::Common(CommonHostCall::Write);
+    // thread::sleep(Duration::from_secs(1));
+
     logger::debug!(
         "find_host_call, isol_id={:x}, call_id={:?}, call_name={}",
         isol_id,

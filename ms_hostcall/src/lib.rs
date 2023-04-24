@@ -4,7 +4,7 @@ extern crate alloc;
 
 pub mod types;
 use alloc::{borrow::ToOwned, string::String};
-use types::{FindHostCallFunc, HostWriteFunc, IsolationID, ServiceName};
+use types::{FindHostCallFunc, HostStdioFunc, HostWriteFunc, IsolationID, ServiceName};
 
 use derive_more::Display;
 
@@ -28,7 +28,7 @@ impl HostCallID {
         match self {
             Self::Common(common) => match common {
                 CommonHostCall::Write => "fstab".to_owned(),
-                CommonHostCall::Stdout => "fstab".to_owned(),
+                CommonHostCall::Stdout => "stdio".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -48,6 +48,7 @@ fn format_hostcall_id() {
 pub trait Transmutor {
     fn host_write_func(&self) -> HostWriteFunc;
     fn find_host_call(&self) -> FindHostCallFunc;
+    fn host_stdio(&self) -> HostStdioFunc;
 }
 
 #[derive(Clone, Copy)]
