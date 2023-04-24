@@ -3,7 +3,6 @@ use std::{fs, io::BufReader, path::PathBuf};
 use anyhow;
 use ms_hostcall::types::ServiceName;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 use std::io;
 
@@ -15,7 +14,10 @@ pub struct IsolationConfig {
 
 impl IsolationConfig {
     pub fn to_file(&self, p: PathBuf) -> Result<(), io::Error> {
-        fs::write(p, json!(self).to_string())?;
+        fs::write(
+            p,
+            serde_json::to_string_pretty(self).expect("failed to pretty json string"),
+        )?;
         Ok(())
     }
 
