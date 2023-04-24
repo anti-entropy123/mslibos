@@ -13,6 +13,8 @@ use derive_more::Display;
 pub enum CommonHostCall {
     #[display(fmt = "host_write")]
     Write,
+    #[display(fmt = "host_stdout")]
+    Stdout,
 }
 
 #[derive(Debug, Display)]
@@ -25,7 +27,8 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
-                CommonHostCall::Write => "fs".to_owned(),
+                CommonHostCall::Write => "fstab".to_owned(),
+                CommonHostCall::Stdout => "fstab".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

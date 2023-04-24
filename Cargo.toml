@@ -5,8 +5,12 @@ members = [
     "msvisor",
     "gen-file",
     "ms_hostcall",
+
+    "common_service/ms_std",
     "common_service/fs",
-    "user/ms_std",
+    "common_service/fdtab",
+    "common_service/stdio",
+
     "user/hello_world",
     "user/should_panic",
 ]
@@ -15,8 +19,11 @@ default-members = ["msvisor"]
 
 [workspace.dependencies]
 msvisor = { path = "msvisor" }
-ms_std = { path = "user/ms_std" }
+
 ms_hostcall = { path = "ms_hostcall" }
+
+ms_std = { path = "common_service/ms_std" }
 native_fs = { path = "common_service/fs" }
+fstab = { path = "common_service/fdtab" }
 
 # [profile.dev.package.hello_world]

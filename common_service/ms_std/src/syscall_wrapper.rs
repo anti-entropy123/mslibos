@@ -9,6 +9,7 @@ use crate::sync::UPSafeCell;
 pub struct UserHostCall {
     pub isolation_ctx: Option<IsolationContext>,
     pub write_addr: Option<usize>,
+    pub stdout_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -16,6 +17,7 @@ impl UserHostCall {
         UserHostCall {
             write_addr: None,
             isolation_ctx: None,
+            stdout_addr: None,
         }
     }
 }
