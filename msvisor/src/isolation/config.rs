@@ -15,8 +15,8 @@ pub struct IsolationConfig {
 
 impl IsolationConfig {
     pub fn to_file(&self, p: PathBuf) -> Result<(), io::Error> {
-        let result = fs::write(p, json!(self).to_string())?;
-        Ok(result)
+        fs::write(p, json!(self).to_string())?;
+        Ok(())
     }
 
     pub fn from_file(p: PathBuf) -> Result<Self, anyhow::Error> {

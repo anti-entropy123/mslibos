@@ -1,25 +1,47 @@
+use core::cell::{Ref, RefMut};
+
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
-use crate::{wrapper::USER_HOST_CALL, heap_alloc::init_heap};
+use lazy_static::lazy_static;
+
+use crate::{heap_alloc::init_heap, sync::UPSafeCell};
+
+lazy_static! {
+    // In fact, isolation_ctx should be readonly, so don't have to
+    // use Mutex or UPSafeCell.
+    pub static ref ISOLATION_CTX: UPSafeCell<IsolationContext> = UPSafeCell::default();
+}
+
+/// This is a non-pub function because it should not be init in other file.
+fn isolation_ctx_mut() -> RefMut<'static, IsolationContext> {
+    ISOLATION_CTX.exclusive_access()
+}
+
+pub fn isolation_ctx() -> Ref<'static, IsolationContext> {
+    let ctx = ISOLATION_CTX.access();
+    if ctx.panic_handler == 0 {
+        panic!("uninit")
+    }
+    ctx
+}
 
 #[allow(improper_ctypes_definitions)]
 #[no_mangle]
 pub extern "C" fn set_handler_addr(ctx: IsolationContext) -> HCResult {
-    let mut hostcalls = USER_HOST_CALL.exclusive_access();
-    if hostcalls.isolation_ctx.is_some() {
+    let mut isol_ctx = isolation_ctx_mut();
+    if isol_ctx.find_handler != 0 {
         panic!();
         // return Err(HCError::HasBeenSet);
     };
-    hostcalls.isolation_ctx = Some(ctx);
+    *isol_ctx = ctx;
+
     init_heap(ctx.heap_range.0);
     Ok(())
 }
 
 #[no_mangle]
 pub extern "C" fn get_handler_addr() -> usize {
-    USER_HOST_CALL
-        .exclusive_access()
-        .isolation_ctx
-        .unwrap()
-        .find_handler
+    let isol_ctx = isolation_ctx();
+
+    isol_ctx.find_handler
 }

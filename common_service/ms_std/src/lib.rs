@@ -13,15 +13,11 @@ pub mod wrapper;
 
 use core::panic::PanicInfo;
 
-use wrapper::USER_HOST_CALL;
+use init_context::isolation_ctx;
 
 #[panic_handler]
 fn panic_handler(_info: &PanicInfo) -> ! {
-    let panic_addr = USER_HOST_CALL
-        .exclusive_access()
-        .isolation_ctx
-        .unwrap()
-        .panic_handler;
+    let panic_addr = isolation_ctx().panic_handler;
 
     let host_panic_handler: unsafe extern "C" fn() -> ! =
         unsafe { core::mem::transmute(panic_addr) };

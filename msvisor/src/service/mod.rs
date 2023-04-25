@@ -46,7 +46,7 @@ impl ServiceLoader {
         let lib_path = self
             .registered
             .get(name)
-            .expect(&format!("unregistered library: {}!", name));
+            .unwrap_or_else(|| panic!("unregistered library: {}!", name));
 
         let service = Service::new(name, lib_path, self.metric.new_svc_metric(name.clone()));
         service.init(self.isol_id);

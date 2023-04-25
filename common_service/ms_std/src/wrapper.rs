@@ -1,13 +1,12 @@
 use lazy_static::lazy_static;
 use ms_hostcall::{
-    types::{FindHostCallFunc, HostStdioFunc, HostWriteFunc},
-    CommonHostCall, HostCallID, IsolationContext, Transmutor,
+    types::{FindHostCallFunc, HostStdioFunc, HostWriteFunc, PanicHandlerFunc},
+    CommonHostCall, HostCallID, Transmutor,
 };
 
-use crate::sync::UPSafeCell;
+use crate::{init_context::isolation_ctx, sync::UPSafeCell};
 
 pub struct UserHostCall {
-    pub isolation_ctx: Option<IsolationContext>,
     pub write_addr: Option<usize>,
     pub stdout_addr: Option<usize>,
 }
@@ -15,7 +14,6 @@ pub struct UserHostCall {
 impl UserHostCall {
     fn new() -> Self {
         UserHostCall {
-            isolation_ctx: None,
             write_addr: None,
             stdout_addr: None,
         }
@@ -28,50 +26,55 @@ lazy_static! {
 }
 
 impl Transmutor for UserHostCall {
-    fn host_write_func(&self) -> HostWriteFunc {
-        unsafe { core::mem::transmute(self.write_addr.unwrap()) }
+    fn host_write_func(&mut self) -> HostWriteFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::Write)) }
     }
 
-    fn host_stdio(&self) -> HostStdioFunc {
-        unsafe { core::mem::transmute(self.stdout_addr.unwrap()) }
+    fn host_stdio_func(&mut self) -> HostStdioFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::Stdout)) }
     }
 
-    fn find_host_call(&self) -> FindHostCallFunc {
-        unsafe { core::mem::transmute(self.isolation_ctx.unwrap().find_handler) }
+    fn find_host_call() -> FindHostCallFunc {
+        unsafe { core::mem::transmute(isolation_ctx().find_handler) }
+    }
+
+    fn host_panic_handler() -> PanicHandlerFunc {
+        unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
 }
 
 impl UserHostCall {
+    fn get_or_find(&mut self, chc_id: CommonHostCall) -> usize {
+        let entry_addr = match chc_id {
+            CommonHostCall::Write => &mut self.write_addr,
+            CommonHostCall::Stdout => &mut self.stdout_addr,
+        };
+        if entry_addr.is_none() {
+            let find_host_call = UserHostCall::find_host_call();
+            let addr =
+                unsafe { find_host_call(isolation_ctx().isol_id, HostCallID::Common(chc_id)) };
+            *entry_addr = Some(addr);
+            addr
+        } else {
+            entry_addr.unwrap()
+        }
+    }
+
     pub fn host_write(fd: i32, buf: &str) -> isize {
-        let write: fn(i32, &str) -> isize = {
+        let write: HostWriteFunc = {
             let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-            if hostcall_table.write_addr.is_none() {
-                let find_host_call: FindHostCallFunc = hostcall_table.find_host_call();
-                let write_addr = unsafe {
-                    find_host_call(
-                        hostcall_table.isolation_ctx.unwrap().isol_id,
-                        HostCallID::Common(CommonHostCall::Write),
-                    )
-                };
-                hostcall_table.write_addr = Some(write_addr);
-            };
             hostcall_table.host_write_func()
         };
 
         write(fd, buf)
     }
 
-    pub fn stdout(buf: &str) {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        if hostcall_table.stdout_addr.is_none() {
-            let find_host_call: FindHostCallFunc = hostcall_table.find_host_call();
-            let stdout_addr = unsafe {
-                find_host_call(
-                    hostcall_table.isolation_ctx.unwrap().isol_id,
-                    HostCallID::Common(CommonHostCall::Stdout),
-                )
-            };
-            hostcall_table.stdout_addr = Some(stdout_addr);
-        }
+    pub fn stdout(buf: &str) -> isize {
+        let stdout: HostStdioFunc = {
+            let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+            hostcall_table.host_stdio_func()
+        };
+
+        stdout(buf)
     }
 }

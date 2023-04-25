@@ -13,7 +13,7 @@ use ms_hostcall::{
 };
 
 use crate::{
-    isolation::{find_host_call, panic_handler},
+    isolation::handler::{find_host_call, panic_handler},
     logger,
     metric::{MetricEvent, SvcMetricBucket},
     GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
@@ -98,7 +98,11 @@ impl ELFService {
         logger::info!("set_handler complete.");
 
         let get_handler: GetHandlerFuncSybmol = self.symbol("get_handler_addr");
-        logger::debug!("service_{} get_hander addr=0x{:x}.", self.name, *get_handler as usize);
+        logger::debug!(
+            "service_{} get_hander addr=0x{:x}.",
+            self.name,
+            *get_handler as usize
+        );
         assert!(unsafe { get_handler() } == find_host_call as usize)
     }
 

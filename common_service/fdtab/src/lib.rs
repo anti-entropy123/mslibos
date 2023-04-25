@@ -9,7 +9,7 @@ use ms_std;
 struct File;
 
 lazy_static! {
-    static ref fd_table: Vec<File> = Vec::new();
+    static ref _FD_TABLE: Vec<File> = Vec::new();
 }
 
 #[no_mangle]

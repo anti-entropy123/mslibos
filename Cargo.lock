@@ -360,13 +360,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "native_fs"
-version = "0.1.0"
-dependencies = [
- "nix",
-]
-
-[[package]]
 name = "nix"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

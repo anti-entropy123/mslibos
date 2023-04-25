@@ -7,7 +7,6 @@ members = [
     "ms_hostcall",
 
     "common_service/ms_std",
-    "common_service/fs",
     "common_service/fdtab",
     "common_service/stdio",
 
