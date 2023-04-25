@@ -1,0 +1,16 @@
+{
+    "app": [
+        "hello1",
+        "/home/yjn/rust_project/mslibos/target/debug/libhello_world.so"
+    ],
+    "services": [
+        [
+            "fdtab",
+            "/home/yjn/rust_project/mslibos/target/debug/libfdtab.so"
+        ],
+        [
+            "stdio",
+            "/home/yjn/rust_project/mslibos/target/debug/libstdio.so"
+        ]
+    ]
+}
