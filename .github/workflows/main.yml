@@ -18,6 +18,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2023-04-15
           override: true
       - run: cargo test
