@@ -43,7 +43,10 @@ impl ServiceLoader {
     }
 
     fn load(&self, name: &ServiceName) -> Arc<Service> {
-        let lib_path = self.registered.get(name).expect("unregistered library!");
+        let lib_path = self
+            .registered
+            .get(name)
+            .unwrap_or_else(|| panic!("unregistered library: {}!", name));
 
         let service = Service::new(name, lib_path, self.metric.new_svc_metric(name.clone()));
         service.init(self.isol_id);

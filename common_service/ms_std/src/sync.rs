@@ -1,4 +1,4 @@
-use core::cell::{RefCell, RefMut};
+use core::cell::{Ref, RefCell, RefMut};
 
 /// Wrap a static data structure inside it so that we are
 /// able to access it without any `unsafe`.
@@ -7,6 +7,7 @@ use core::cell::{RefCell, RefMut};
 ///
 /// In order to get mutable reference of inner data, call
 /// `exclusive_access`.
+#[derive(Default)]
 pub struct UPSafeCell<T> {
     /// inner data
     inner: RefCell<T>,
@@ -25,5 +26,9 @@ impl<T> UPSafeCell<T> {
     /// Panic if the data has been borrowed.
     pub fn exclusive_access(&self) -> RefMut<'_, T> {
         self.inner.borrow_mut()
+    }
+
+    pub fn access(&self) -> Ref<'_, T> {
+        self.inner.borrow()
     }
 }

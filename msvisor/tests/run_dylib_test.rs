@@ -1,20 +1,26 @@
 use std::{path::PathBuf, thread};
 
 use msvisor::{
-    isolation::{Isolation, config::IsolationConfig},
+    isolation::{config::IsolationConfig, Isolation},
     logger,
 };
 
-const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target");
+const TARGET_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
 #[test]
 fn run_dylib_test() {
     // logger::init();
 
-    let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
+    let debug_target_dir = PathBuf::from(TARGET_DIR)
+        .parent()
+        .unwrap()
+        .join("target/debug");
 
     let config1 = IsolationConfig {
-        services: Vec::from([("fs".to_owned(), debug_target_dir.join("libnative_fs.so"))]),
+        services: Vec::from([
+            ("fdtab".to_owned(), debug_target_dir.join("libfdtab.so")),
+            ("stdio".to_owned(), debug_target_dir.join("libstdio.so")),
+        ]),
         app: (
             "hello1".to_owned(),
             debug_target_dir.join("libhello_world.so"),
