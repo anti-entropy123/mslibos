@@ -43,14 +43,17 @@ fn find_host_call_test() {
     use crate::isolation::{Isolation, IsolationConfig};
     use std::path::PathBuf;
 
-    const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target/debug/");
+    const TARGET_DIR: &str = env!("CARGO_MANIFEST_DIR");
     let isol = {
         // let mut isol_table = ISOL_TABLE.lock().unwrap();
         let services = {
             let mut s = Vec::new();
             s.push((
                 "fdtab".to_owned(),
-                PathBuf::from(TARGET_DIR).join("libfdtab.so"),
+                PathBuf::from(TARGET_DIR)
+                    .parent()
+                    .unwrap()
+                    .join("target/debug/libfdtab.so"),
             ));
             s
         };
