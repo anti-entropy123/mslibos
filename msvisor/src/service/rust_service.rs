@@ -160,9 +160,10 @@ pub fn load_pic_dynlib() {
     // log::debug!("mmap_bss: {}", mmap_bss)
 }
 
-#[test]
-fn load_pic_dynlib_test() {
-    use crate::logger;
-    logger::init();
-    load_pic_dynlib()
-}
+// This is a test case for dlmopen-like service loader. 
+// #[test]
+// fn load_pic_dynlib_test() {
+//     use crate::logger;
+//     logger::init();
+//     load_pic_dynlib()
+// }

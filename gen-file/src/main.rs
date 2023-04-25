@@ -2,12 +2,12 @@ use std::path::PathBuf;
 
 use msvisor::isolation::config::IsolationConfig;
 
-const TARGET_DIR: &str = env!("CARGO_MANIFEST_DIR");
+const TARGET_DIR: &str = ""; //env!("CARGO_MANIFEST_DIR");
 
 fn main() {
     let debug_target_dir = PathBuf::from(TARGET_DIR)
-        .parent()
-        .unwrap()
+        // .parent()
+        // .unwrap()
         .join("target/debug");
 
     let config1 = IsolationConfig {
