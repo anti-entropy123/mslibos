@@ -80,7 +80,10 @@ impl MetricBucket {
             serde_json::json!(svc_metrics)
         };
 
-        println!("{}", result)
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&result).expect("format json failed")
+        );
     }
 }
 

@@ -9,20 +9,16 @@ pub mod console;
 mod heap_alloc;
 pub mod init_context;
 mod sync;
-mod syscall_wrapper;
+pub mod wrapper;
 
 use core::panic::PanicInfo;
 
-pub use syscall_wrapper::*;
+use init_context::isolation_ctx;
 
 #[panic_handler]
 fn panic_handler(_info: &PanicInfo) -> ! {
-    let panic_addr = USER_HOST_CALL
-        .exclusive_access()
-        .isolation_ctx
-        .unwrap()
-        .panic_handler;
-    
+    let panic_addr = isolation_ctx().panic_handler;
+
     let host_panic_handler: unsafe extern "C" fn() -> ! =
         unsafe { core::mem::transmute(panic_addr) };
     unsafe { host_panic_handler() }
