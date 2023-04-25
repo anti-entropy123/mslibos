@@ -1,4 +1,4 @@
-dir /home/yjn/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/etc/
+set pagination off
 start
 layout src
 focus cmd

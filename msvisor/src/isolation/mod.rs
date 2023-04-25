@@ -4,7 +4,12 @@ pub mod handler;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, MutexGuard},
+    thread,
 };
+
+use lazy_static::lazy_static;
+
+use ms_hostcall::types::{IsolationID as IsolID, ServiceName};
 
 use crate::{
     logger,
@@ -12,10 +17,6 @@ use crate::{
     service::{Service, ServiceLoader},
     utils::gen_new_id,
 };
-
-use lazy_static::lazy_static;
-use ms_hostcall::types::{IsolationID as IsolID, ServiceName};
-
 use config::IsolationConfig;
 
 type IsolTable = HashMap<IsolID, Arc<Isolation>>;
@@ -81,7 +82,9 @@ impl Isolation {
 
     pub fn run(&self) {
         let user_app = self.loader.load_app();
-        user_app.run()
+        let handler = thread::spawn(move || user_app.run());
+
+        handler.join().expect("isolation app-thread failed")
     }
 }
 
