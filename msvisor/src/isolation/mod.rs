@@ -4,6 +4,7 @@ pub mod handler;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, MutexGuard},
+    thread,
 };
 
 use lazy_static::lazy_static;
@@ -81,7 +82,9 @@ impl Isolation {
 
     pub fn run(&self) {
         let user_app = self.loader.load_app();
-        user_app.run()
+        let handler = thread::spawn(move || user_app.run());
+
+        handler.join().expect("isolation app-thread failed")
     }
 }
 

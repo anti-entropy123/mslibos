@@ -40,6 +40,8 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
 #[test]
 fn find_host_call_test() {
     // logger::init();
+    use crate::isolation::{Isolation, IsolationConfig};
+    use std::path::PathBuf;
 
     const TARGET_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../target/debug/");
     let isol = {
@@ -47,8 +49,8 @@ fn find_host_call_test() {
         let services = {
             let mut s = Vec::new();
             s.push((
-                "fs".to_owned(),
-                PathBuf::from(TARGET_DIR).join("libnative_fs.so"),
+                "fdtab".to_owned(),
+                PathBuf::from(TARGET_DIR).join("libfdtab.so"),
             ));
             s
         };
@@ -68,7 +70,7 @@ fn find_host_call_test() {
     let hostcall_id = HostCallID::Common(ms_hostcall::CommonHostCall::Write);
     let addr = unsafe { find_host_call(1, hostcall_id) };
 
-    let fs_svc = isol.service_or_load(&"fs".to_string());
+    let fs_svc = isol.service_or_load(&"fdtab".to_string());
     let symbol = fs_svc.interface::<fn()>("host_write");
 
     assert!(addr == *symbol as usize)
