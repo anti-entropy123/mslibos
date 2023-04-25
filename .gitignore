@@ -2,4 +2,4 @@ target
 .VSCodeCounter
 *.log
 .gdbinit
-*.json
+./*.json
