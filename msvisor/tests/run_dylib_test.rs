@@ -1,9 +1,6 @@
-use std::{path::PathBuf, thread};
+use std::path::PathBuf;
 
-use msvisor::{
-    isolation::{config::IsolationConfig, Isolation},
-    logger,
-};
+use msvisor::isolation::{config::IsolationConfig, Isolation};
 
 const TARGET_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
