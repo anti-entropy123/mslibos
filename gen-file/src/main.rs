@@ -1,14 +1,7 @@
-use std::path::PathBuf;
-
-use msvisor::isolation::config::IsolationConfig;
-
-const TARGET_DIR: &str = ""; //env!("CARGO_MANIFEST_DIR");
+use msvisor::{isolation::config::IsolationConfig, utils};
 
 fn main() {
-    let debug_target_dir = PathBuf::from(TARGET_DIR)
-        // .parent()
-        // .unwrap()
-        .join("target/debug");
+    let debug_target_dir = &utils::TARGET_DEBUG_PATH;
 
     let config1 = IsolationConfig {
         services: Vec::from([("fdtab".to_owned(), debug_target_dir.join("libfdtab.so"))]),

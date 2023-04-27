@@ -23,6 +23,8 @@ impl IsolationConfig {
 
     pub fn from_file(p: PathBuf) -> Result<Self, anyhow::Error> {
         let content = fs::File::open(p)?;
-        Ok(serde_json::from_reader(BufReader::new(content))?)
+        let mut config = serde_json::from_reader(BufReader::new(content))?;
+
+        Ok(config)
     }
 }
