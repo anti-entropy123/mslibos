@@ -1,3 +1,9 @@
+//! This crate support the defination of symbols `set_handler_addr`
+//! and `get_handler_addr`. These two symbols will be lookup when 
+//! initialize service. 
+//! To some service that depent `std`, they would use this crate directly 
+//! rather than `ms_std`.
+
 use core::cell::{Ref, RefMut};
 
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};

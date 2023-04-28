@@ -60,18 +60,10 @@ fn test_round_page() {
 
 const REPOS_ROOT: &str = env!("CARGO_MANIFEST_DIR");
 lazy_static! {
-    pub static ref TARGET_DEBUG_PATH: PathBuf = {
-        PathBuf::from(REPOS_ROOT)
-            .parent()
-            .unwrap()
-            .join("target/debug")
-    };
-    pub static ref ISOL_CONFIG_PATH: PathBuf = {
-        PathBuf::from(REPOS_ROOT)
-            .parent()
-            .unwrap()
-            .join("isol_config")
-    };
+    pub static ref REPOS_ROOT_PATH: PathBuf =
+        PathBuf::from(REPOS_ROOT).parent().unwrap().to_path_buf();
+    pub static ref TARGET_DEBUG_PATH: PathBuf = REPOS_ROOT_PATH.join("target/debug");
+    pub static ref ISOL_CONFIG_PATH: PathBuf = REPOS_ROOT_PATH.join("isol_config");
 }
 
 #[test]

@@ -1,11 +1,11 @@
 use alloc::format;
 
-use crate::wrapper::UserHostCall;
+use crate::libos;
 use core::fmt;
 
 #[allow(unused)]
 pub fn print(args: fmt::Arguments) {
-    UserHostCall::host_write(1, &format!("{}", args));
+    libos::host_write(1, &format!("{}", args));
 }
 
 #[macro_export]

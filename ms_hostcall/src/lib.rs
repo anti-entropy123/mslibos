@@ -1,12 +1,11 @@
 #![no_std]
+#![feature(ip_in_core)]
 
 extern crate alloc;
 
 pub mod types;
 use alloc::{borrow::ToOwned, string::String};
-use types::{
-    FindHostCallFunc, HostStdioFunc, HostWriteFunc, IsolationID, PanicHandlerFunc, ServiceName,
-};
+use types::{IsolationID, ServiceName};
 
 use derive_more::Display;
 
@@ -17,6 +16,8 @@ pub enum CommonHostCall {
     Write,
     #[display(fmt = "host_stdout")]
     Stdout,
+    #[display(fmt = "addrinfo")]
+    SmoltcpAddrInfo,
 }
 
 #[derive(Debug, Display)]
@@ -31,6 +32,7 @@ impl HostCallID {
             Self::Common(common) => match common {
                 CommonHostCall::Write => "fdtab".to_owned(),
                 CommonHostCall::Stdout => "stdio".to_owned(),
+                CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -45,14 +47,6 @@ fn format_hostcall_id() {
         "actual format result is {}",
         result
     )
-}
-
-pub trait Transmutor {
-    fn find_host_call() -> FindHostCallFunc;
-    fn host_panic_handler() -> PanicHandlerFunc;
-
-    fn host_write_func(&mut self) -> HostWriteFunc;
-    fn host_stdio_func(&mut self) -> HostStdioFunc;
 }
 
 #[derive(Clone, Copy, Default)]

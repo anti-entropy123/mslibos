@@ -29,3 +29,15 @@ pub type HostWriteFunc = fn(i32, &str) -> isize;
 
 // stdio
 pub type HostStdioFunc = fn(&str) -> isize;
+
+// socket
+pub type SomltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
+
+pub trait Transmutor {
+    fn find_host_call() -> FindHostCallFunc;
+    fn host_panic_handler() -> PanicHandlerFunc;
+
+    fn host_write_func(&mut self) -> HostWriteFunc;
+    fn host_stdio_func(&mut self) -> HostStdioFunc;
+    fn somltcp_addrinfo(&mut self) -> SomltcpAddrInfoFunc;
+}

@@ -1,13 +1,16 @@
-use msvisor::{isolation::config::IsolationConfig, utils};
+use std::path::PathBuf;
+
+use msvisor::isolation::config::IsolationConfig;
 
 fn main() {
-    let debug_target_dir = &utils::TARGET_DEBUG_PATH;
-
     let config1 = IsolationConfig {
-        services: Vec::from([("fdtab".to_owned(), debug_target_dir.join("libfdtab.so"))]),
+        services: Vec::from([(
+            "fdtab".to_owned(),
+            PathBuf::from("target/debug/libfdtab.so"),
+        )]),
         app: (
             "hello1".to_owned(),
-            debug_target_dir.join("libhello_world.so"),
+            PathBuf::from("target/debug/libhello_world.so"),
         ),
     };
 

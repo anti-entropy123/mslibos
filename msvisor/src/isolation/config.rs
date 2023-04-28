@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use std::io;
 
+use crate::utils;
+
 #[derive(Serialize, Deserialize)]
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
@@ -22,8 +24,14 @@ impl IsolationConfig {
     }
 
     pub fn from_file(p: PathBuf) -> Result<Self, anyhow::Error> {
+        let p = if !p.is_file() {
+            utils::ISOL_CONFIG_PATH.join(p)
+        } else {
+            p
+        };
+
         let content = fs::File::open(p)?;
-        let mut config = serde_json::from_reader(BufReader::new(content))?;
+        let config = serde_json::from_reader(BufReader::new(content))?;
 
         Ok(config)
     }
