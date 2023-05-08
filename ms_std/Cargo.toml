@@ -7,6 +7,11 @@ edition = "2021"
 [lib]
 crate-type = ["rlib"]
 
+[features]
+no_std = []
+
+# default = ["no_std"]
+
 [dependencies]
 once_cell = "*"
 lazy_static = { version = "*", features = ["spin_no_std"] }

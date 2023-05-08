@@ -10,4 +10,27 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std.workspace = true
-smoltcp = { version = "*" }
+smoltcp = { workspace = true}
+ms_hostcall.workspace = true
+
+lazy_static = "*"
+managed = { version = "0.8", default-features = false, features = ["map"] }
+defmt = { version = "0.3", optional = true }
+libc = { version = "0.2.18", optional = true }
+rand = "*"
+
+[features]
+default = []
+log = []
+std = ["managed/std", "alloc"]
+alloc = ["managed/alloc", "defmt?/alloc"]
+"medium-ethernet" = ["socket"]
+"medium-ip" = ["socket"]
+
+"phy-tuntap_interface" = ["std", "libc", "medium-ethernet"]
+
+"proto-ipv4" = []
+
+"socket" = []
+"socket-tcp" = ["socket"]
+"socket-icmp" = ["socket"]

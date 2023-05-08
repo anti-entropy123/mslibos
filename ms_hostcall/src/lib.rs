@@ -16,6 +16,8 @@ pub enum CommonHostCall {
     Write,
     #[display(fmt = "host_stdout")]
     Stdout,
+    #[display(fmt = "init_net_dev")]
+    SmoltcpInitDev,
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
 }
@@ -33,6 +35,7 @@ impl HostCallID {
                 CommonHostCall::Write => "fdtab".to_owned(),
                 CommonHostCall::Stdout => "stdio".to_owned(),
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
+                CommonHostCall::SmoltcpInitDev => "socket".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

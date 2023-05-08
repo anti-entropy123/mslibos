@@ -1,5 +1,5 @@
 use alloc::string::String;
-// use alloc::
+use smoltcp::{iface::Interface, phy::TunTapInterface};
 
 use crate::{HostCallID, IsolationContext};
 
@@ -7,6 +7,8 @@ pub type IsolationID = u64;
 pub type ServiceName = String;
 pub type SymbolName = String;
 pub type HostCallResult = Result<(), HostCallError>;
+pub type NetDevice = TunTapInterface;
+pub type NetIface = Interface;
 
 #[derive(Debug)]
 pub enum HostCallError {
@@ -31,7 +33,9 @@ pub type HostWriteFunc = fn(i32, &str) -> isize;
 pub type HostStdioFunc = fn(&str) -> isize;
 
 // socket
-pub type SomltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
+pub type SmoltcpInitDevFunc = fn() -> (NetDevice, NetIface);
+pub type SmoltcpAddrInfoFunc =
+    fn(&mut NetDevice, &mut NetIface, &str) -> Result<core::net::Ipv4Addr, ()>;
 
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
@@ -39,5 +43,6 @@ pub trait Transmutor {
 
     fn host_write_func(&mut self) -> HostWriteFunc;
     fn host_stdio_func(&mut self) -> HostStdioFunc;
-    fn somltcp_addrinfo(&mut self) -> SomltcpAddrInfoFunc;
+    fn smoltcp_init_dev(&mut self) -> SmoltcpInitDevFunc;
+    fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc;
 }

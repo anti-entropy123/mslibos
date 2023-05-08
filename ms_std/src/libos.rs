@@ -3,17 +3,19 @@ use core::net::Ipv4Addr;
 use lazy_static::lazy_static;
 use ms_hostcall::{
     types::{
-        FindHostCallFunc, HostStdioFunc, HostWriteFunc, PanicHandlerFunc, SomltcpAddrInfoFunc,
-        Transmutor,
+        FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetDevice, NetIface, PanicHandlerFunc,
+        SmoltcpAddrInfoFunc, SmoltcpInitDevFunc, Transmutor,
     },
     CommonHostCall, HostCallID,
 };
 
-use crate::{init_context::isolation_ctx, sync::UPSafeCell};
+use crate::init_context::isolation_ctx;
+use crate::sync::UPSafeCell;
 
 pub struct UserHostCall {
     write_addr: Option<usize>,
     stdout_addr: Option<usize>,
+    smoltcp_init_dev: Option<usize>,
     smoltcp_addrinfo_addr: Option<usize>,
 }
 
@@ -22,6 +24,7 @@ impl UserHostCall {
         UserHostCall {
             write_addr: None,
             stdout_addr: None,
+            smoltcp_init_dev: None,
             smoltcp_addrinfo_addr: None,
         }
     }
@@ -50,8 +53,12 @@ impl Transmutor for UserHostCall {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::Stdout)) }
     }
 
-    fn somltcp_addrinfo(&mut self) -> SomltcpAddrInfoFunc {
+    fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpAddrInfo)) }
+    }
+
+    fn smoltcp_init_dev(&mut self) -> ms_hostcall::types::SmoltcpInitDevFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpInitDev)) }
     }
 }
 
@@ -61,6 +68,7 @@ impl UserHostCall {
             CommonHostCall::Write => &mut self.write_addr,
             CommonHostCall::Stdout => &mut self.stdout_addr,
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
+            CommonHostCall::SmoltcpInitDev => &mut self.smoltcp_init_dev,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
@@ -92,11 +100,26 @@ pub fn stdout(buf: &str) -> isize {
     stdout(buf)
 }
 
-pub fn addr_info(name: &str) -> Result<Ipv4Addr, ()> {
-    let addr_info: SomltcpAddrInfoFunc = {
+pub fn init_dev() -> Result<(NetDevice, NetIface), ()> {
+    let init_dev: SmoltcpInitDevFunc = {
         let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.somltcp_addrinfo()
+        hostcall_table.smoltcp_init_dev()
     };
 
-    addr_info(name)
+    Ok(init_dev())
 }
+
+pub fn addr_info(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Result<Ipv4Addr, ()> {
+    let addr_info: SmoltcpAddrInfoFunc = {
+        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+        hostcall_table.smoltcp_addrinfo()
+    };
+
+    addr_info(device, iface, name)
+}
+
+// pub fn connect() -> Result<(), ()> {
+//     let connect:
+
+//     Ok(())
+// }
