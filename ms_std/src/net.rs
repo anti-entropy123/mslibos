@@ -1,7 +1,6 @@
 use core::{
     fmt::Display,
     net::{Ipv4Addr, SocketAddrV4},
-    str::FromStr,
 };
 
 #[cfg(feature = "no_std")]
@@ -9,7 +8,7 @@ use alloc::vec::Vec;
 use ms_hostcall::types::{NetDevice, NetIface};
 
 use crate::{
-    libos::{self, send},
+    libos::{self},
     println,
 };
 
@@ -29,7 +28,7 @@ pub struct TcpStream {
 
 impl TcpStream {
     pub fn connect(addr: SocketAddr) -> Result<Self, ()> {
-        println!("connect to {}", addr);
+        // println!("connect to {}", addr);
 
         let mut stream = Self {
             device: addr.device,
@@ -49,11 +48,15 @@ impl TcpStream {
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
         assert_eq!(self.state, State::Request);
         libos::send(&mut self.device, &mut self.iface, data).expect("send data failed");
-        Err(())
+        self.state = State::Response;
+        Ok(())
     }
 
-    pub fn read(&self, _buf: &[u8]) -> Result<usize, ()> {
-        Err(())
+    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
+        assert_eq!(self.state, State::Response);
+        let len = libos::recv(&mut self.device, &mut self.iface, buf).expect("recv data failed");
+
+        Ok(len)
     }
 }
 
@@ -86,7 +89,7 @@ impl From<&str> for SocketAddr {
     fn from(value: &str) -> Self {
         let mut sockaddr = SocketAddr::default();
 
-        let tcp_addr: Vec<&str> = value.split(":").collect();
+        let tcp_addr: Vec<&str> = value.split(':').collect();
         let (ip, port) = {
             let addr: Ipv4Addr = if let Ok(addr) = tcp_addr[0].parse() {
                 addr

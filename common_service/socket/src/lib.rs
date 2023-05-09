@@ -1,7 +1,7 @@
 #![feature(ip_in_core)]
 
 use core::net::Ipv4Addr;
-use std::{net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
+use std::{io::Write, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
 use lazy_static::lazy_static;
 use ms_hostcall::types::{NetDevice, NetIface};
@@ -56,7 +56,6 @@ lazy_static! {
 #[no_mangle]
 pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Result<Ipv4Addr, ()> {
     let fd = device.as_raw_fd();
-    println!("device raw fd: {}", fd);
     // Create sockets
     let servers = &[Ipv4Address::new(8, 8, 8, 8).into()];
     let dns_socket = dns::Socket::new(servers, vec![]);
@@ -132,18 +131,42 @@ pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result
         if socket.may_send() {
             socket.send_slice(data).expect("cannot send");
             return Ok(());
-        } else {
-            // if don't enter above branch, must manual drop sockets, otherwise
-            // will be deadlock.
-            drop(sockets)
         }
-
+        // if don't manual drop sockets, will be deadlock.
+        drop(sockets);
         phy_wait(fd, iface.poll_delay(timestamp, &SOCKETS.lock().unwrap())).expect("wait error");
     }
 }
 
 #[no_mangle]
-pub fn recv() {}
+pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Result<usize, ()> {
+    let fd = device.as_raw_fd();
+
+    let mut cursor = 0;
+    loop {
+        let timestamp = Instant::now();
+        iface.poll(timestamp, device, &mut SOCKETS.lock().unwrap());
+
+        let mut sockets = SOCKETS.lock().unwrap();
+        let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
+
+        if socket.can_recv() {
+            socket
+                .recv(|data| {
+                    buf[cursor..cursor + data.len()].copy_from_slice(data);
+                    cursor += data.len();
+                    (data.len(), ())
+                })
+                .expect("recv to slice failed");
+        } else if !socket.may_recv() {
+            return Ok(cursor);
+        }
+
+        // The reason for this line has been said in function `send`.
+        drop(sockets);
+        phy_wait(fd, iface.poll_delay(timestamp, &SOCKETS.lock().unwrap())).expect("wait error");
+    }
+}
 
 #[no_mangle]
 pub fn close_tcp() {}

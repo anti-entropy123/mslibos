@@ -4,11 +4,11 @@ use lazy_static::lazy_static;
 use ms_hostcall::{
     types::{
         FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetDevice, NetIface, PanicHandlerFunc,
-        SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpInitDevFunc, SmoltcpSendFunc, Transmutor,
+        SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpInitDevFunc, SmoltcpRecvFunc,
+        SmoltcpSendFunc, Transmutor,
     },
     CommonHostCall, HostCallID,
 };
-use url::Url;
 
 use crate::init_context::isolation_ctx;
 use crate::sync::UPSafeCell;
@@ -20,6 +20,7 @@ pub struct UserHostCall {
     smoltcp_addrinfo_addr: Option<usize>,
     smoltcp_connect: Option<usize>,
     smoltcp_send: Option<usize>,
+    smoltcp_recv: Option<usize>,
 }
 
 impl UserHostCall {
@@ -31,6 +32,7 @@ impl UserHostCall {
             smoltcp_addrinfo_addr: None,
             smoltcp_connect: None,
             smoltcp_send: None,
+            smoltcp_recv: None,
         }
     }
 }
@@ -73,6 +75,10 @@ impl Transmutor for UserHostCall {
     fn smoltcp_send(&mut self) -> ms_hostcall::types::SmoltcpSendFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpSend)) }
     }
+
+    fn smoltcp_recv(&mut self) -> ms_hostcall::types::SmoltcpRecvFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpRecv)) }
+    }
 }
 
 impl UserHostCall {
@@ -84,6 +90,7 @@ impl UserHostCall {
             CommonHostCall::SmoltcpInitDev => &mut self.smoltcp_init_dev,
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
+            CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
@@ -148,4 +155,13 @@ pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result
     };
 
     send(device, iface, data)
+}
+
+pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Result<usize, ()> {
+    let recv: SmoltcpRecvFunc = {
+        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+        hostcall_table.smoltcp_recv()
+    };
+
+    recv(device, iface, buf)
 }
