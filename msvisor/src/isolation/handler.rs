@@ -40,20 +40,18 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
 #[test]
 fn find_host_call_test() {
     // logger::init();
-    use crate::isolation::{Isolation, IsolationConfig};
-    use std::path::PathBuf;
+    use crate::{
+        isolation::{Isolation, IsolationConfig},
+        utils,
+    };
 
-    const TARGET_DIR: &str = env!("CARGO_MANIFEST_DIR");
     let isol = {
         // let mut isol_table = ISOL_TABLE.lock().unwrap();
         let services = {
             let mut s = Vec::new();
             s.push((
                 "fdtab".to_owned(),
-                PathBuf::from(TARGET_DIR)
-                    .parent()
-                    .unwrap()
-                    .join("target/debug/libfdtab.so"),
+                utils::TARGET_DEBUG_PATH.join("libfdtab.so"),
             ));
             s
         };
@@ -63,7 +61,7 @@ fn find_host_call_test() {
             services,
             app: (
                 "hello1".to_owned(),
-                PathBuf::from(TARGET_DIR).join("libhello_world.so"),
+                utils::TARGET_DEBUG_PATH.join("libhello_world.so"),
             ),
         });
         // isol_table.insert(1, Arc::clone(&isol));

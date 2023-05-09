@@ -1,0 +1,20 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "target/debug/libfdtab.so"
+    ],
+    [
+      "stdio",
+      "target/debug/libstdio.so"
+    ],
+    [
+      "socket",
+      "target/debug/libsocket.so"
+    ]
+  ],
+  "app": [
+    "hello1",
+    "target/debug/libsimple_http.so"
+  ]
+}

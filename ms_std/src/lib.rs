@@ -1,20 +1,25 @@
-#![no_std]
+#![cfg_attr(feature = "no_std", no_std)]
+
 #![feature(lang_items)]
-// #![feature(default_alloc_error_handler)] // have been stable.
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
+#![feature(ip_in_core)]
+#[cfg(feature = "no_std")]
 extern crate alloc;
 
 pub mod console;
-mod heap_alloc;
+
 pub mod init_context;
-mod sync;
-pub mod wrapper;
+pub mod libos;
+pub mod net;
+pub mod sync;
 
-use core::panic::PanicInfo;
+#[cfg(feature = "no_std")]
+mod heap_alloc;
+#[cfg(feature = "no_std")]
+use {core::panic::PanicInfo, init_context::isolation_ctx};
 
-use init_context::isolation_ctx;
-
+#[cfg(feature = "no_std")]
 #[panic_handler]
 fn panic_handler(_info: &PanicInfo) -> ! {
     let panic_addr = isolation_ctx().panic_handler;
@@ -24,6 +29,7 @@ fn panic_handler(_info: &PanicInfo) -> ! {
     unsafe { host_panic_handler() }
 }
 
+#[cfg(feature = "no_std")]
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}
 

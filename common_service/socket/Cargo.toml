@@ -1,18 +1,21 @@
 [package]
-name = "ms_hostcall"
+name = "socket"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
 
+[lib]
+crate-type = ["dylib"]
 
 [dependencies]
-smoltcp.workspace = true
+ms_std.workspace = true
+smoltcp = { workspace = true }
+ms_hostcall.workspace = true
 url.workspace = true
 
-thiserror = "*"
-derive_more = "*"
+lazy_static = "*"
 managed = { version = "0.8", default-features = false, features = ["map"] }
 defmt = { version = "0.3", optional = true }
 libc = { version = "0.2.18", optional = true }
+rand = "*"
