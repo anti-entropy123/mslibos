@@ -16,14 +16,14 @@ use crate::{
     isolation::handler::{find_host_call, panic_handler},
     logger,
     metric::{MetricEvent, SvcMetricBucket},
-    GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
+    utils, GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
 };
 
 lazy_static! {
     static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
         let mut hs = HashSet::new();
-        hs.insert("fs".to_owned());
         hs.insert("stdio".to_owned());
+        hs.insert("socket".to_owned());
         hs
     });
 }
@@ -31,8 +31,8 @@ lazy_static! {
 #[test]
 fn test_should_not_set_context() {
     assert!(
-        SHOULD_NOT_SET_CONTEXT.contains("fs"),
-        "SHOULD_NOT_SET_CONTEXT do not have 'fs'"
+        SHOULD_NOT_SET_CONTEXT.contains("stdio"),
+        "SHOULD_NOT_SET_CONTEXT do not have 'stdio'"
     )
 }
 
@@ -127,6 +127,12 @@ impl ELFService {
 }
 
 fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
+    let filename = if !filename.is_file() {
+        utils::REPOS_ROOT_PATH.join(filename)
+    } else {
+        filename.to_owned()
+    };
+
     if !filename.is_file() {
         return Err(anyhow!(
             "load dynlib failed. filename is invaild: {}",

@@ -1,5 +1,7 @@
+use core::net::SocketAddrV4;
+
 use alloc::string::String;
-// use alloc::
+use smoltcp::{iface::Interface, phy::TunTapInterface};
 
 use crate::{HostCallID, IsolationContext};
 
@@ -7,6 +9,8 @@ pub type IsolationID = u64;
 pub type ServiceName = String;
 pub type SymbolName = String;
 pub type HostCallResult = Result<(), HostCallError>;
+pub type NetDevice = TunTapInterface;
+pub type NetIface = Interface;
 
 #[derive(Debug)]
 pub enum HostCallError {
@@ -29,3 +33,24 @@ pub type HostWriteFunc = fn(i32, &str) -> isize;
 
 // stdio
 pub type HostStdioFunc = fn(&str) -> isize;
+
+// socket
+pub type SmoltcpInitDevFunc = fn() -> (NetDevice, NetIface);
+pub type SmoltcpAddrInfoFunc =
+    fn(&mut NetDevice, &mut NetIface, &str) -> Result<core::net::Ipv4Addr, ()>;
+pub type SmoltcpConnectFunc = fn(&mut NetIface, SocketAddrV4) -> Result<(), ()>;
+pub type SmoltcpSendFunc = fn(&mut NetDevice, &mut NetIface, &[u8]) -> Result<(), ()>;
+pub type SmoltcpRecvFunc = fn(&mut NetDevice, &mut NetIface, &mut [u8]) -> Result<usize, ()>;
+
+pub trait Transmutor {
+    fn find_host_call() -> FindHostCallFunc;
+    fn host_panic_handler() -> PanicHandlerFunc;
+
+    fn host_write_func(&mut self) -> HostWriteFunc;
+    fn host_stdio_func(&mut self) -> HostStdioFunc;
+    fn smoltcp_init_dev(&mut self) -> SmoltcpInitDevFunc;
+    fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc;
+    fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc;
+    fn smoltcp_send(&mut self) -> SmoltcpSendFunc;
+    fn smoltcp_recv(&mut self) -> SmoltcpRecvFunc;
+}

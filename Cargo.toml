@@ -6,23 +6,36 @@ members = [
     "gen-file",
     "ms_hostcall",
 
-    "common_service/ms_std",
+    "ms_std",
+
     "common_service/fdtab",
     "common_service/stdio",
+    "common_service/socket",
 
     "user/hello_world",
     "user/should_panic",
+    "user/simple_http",
 ]
 default-members = ["msvisor"]
-
 
 [workspace.dependencies]
 msvisor = { path = "msvisor" }
 
 ms_hostcall = { path = "ms_hostcall" }
+ms_std = { path = "ms_std" }
 
-ms_std = { path = "common_service/ms_std" }
-native_fs = { path = "common_service/fs" }
 fstab = { path = "common_service/fdtab" }
+
+url = "*"
+smoltcp = { version = "*", default-features = false, features = [
+    "log",
+    "std",
+    "medium-ethernet",
+    "medium-ip",
+    "phy-tuntap_interface",
+    "proto-ipv4",
+    "socket-tcp",
+    "socket-dns"
+] }
 
 # [profile.dev.package.hello_world]

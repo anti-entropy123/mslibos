@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{path::PathBuf, sync::Mutex};
 
 use lazy_static::lazy_static;
 
@@ -56,4 +56,20 @@ fn test_round_page() {
     assert_eq!(round_up!(0x2001), 0x3000);
     assert_eq!(round_up!(0x1fff), 0x2000);
     assert_eq!(round_up!(0x2000), 0x2000);
+}
+
+const REPOS_ROOT: &str = env!("CARGO_MANIFEST_DIR");
+lazy_static! {
+    pub static ref REPOS_ROOT_PATH: PathBuf =
+        PathBuf::from(REPOS_ROOT).parent().unwrap().to_path_buf();
+    pub static ref TARGET_DEBUG_PATH: PathBuf = REPOS_ROOT_PATH.join("target/debug");
+    pub static ref ISOL_CONFIG_PATH: PathBuf = REPOS_ROOT_PATH.join("isol_config");
+}
+
+#[test]
+fn common_path_test() {
+    use std::fs;
+
+    fs::metadata(TARGET_DEBUG_PATH.join("msvisor")).expect("msvisor not found.");
+    fs::metadata(ISOL_CONFIG_PATH.join("base_config.json")).expect("base_config.json not found.");
 }

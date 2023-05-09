@@ -12,7 +12,7 @@ use msvisor::{
 #[command(author, version, about, long_about = None)]
 struct Args {
     // Config file path.
-    #[arg(short, long, default_value_t = String::from("isol_config/base_config.json"))]
+    #[arg(short, long, default_value_t = String::from("base_config.json"))]
     file: String,
 }
 

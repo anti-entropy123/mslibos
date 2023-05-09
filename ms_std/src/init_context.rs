@@ -1,10 +1,16 @@
+//! This crate support the defination of symbols `set_handler_addr`
+//! and `get_handler_addr`. These two symbols will be lookup when
+//! initialize service.
+//! To some service that depent `std`, they would use this crate directly
+//! rather than `ms_std`.
+
 use core::cell::{Ref, RefMut};
 
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
 use lazy_static::lazy_static;
 
-use crate::{heap_alloc::init_heap, sync::UPSafeCell};
+use crate::sync::UPSafeCell;
 
 lazy_static! {
     // In fact, isolation_ctx should be readonly, so don't have to
@@ -35,7 +41,12 @@ pub extern "C" fn set_handler_addr(ctx: IsolationContext) -> HCResult {
     };
     *isol_ctx = ctx;
 
-    init_heap(ctx.heap_range.0);
+    #[cfg(feature = "no_std")]
+    {
+        use crate::heap_alloc::init_heap;
+        init_heap(ctx.heap_range.0);
+    }
+
     Ok(())
 }
 
