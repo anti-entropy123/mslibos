@@ -8,7 +8,10 @@ use core::{
 use alloc::vec::Vec;
 use ms_hostcall::types::{NetDevice, NetIface};
 
-use crate::{libos, println};
+use crate::{
+    libos::{self, send},
+    println,
+};
 
 #[derive(PartialEq, Debug)]
 enum State {
@@ -37,17 +40,15 @@ impl TcpStream {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
-        libos::connect(&mut stream.device, &mut stream.iface, sockaddrv4)
-            .expect("libos::connect failed");
+        libos::connect(&mut stream.iface, sockaddrv4).expect("libos::connect failed");
         stream.state = State::Request;
 
         Ok(stream)
     }
 
-    pub fn write_all(&mut self, _data: &[u8]) -> Result<(), ()> {
+    pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
         assert_eq!(self.state, State::Request);
-        
-
+        libos::send(&mut self.device, &mut self.iface, data).expect("send data failed");
         Err(())
     }
 

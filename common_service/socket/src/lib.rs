@@ -1,20 +1,20 @@
 #![feature(ip_in_core)]
 
 use core::net::Ipv4Addr;
-use std::{net::{SocketAddr, SocketAddrV4}, os::fd::AsRawFd};
+use std::{net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
+use lazy_static::lazy_static;
 use ms_hostcall::types::{NetDevice, NetIface};
 use smoltcp::{
-    iface::{Config, Interface, SocketSet},
+    iface::{Config, Interface, SocketHandle, SocketSet},
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
     socket::{
         dns::{self, GetQueryResultError},
-        tcp,
+        tcp::{self},
     },
     time::Instant,
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
-use url::Url;
 
 #[no_mangle]
 pub fn init_net_dev() -> (NetDevice, NetIface) {
@@ -49,6 +49,10 @@ pub fn init_net_dev() -> (NetDevice, NetIface) {
     (device, iface)
 }
 
+lazy_static! {
+    static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
+}
+
 #[no_mangle]
 pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Result<Ipv4Addr, ()> {
     let fd = device.as_raw_fd();
@@ -57,8 +61,8 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
     let servers = &[Ipv4Address::new(8, 8, 8, 8).into()];
     let dns_socket = dns::Socket::new(servers, vec![]);
 
-    let mut sockets = SocketSet::new(vec![]);
-    let dns_handle = sockets.add(dns_socket);
+    let mut sockets = SOCKETS.lock().unwrap();
+    let dns_handle: SocketHandle = sockets.add(dns_socket);
 
     let socket = sockets.get_mut::<dns::Socket>(dns_handle);
     let query: dns::QueryHandle = socket
@@ -67,8 +71,6 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
 
     loop {
         let timestamp = Instant::now();
-        //  log::debug!("timestamp {:?}", timestamp);
-
         iface.poll(timestamp, device, &mut sockets);
 
         match sockets
@@ -80,6 +82,7 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
                     smoltcp::wire::IpAddress::Ipv4(ipv4) => ipv4.0,
                     // smoltcp::wire::IpAddress::Ipv6(_) => todo!(),
                 };
+                sockets.remove(dns_handle);
                 return Ok(Ipv4Addr::from(addr));
             }
             Err(GetQueryResultError::Pending) => {} // not done yet
@@ -91,7 +94,7 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
 }
 
 #[no_mangle]
-pub fn connect(device: &mut NetDevice, iface: &mut NetIface, sockaddr: SocketAddrV4) {
+pub fn connect(iface: &mut NetIface, sockaddr: SocketAddrV4) -> Result<(), ()> {
     // let address = address
     // Create sockets
     let tcp_socket = {
@@ -99,21 +102,45 @@ pub fn connect(device: &mut NetDevice, iface: &mut NetIface, sockaddr: SocketAdd
         let tcp_tx_buffer = tcp::SocketBuffer::new(vec![0; 1024]);
         tcp::Socket::new(tcp_rx_buffer, tcp_tx_buffer)
     };
-    let mut sockets = SocketSet::new(vec![]);
-    let tcp_handle = sockets.add(tcp_socket);
+    let mut sockets = SOCKETS.lock().unwrap();
+    let tcp_handle: SocketHandle = sockets.add(tcp_socket);
 
-    let timestamp = Instant::now();
-    iface.poll(timestamp, device, &mut sockets);
+    // let timestamp = Instant::now();
+    // iface.poll(timestamp, device, &mut sockets);
 
-    let socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
+    let socket: &mut tcp::Socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
     let cx = iface.context();
 
+    assert!(!socket.is_active());
     let local_port = 49152 + rand::random::<u16>() % 16384;
     socket.connect(cx, sockaddr, local_port).unwrap();
+
+    Ok(())
 }
 
 #[no_mangle]
-pub fn send() {}
+pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result<(), ()> {
+    let fd = device.as_raw_fd();
+
+    loop {
+        let timestamp = Instant::now();
+        iface.poll(timestamp, device, &mut SOCKETS.lock().unwrap());
+
+        let mut sockets = SOCKETS.lock().unwrap();
+        let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
+
+        if socket.may_send() {
+            socket.send_slice(data).expect("cannot send");
+            return Ok(());
+        } else {
+            // if don't enter above branch, must manual drop sockets, otherwise
+            // will be deadlock.
+            drop(sockets)
+        }
+
+        phy_wait(fd, iface.poll_delay(timestamp, &SOCKETS.lock().unwrap())).expect("wait error");
+    }
+}
 
 #[no_mangle]
 pub fn recv() {}

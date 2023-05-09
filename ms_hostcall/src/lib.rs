@@ -22,6 +22,8 @@ pub enum CommonHostCall {
     SmoltcpAddrInfo,
     #[display(fmt = "connect")]
     SmoltcpConnect,
+    #[display(fmt = "send")]
+    SmoltcpSend,
 }
 
 #[derive(Debug, Display)]
@@ -39,6 +41,7 @@ impl HostCallID {
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpInitDev => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
+                CommonHostCall::SmoltcpSend => "socket".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
