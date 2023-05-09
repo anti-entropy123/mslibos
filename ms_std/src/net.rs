@@ -1,16 +1,15 @@
 use core::{
     fmt::Display,
     net::{Ipv4Addr, SocketAddrV4},
+    str::FromStr,
 };
 
 #[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 use ms_hostcall::types::{NetDevice, NetIface};
+use url::Url;
 
-use crate::{
-    libos::{self},
-    println,
-};
+use crate::libos;
 
 #[derive(PartialEq, Debug)]
 enum State {
@@ -29,7 +28,6 @@ pub struct TcpStream {
 impl TcpStream {
     pub fn connect(addr: SocketAddr) -> Result<Self, ()> {
         // println!("connect to {}", addr);
-
         let mut stream = Self {
             device: addr.device,
             iface: addr.iface,
@@ -87,24 +85,25 @@ impl Display for SocketAddr {
 
 impl From<&str> for SocketAddr {
     fn from(value: &str) -> Self {
+        let value = if value.starts_with("http") {
+            value.to_owned()
+        } else {
+            format!("http://{}", value)
+        };
+        let url = Url::from_str(&value).expect("wrong url");
+
         let mut sockaddr = SocketAddr::default();
 
-        let tcp_addr: Vec<&str> = value.split(':').collect();
         let (ip, port) = {
-            let addr: Ipv4Addr = if let Ok(addr) = tcp_addr[0].parse() {
+            let host_str = url.host_str().expect("wrong http url");
+            let addr = if let Ok(addr) = host_str.parse() {
                 addr
             } else {
-                libos::addr_info(&mut sockaddr.device, &mut sockaddr.iface, tcp_addr[0])
+                libos::addr_info(&mut sockaddr.device, &mut sockaddr.iface, host_str)
                     .expect("wrong tcp domain")
             };
 
-            let port = if tcp_addr.get(1).is_none() {
-                80
-            } else {
-                tcp_addr[1].parse::<u32>().expect("wrong tcp port")
-            };
-
-            (addr, port as u16)
+            (addr, url.port().unwrap_or(80))
         };
 
         sockaddr.inner = core::net::SocketAddr::from(SocketAddrV4::new(ip, port));

@@ -1,7 +1,7 @@
 #![feature(ip_in_core)]
 
 use core::net::Ipv4Addr;
-use std::{io::Write, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
+use std::{cmp::min, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
 use lazy_static::lazy_static;
 use ms_hostcall::types::{NetDevice, NetIface};
@@ -143,6 +143,7 @@ pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Res
     let fd = device.as_raw_fd();
 
     let mut cursor = 0;
+    let mut freesize = buf.len();
     loop {
         let timestamp = Instant::now();
         iface.poll(timestamp, device, &mut SOCKETS.lock().unwrap());
@@ -150,17 +151,21 @@ pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Res
         let mut sockets = SOCKETS.lock().unwrap();
         let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
 
-        if socket.can_recv() {
+        if freesize == 0 || !socket.may_recv() {
+            return Ok(cursor);
+        } else if socket.can_recv() {
             socket
                 .recv(|data| {
-                    buf[cursor..cursor + data.len()].copy_from_slice(data);
-                    cursor += data.len();
-                    (data.len(), ())
+                    // avoid to overflow the buffer.
+                    let size = min(buf.len() - cursor, data.len());
+                    buf[cursor..(cursor + size)].copy_from_slice(&data[0..size]);
+                    cursor += size;
+                    freesize = buf.len() - cursor;
+                    println!("read size={}, free size={}", size, freesize);
+                    (size, ())
                 })
                 .expect("recv to slice failed");
-        } else if !socket.may_recv() {
-            return Ok(cursor);
-        }
+        };
 
         // The reason for this line has been said in function `send`.
         drop(sockets);
