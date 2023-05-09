@@ -1,6 +1,7 @@
 use core::{
     fmt::Display,
     net::{Ipv4Addr, SocketAddrV4},
+    str::FromStr,
 };
 
 #[cfg(feature = "no_std")]
@@ -9,19 +10,44 @@ use ms_hostcall::types::{NetDevice, NetIface};
 
 use crate::{libos, println};
 
+#[derive(PartialEq, Debug)]
+enum State {
+    Connect,
+    Request,
+    Response,
+}
+
 pub struct TcpStream {
     device: NetDevice,
     iface: NetIface,
+
+    state: State,
 }
 
 impl TcpStream {
     pub fn connect(addr: SocketAddr) -> Result<Self, ()> {
         println!("connect to {}", addr);
 
-        Err(())
+        let mut stream = Self {
+            device: addr.device,
+            iface: addr.iface,
+            state: State::Connect,
+        };
+        let sockaddrv4 = match addr.inner {
+            core::net::SocketAddr::V4(addr) => addr,
+            core::net::SocketAddr::V6(_) => todo!(),
+        };
+        libos::connect(&mut stream.device, &mut stream.iface, sockaddrv4)
+            .expect("libos::connect failed");
+        stream.state = State::Request;
+
+        Ok(stream)
     }
 
     pub fn write_all(&mut self, _data: &[u8]) -> Result<(), ()> {
+        assert_eq!(self.state, State::Request);
+        
+
         Err(())
     }
 

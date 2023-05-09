@@ -1,5 +1,8 @@
+use core::net::SocketAddrV4;
+
 use alloc::string::String;
-use smoltcp::{iface::Interface, phy::TunTapInterface};
+use smoltcp::{iface::Interface, phy::TunTapInterface, wire::IpAddress};
+use url::Url;
 
 use crate::{HostCallID, IsolationContext};
 
@@ -36,6 +39,8 @@ pub type HostStdioFunc = fn(&str) -> isize;
 pub type SmoltcpInitDevFunc = fn() -> (NetDevice, NetIface);
 pub type SmoltcpAddrInfoFunc =
     fn(&mut NetDevice, &mut NetIface, &str) -> Result<core::net::Ipv4Addr, ()>;
+pub type SmoltcpConnectFunc =
+    fn(&mut NetDevice, &mut NetIface, SocketAddrV4) -> Result<core::net::Ipv4Addr, ()>;
 
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
@@ -45,4 +50,5 @@ pub trait Transmutor {
     fn host_stdio_func(&mut self) -> HostStdioFunc;
     fn smoltcp_init_dev(&mut self) -> SmoltcpInitDevFunc;
     fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc;
+    fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc;
 }

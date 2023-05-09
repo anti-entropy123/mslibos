@@ -279,15 +279,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "getopts"
-version = "0.2.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14dbbfd5c71d70241ecf9e6f13737f7b5ce823821063188d7e46c41d371eebd5"
-dependencies = [
- "unicode-width",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -314,7 +305,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db04bc24a18b9ea980628ecf00e6c0264f3c1426dac36c00cb49b6fbad8b0743"
 dependencies = [
  "atomic-polyfill",
- "defmt",
  "hash32",
  "rustc_version",
  "spin 0.9.8",
@@ -465,6 +455,7 @@ dependencies = [
  "managed",
  "smoltcp",
  "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -475,6 +466,7 @@ dependencies = [
  "lazy_static",
  "ms_hostcall",
  "once_cell",
+ "url",
 ]
 
 [[package]]
@@ -710,19 +702,17 @@ dependencies = [
 [[package]]
 name = "smoltcp"
 version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e9786ac45091b96f946693e05bfa4d8ca93e2d3341237d97a380107a6b38dea"
 dependencies = [
  "bitflags",
  "byteorder",
  "cfg-if",
  "defmt",
- "env_logger",
- "getopts",
  "heapless",
  "libc",
  "log",
  "managed",
- "rand",
- "url",
 ]
 
 [[package]]
@@ -737,6 +727,7 @@ dependencies = [
  "ms_std",
  "rand",
  "smoltcp",
+ "url",
 ]
 
 [[package]]
@@ -868,12 +859,6 @@ checksum = "5c5713f0fc4b5db668a2ac63cdb7bb4469d8c9fed047b1d0292cc7b0ce2ba921"
 dependencies = [
  "tinyvec",
 ]
-
-[[package]]
-name = "unicode-width"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
 
 [[package]]
 name = "url"

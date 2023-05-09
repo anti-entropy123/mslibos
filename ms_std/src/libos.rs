@@ -1,13 +1,14 @@
-use core::net::Ipv4Addr;
+use core::net::{Ipv4Addr, SocketAddrV4};
 
 use lazy_static::lazy_static;
 use ms_hostcall::{
     types::{
         FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetDevice, NetIface, PanicHandlerFunc,
-        SmoltcpAddrInfoFunc, SmoltcpInitDevFunc, Transmutor,
+        SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpInitDevFunc, Transmutor,
     },
     CommonHostCall, HostCallID,
 };
+use url::Url;
 
 use crate::init_context::isolation_ctx;
 use crate::sync::UPSafeCell;
@@ -17,6 +18,7 @@ pub struct UserHostCall {
     stdout_addr: Option<usize>,
     smoltcp_init_dev: Option<usize>,
     smoltcp_addrinfo_addr: Option<usize>,
+    smoltcp_connect: Option<usize>,
 }
 
 impl UserHostCall {
@@ -26,6 +28,7 @@ impl UserHostCall {
             stdout_addr: None,
             smoltcp_init_dev: None,
             smoltcp_addrinfo_addr: None,
+            smoltcp_connect: None,
         }
     }
 }
@@ -60,6 +63,10 @@ impl Transmutor for UserHostCall {
     fn smoltcp_init_dev(&mut self) -> ms_hostcall::types::SmoltcpInitDevFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpInitDev)) }
     }
+
+    fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpConnect)) }
+    }
 }
 
 impl UserHostCall {
@@ -69,6 +76,7 @@ impl UserHostCall {
             CommonHostCall::Stdout => &mut self.stdout_addr,
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
             CommonHostCall::SmoltcpInitDev => &mut self.smoltcp_init_dev,
+            CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
@@ -118,8 +126,15 @@ pub fn addr_info(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Re
     addr_info(device, iface, name)
 }
 
-// pub fn connect() -> Result<(), ()> {
-//     let connect:
-
-//     Ok(())
-// }
+pub fn connect(
+    device: &mut NetDevice,
+    iface: &mut NetIface,
+    sockaddr: SocketAddrV4,
+) -> Result<(), ()> {
+    let connect: SmoltcpConnectFunc = {
+        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+        hostcall_table.smoltcp_connect()
+    };
+    connect(device, iface, sockaddr).expect("connect tcp server failed.");
+    Ok(())
+}

@@ -8,33 +8,11 @@ edition = "2021"
 
 
 [dependencies]
+smoltcp.workspace = true
+url.workspace = true
+
 thiserror = "*"
 derive_more = "*"
-smoltcp.workspace = true
 managed = { version = "0.8", default-features = false, features = ["map"] }
 defmt = { version = "0.3", optional = true }
 libc = { version = "0.2.18", optional = true }
-
-# [features]
-# default = [
-#     "log",
-#     "std",
-#     "medium-ethernet",
-#     "medium-ip",
-#     "phy-tuntap_interface",
-#     "proto-ipv4",
-#     "socket-tcp",
-# ]
-# log = []
-# std = ["managed/std", "alloc"]
-# alloc = ["managed/alloc", "defmt?/alloc"]
-# "medium-ethernet" = ["socket"]
-# "medium-ip" = ["socket"]
-
-# "phy-tuntap_interface" = ["std", "libc", "medium-ethernet"]
-
-# "proto-ipv4" = []
-
-# "socket" = []
-# "socket-tcp" = ["socket"]
-# "socket-icmp" = ["socket"]

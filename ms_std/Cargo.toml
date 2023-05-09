@@ -13,9 +13,11 @@ no_std = []
 # default = ["no_std"]
 
 [dependencies]
+ms_hostcall = { workspace = true }
+url.workspace = true
+
 once_cell = "*"
 lazy_static = { version = "*", features = ["spin_no_std"] }
-ms_hostcall = { workspace = true }
 buddy_system_allocator = "0.6"
 
 # nix = "*"

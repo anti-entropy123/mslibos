@@ -1,16 +1,20 @@
 #![feature(ip_in_core)]
 
 use core::net::Ipv4Addr;
-use std::os::fd::AsRawFd;
+use std::{net::{SocketAddr, SocketAddrV4}, os::fd::AsRawFd};
 
 use ms_hostcall::types::{NetDevice, NetIface};
 use smoltcp::{
     iface::{Config, Interface, SocketSet},
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
-    socket::dns::{self, GetQueryResultError},
+    socket::{
+        dns::{self, GetQueryResultError},
+        tcp,
+    },
     time::Instant,
-    wire::{DnsQueryType, EthernetAddress, Ipv4Address, IpCidr, IpAddress},
+    wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
+use url::Url;
 
 #[no_mangle]
 pub fn init_net_dev() -> (NetDevice, NetIface) {
@@ -19,12 +23,14 @@ pub fn init_net_dev() -> (NetDevice, NetIface) {
 
     // Create interface
     let mut iface = {
-        let mut config = match device.capabilities().medium {
+        let mut config = Config::new();
+        match device.capabilities().medium {
             Medium::Ethernet => {
-                Config::new(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into())
+                config.hardware_addr =
+                    Some(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into());
             }
-            Medium::Ip => Config::new(smoltcp::wire::HardwareAddress::Ip),
-            Medium::Ieee802154 => todo!(),
+            Medium::Ip => todo!(),
+            // Medium::Ieee802154 => todo!(),
         };
         config.random_seed = rand::random();
         Interface::new(config, &mut device)
@@ -72,7 +78,7 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
             Ok(addrs) => {
                 let addr = match addrs.get(0).unwrap() {
                     smoltcp::wire::IpAddress::Ipv4(ipv4) => ipv4.0,
-                    smoltcp::wire::IpAddress::Ipv6(_) => todo!(),
+                    // smoltcp::wire::IpAddress::Ipv6(_) => todo!(),
                 };
                 return Ok(Ipv4Addr::from(addr));
             }
@@ -82,11 +88,29 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
 
         phy_wait(fd, iface.poll_delay(timestamp, &sockets)).expect("wait error");
     }
-
 }
 
 #[no_mangle]
-pub fn connect() {}
+pub fn connect(device: &mut NetDevice, iface: &mut NetIface, sockaddr: SocketAddrV4) {
+    // let address = address
+    // Create sockets
+    let tcp_socket = {
+        let tcp_rx_buffer = tcp::SocketBuffer::new(vec![0; 1024]);
+        let tcp_tx_buffer = tcp::SocketBuffer::new(vec![0; 1024]);
+        tcp::Socket::new(tcp_rx_buffer, tcp_tx_buffer)
+    };
+    let mut sockets = SocketSet::new(vec![]);
+    let tcp_handle = sockets.add(tcp_socket);
+
+    let timestamp = Instant::now();
+    iface.poll(timestamp, device, &mut sockets);
+
+    let socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
+    let cx = iface.context();
+
+    let local_port = 49152 + rand::random::<u16>() % 16384;
+    socket.connect(cx, sockaddr, local_port).unwrap();
+}
 
 #[no_mangle]
 pub fn send() {}

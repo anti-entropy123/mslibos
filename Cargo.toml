@@ -26,7 +26,8 @@ ms_std = { path = "ms_std" }
 
 fstab = { path = "common_service/fdtab" }
 
-smoltcp = { path = "smoltcp", default-features = false, features = [
+url = "*"
+smoltcp = { version = "*", default-features = false, features = [
     "log",
     "std",
     "medium-ethernet",
@@ -34,6 +35,7 @@ smoltcp = { path = "smoltcp", default-features = false, features = [
     "phy-tuntap_interface",
     "proto-ipv4",
     "socket-tcp",
+    "socket-dns"
 ] }
 
 # [profile.dev.package.hello_world]
