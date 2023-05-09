@@ -31,8 +31,8 @@ lazy_static! {
 #[test]
 fn test_should_not_set_context() {
     assert!(
-        SHOULD_NOT_SET_CONTEXT.contains("fs"),
-        "SHOULD_NOT_SET_CONTEXT do not have 'fs'"
+        SHOULD_NOT_SET_CONTEXT.contains("stdio"),
+        "SHOULD_NOT_SET_CONTEXT do not have 'stdio'"
     )
 }
 
