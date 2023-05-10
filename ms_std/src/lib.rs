@@ -40,10 +40,12 @@ pub fn main() {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_main() {
+pub fn rust_main() -> Result<(), ()> {
     let result = panic::catch_unwind(|| main());
 
-    if let Err(e) = result {
+    if let Err(ref e) = result {
         println!("error: {:#?}", e)
     }
+
+    result.map_err(|_| ())
 }
