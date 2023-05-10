@@ -8,11 +8,9 @@ edition = "2021"
 
 
 [dependencies]
-smoltcp.workspace = true
-url.workspace = true
-
+# smoltcp.workspace = true
 thiserror = "*"
 derive_more = "*"
-managed = { version = "0.8", default-features = false, features = ["map"] }
-defmt = { version = "0.3", optional = true }
-libc = { version = "0.2.18", optional = true }
+# managed = { version = "0.8", default-features = false, features = ["map"] }
+# defmt = { version = "0.3", optional = true }
+# libc = { version = "0.2.18", optional = true }

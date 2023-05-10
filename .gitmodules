@@ -1,0 +1,3 @@
+[submodule "nom-uri"]
+	path = nom-uri
+	url = https://github.com/Skasselbard/nom-uri.git
