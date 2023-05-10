@@ -3,9 +3,8 @@ use core::net::{Ipv4Addr, SocketAddrV4};
 use lazy_static::lazy_static;
 use ms_hostcall::{
     types::{
-        FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetDevice, NetIface, PanicHandlerFunc,
-        SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpInitDevFunc, SmoltcpRecvFunc,
-        SmoltcpSendFunc, Transmutor,
+        FindHostCallFunc, HostStdioFunc, HostWriteFunc, PanicHandlerFunc, SmoltcpAddrInfoFunc,
+        SmoltcpConnectFunc, SmoltcpRecvFunc, SmoltcpSendFunc, Transmutor,
     },
     CommonHostCall, HostCallID,
 };
@@ -64,10 +63,6 @@ impl Transmutor for UserHostCall {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpAddrInfo)) }
     }
 
-    fn smoltcp_init_dev(&mut self) -> ms_hostcall::types::SmoltcpInitDevFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpInitDev)) }
-    }
-
     fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpConnect)) }
     }
@@ -122,46 +117,37 @@ pub fn stdout(buf: &str) -> isize {
     stdout(buf)
 }
 
-pub fn init_dev() -> Result<(NetDevice, NetIface), ()> {
-    let init_dev: SmoltcpInitDevFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.smoltcp_init_dev()
-    };
-
-    Ok(init_dev())
-}
-
-pub fn addr_info(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Result<Ipv4Addr, ()> {
+pub fn addr_info(name: &str) -> Result<Ipv4Addr, ()> {
     let addr_info: SmoltcpAddrInfoFunc = {
         let mut hostcall_table = USER_HOST_CALL.exclusive_access();
         hostcall_table.smoltcp_addrinfo()
     };
 
-    addr_info(device, iface, name)
+    addr_info(name)
 }
 
-pub fn connect(iface: &mut NetIface, sockaddr: SocketAddrV4) -> Result<(), ()> {
+pub fn connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
     let connect: SmoltcpConnectFunc = {
         let mut hostcall_table = USER_HOST_CALL.exclusive_access();
         hostcall_table.smoltcp_connect()
     };
-    connect(iface, sockaddr)
+    connect(sockaddr)
 }
 
-pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result<(), ()> {
+pub fn send(data: &[u8]) -> Result<(), ()> {
     let send: SmoltcpSendFunc = {
         let mut hostcall_table = USER_HOST_CALL.exclusive_access();
         hostcall_table.smoltcp_send()
     };
 
-    send(device, iface, data)
+    send(data)
 }
 
-pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Result<usize, ()> {
+pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
     let recv: SmoltcpRecvFunc = {
         let mut hostcall_table = USER_HOST_CALL.exclusive_access();
         hostcall_table.smoltcp_recv()
     };
 
-    recv(device, iface, buf)
+    recv(buf)
 }
