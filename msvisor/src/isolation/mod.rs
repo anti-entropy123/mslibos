@@ -80,11 +80,11 @@ impl Isolation {
         }
     }
 
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<(), ()> {
         let user_app = self.loader.load_app();
         let handler = thread::spawn(move || user_app.run());
 
-        handler.join().expect("isolation app-thread failed")
+        handler.join().expect("Join isolation app-thread failed")
     }
 }
 

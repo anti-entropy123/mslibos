@@ -2,6 +2,6 @@
 use ms_std::println;
 
 #[no_mangle]
-pub fn rust_main() {
+pub fn main() {
     println!("Hello, world!");
 }

@@ -26,7 +26,7 @@ pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
 pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 
 // app main
-pub type RustMainFunc = unsafe fn() -> ();
+pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
 
 // fdtab
 pub type HostWriteFunc = fn(i32, &str) -> isize;

@@ -1,5 +1,5 @@
-//! `rust_service` will replace elf_service, because it 
-//! will use `dlmopen` or `mmap` to avoid some problems of 
+//! `rust_service` will replace elf_service, because it
+//! will use `dlmopen` or `mmap` to avoid some problems of
 //! `elf_service`.
 
 use std::{fmt::Display, fs::File, io::Read, num::NonZeroUsize, os::unix::prelude::AsRawFd};
@@ -18,7 +18,9 @@ pub struct RustService {
 impl RustService {
     pub fn init(&self, _isol_id: IsolationID) {}
 
-    pub fn run(&self) {}
+    pub fn run(&self) -> Result<(), ()> {
+        Err(())
+    }
 
     pub fn symbol<T>(&self, _symbol: &str) -> Symbol<T> {
         todo!()
@@ -73,7 +75,7 @@ fn mmap_segment(
 
 /// This is a function used to test load dynlib by mmap. But in current implementation,
 /// it still have bugs: free(): invalid pointer.
-/// I guess this is because some range will be free twice. 
+/// I guess this is because some range will be free twice.
 #[allow(unused)]
 pub fn load_pic_dynlib() {
     let mut elf_file =
@@ -160,7 +162,7 @@ pub fn load_pic_dynlib() {
     // log::debug!("mmap_bss: {}", mmap_bss)
 }
 
-// This is a test case for dlmopen-like service loader. 
+// This is a test case for dlmopen-like service loader.
 // #[test]
 // fn load_pic_dynlib_test() {
 //     use crate::logger;
