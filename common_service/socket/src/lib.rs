@@ -4,7 +4,6 @@ use core::net::Ipv4Addr;
 use std::{cmp::min, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
 use lazy_static::lazy_static;
-use ms_hostcall::types::{NetDevice, NetIface};
 use smoltcp::{
     iface::{Config, Interface, SocketHandle, SocketSet},
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
@@ -16,46 +15,46 @@ use smoltcp::{
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
 
-#[no_mangle]
-pub fn init_net_dev() -> (NetDevice, NetIface) {
-    // Create device;
-    let mut device: TunTapInterface = TunTapInterface::new("tap0", Medium::Ethernet).unwrap();
-
-    // Create interface
-    let mut iface = {
-        let mut config = Config::new();
-        match device.capabilities().medium {
-            Medium::Ethernet => {
-                config.hardware_addr =
-                    Some(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into());
-            }
-            Medium::Ip => todo!(),
-            // Medium::Ieee802154 => todo!(),
-        };
-        config.random_seed = rand::random();
-        Interface::new(config, &mut device)
-    };
-
-    iface.update_ip_addrs(|ip_addrs| {
-        ip_addrs
-            .push(IpCidr::new(IpAddress::v4(192, 168, 69, 1), 24))
-            .unwrap();
-    });
-    iface
-        .routes_mut()
-        .add_default_ipv4_route(Ipv4Address::new(192, 168, 69, 100))
-        .unwrap();
-
-    (device, iface)
+thread_local! {
+    static DEVICE: Mutex<TunTapInterface> = Mutex::from(TunTapInterface::new("tap0", Medium::Ethernet).unwrap()) ;
 }
 
 lazy_static! {
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
+    static ref IFACE: Mutex<Interface> = {
+        let mut iface = DEVICE.with(|device_tls| {
+            let mut device = device_tls.lock().unwrap();
+            let mut config = Config::new();
+            match device.capabilities().medium {
+                Medium::Ethernet => {
+                    config.hardware_addr =
+                        Some(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into());
+                }
+                Medium::Ip => todo!(),
+                // Medium::Ieee802154 => todo!(),
+            };
+            config.random_seed = rand::random();
+            Interface::new(config, &mut (*device))
+        });
+
+        iface.update_ip_addrs(|ip_addrs| {
+            ip_addrs
+                .push(IpCidr::new(IpAddress::v4(192, 168, 69, 1), 24))
+                .unwrap();
+        });
+        iface
+            .routes_mut()
+            .add_default_ipv4_route(Ipv4Address::new(192, 168, 69, 100))
+            .unwrap();
+
+        Mutex::new(iface)
+    };
 }
 
 #[no_mangle]
-pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Result<Ipv4Addr, ()> {
-    let fd = device.as_raw_fd();
+pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
+    let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
+    // println!("Device raw_fd is {}", fd);
     // Create sockets
     let servers = &[Ipv4Address::new(8, 8, 8, 8).into()];
     let dns_socket = dns::Socket::new(servers, vec![]);
@@ -64,13 +63,18 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
     let dns_handle: SocketHandle = sockets.add(dns_socket);
 
     let socket = sockets.get_mut::<dns::Socket>(dns_handle);
+    let mut iface = IFACE.lock().unwrap();
+
     let query: dns::QueryHandle = socket
         .start_query(iface.context(), name, DnsQueryType::A)
         .unwrap();
 
     loop {
         let timestamp = Instant::now();
-        iface.poll(timestamp, device, &mut sockets);
+        DEVICE.with(|device_tls| {
+            let mut device = device_tls.lock().unwrap();
+            iface.poll(timestamp, &mut (*device), &mut sockets)
+        });
 
         match sockets
             .get_mut::<dns::Socket>(dns_handle)
@@ -79,7 +83,6 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
             Ok(addrs) => {
                 let addr = match addrs.get(0).unwrap() {
                     smoltcp::wire::IpAddress::Ipv4(ipv4) => ipv4.0,
-                    // smoltcp::wire::IpAddress::Ipv6(_) => todo!(),
                 };
                 sockets.remove(dns_handle);
                 return Ok(Ipv4Addr::from(addr));
@@ -93,7 +96,7 @@ pub fn addrinfo(device: &mut NetDevice, iface: &mut NetIface, name: &str) -> Res
 }
 
 #[no_mangle]
-pub fn connect(iface: &mut NetIface, sockaddr: SocketAddrV4) -> Result<(), ()> {
+pub fn connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
     // let address = address
     // Create sockets
     let tcp_socket = {
@@ -108,6 +111,7 @@ pub fn connect(iface: &mut NetIface, sockaddr: SocketAddrV4) -> Result<(), ()> {
     // iface.poll(timestamp, device, &mut sockets);
 
     let socket: &mut tcp::Socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
+    let mut iface = IFACE.lock().unwrap();
     let cx = iface.context();
 
     assert!(!socket.is_active());
@@ -118,12 +122,16 @@ pub fn connect(iface: &mut NetIface, sockaddr: SocketAddrV4) -> Result<(), ()> {
 }
 
 #[no_mangle]
-pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result<(), ()> {
-    let fd = device.as_raw_fd();
+pub fn send(data: &[u8]) -> Result<(), ()> {
+    let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
+    let mut iface = IFACE.lock().unwrap();
 
     loop {
         let timestamp = Instant::now();
-        iface.poll(timestamp, device, &mut SOCKETS.lock().unwrap());
+        DEVICE.with(|device_tls| {
+            let mut device = device_tls.lock().unwrap();
+            iface.poll(timestamp, &mut (*device), &mut SOCKETS.lock().unwrap())
+        });
 
         let mut sockets = SOCKETS.lock().unwrap();
         let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
@@ -139,14 +147,18 @@ pub fn send(device: &mut NetDevice, iface: &mut NetIface, data: &[u8]) -> Result
 }
 
 #[no_mangle]
-pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Result<usize, ()> {
-    let fd = device.as_raw_fd();
+pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
+    let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
+    let mut iface = IFACE.lock().unwrap();
 
     let mut cursor = 0;
     let mut freesize = buf.len();
     loop {
         let timestamp = Instant::now();
-        iface.poll(timestamp, device, &mut SOCKETS.lock().unwrap());
+        DEVICE.with(|device_tls| {
+            let mut device = device_tls.lock().unwrap();
+            iface.poll(timestamp, &mut (*device), &mut SOCKETS.lock().unwrap())
+        });
 
         let mut sockets = SOCKETS.lock().unwrap();
         let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
@@ -161,7 +173,7 @@ pub fn recv(device: &mut NetDevice, iface: &mut NetIface, buf: &mut [u8]) -> Res
                     buf[cursor..(cursor + size)].copy_from_slice(&data[0..size]);
                     cursor += size;
                     freesize = buf.len() - cursor;
-                    println!("read size={}, free size={}", size, freesize);
+                    // println!("read size={}, free size={}", size, freesize);
                     (size, ())
                 })
                 .expect("recv to slice failed");
