@@ -13,4 +13,4 @@ updates:
     allow:
       - dependency-type: direct
       - dependency-type: indirect
-    target-branch: dev
+    target-branch: master
