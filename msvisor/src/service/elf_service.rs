@@ -110,7 +110,7 @@ impl ELFService {
         unsafe { self.lib.get(symbol.as_bytes()) }.expect("find symbol failed")
     }
 
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<(), ()> {
         let rust_main: RustMainFuncSybmol = self.symbol("rust_main");
         log::info!(
             "service_{} rust_main={:x}",
@@ -119,10 +119,11 @@ impl ELFService {
         );
 
         self.metric.mark(MetricEvent::SvcRun);
-        unsafe { rust_main() };
+        let result = unsafe { rust_main() };
         self.metric.mark(MetricEvent::SvcEnd);
 
         logger::info!("{} complete.", self.name);
+        result
     }
 }
 

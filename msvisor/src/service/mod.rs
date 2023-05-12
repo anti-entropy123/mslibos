@@ -79,7 +79,7 @@ impl Service {
             Service::RustService(svc) => svc.init(isol_id),
         }
     }
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<(), ()> {
         match self {
             Service::ElfService(svc) => svc.run(),
             Service::RustService(svc) => svc.run(),

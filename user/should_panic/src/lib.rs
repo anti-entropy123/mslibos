@@ -2,6 +2,6 @@
 pub use ms_std;
 
 #[no_mangle]
-pub extern "C" fn rust_main() {
+pub fn main() {
     panic!("I must panic!")
 }

@@ -21,7 +21,7 @@ fn run_dylib_test() {
     };
 
     let isol1 = Isolation::new(config1);
-    isol1.run();
+    assert!(isol1.run().is_ok());
 }
 
 // This test have stack overflow error.
@@ -32,25 +32,4 @@ fn run_dylib_test() {
 //             .join()
 //             .expect("join thread failed");
 //     }
-// }
-
-// This test doesn't work because panic_handler haven't been
-// implemented correctly.
-// #[test]
-// #[should_panic]
-// fn run_should_panic_test() {
-//     logger::init();
-
-//     let debug_target_dir = PathBuf::from(TARGET_DIR).join("debug");
-
-//     let config1 = IsolationConfig {
-//         services: Vec::new(),
-//         app: (
-//             "should_panic".to_owned(),
-//             debug_target_dir.join("libshould_panic.so"),
-//         ),
-//     };
-
-//     let isol1 = Isolation::new(config1);
-//     isol1.run();
 // }
