@@ -3,10 +3,14 @@
     [
       "fdtab",
       "target/debug/libfdtab.so"
+    ],
+    [
+        "stdio",
+        "target/debug/libstdio.so"
     ]
   ],
   "app": [
     "hello1",
-    "target/debug/libhello_world.so"
+    "target/debug/libshould_panic.so"
   ]
 }
