@@ -17,7 +17,7 @@ ms_hostcall = { workspace = true }
 
 once_cell = "*"
 lazy_static = { version = "*", features = ["spin_no_std"] }
-buddy_system_allocator = "0.6"
+buddy_system_allocator = "0.9"
 unwinding = { version = "*", default-features = false, features = [
     "personality",
     "panic-handler",

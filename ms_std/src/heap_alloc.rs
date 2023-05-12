@@ -2,7 +2,7 @@ use buddy_system_allocator::LockedHeap;
 use ms_hostcall::SERVICE_HEAP_SIZE;
 
 #[global_allocator]
-static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
+static HEAP_ALLOCATOR: LockedHeap<16> = LockedHeap::empty();
 
 /// Currently, all service will get a static heap region. It is work well but 
 /// maybe cause wasting memory.
