@@ -28,6 +28,9 @@ pub type SetHandlerFunc = unsafe extern "C" fn(IsolationContext) -> HostCallResu
 pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
 pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 
+// service drop
+pub type DropHandlerFunc = unsafe fn();
+
 // app main
 pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
 

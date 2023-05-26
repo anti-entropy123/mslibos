@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use ms_hostcall::{
     types::{IsolationID, NetdevName},
     CommonHostCall, HostCallID,
@@ -24,7 +22,11 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
     );
     let isol = {
         let isol_table = ISOL_TABLE.lock().unwrap();
-        Arc::clone(isol_table.get(&isol_id).unwrap())
+        isol_table
+            .get(&isol_id)
+            .unwrap()
+            .upgrade()
+            .expect("isolation already stopped?")
     };
     match hc_id {
         HostCallID::Common(CommonHostCall::NetdevAlloc) => todo!(),
@@ -37,7 +39,14 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
             );
 
             let service = isol.service_or_load(&svc_name);
-            let addr = *service.interface::<fn()>(&hc_id.to_string()) as usize;
+            let symbol = service
+                .interface::<fn()>(&hc_id.to_string())
+                .expect(&format!(
+                    "not found interface {} in service {}",
+                    hc_id,
+                    hc_id.belong_to()
+                ));
+            let addr = *symbol as usize;
 
             log::debug!("host_write addr = 0x{:x}", addr);
             addr
@@ -80,7 +89,9 @@ fn find_host_call_test() {
     let addr = unsafe { find_host_call(1, hostcall_id) };
 
     let fs_svc = isol.service_or_load(&"fdtab".to_string());
-    let symbol = fs_svc.interface::<fn()>("host_write");
+    let symbol = fs_svc
+        .interface::<fn()>("host_write")
+        .expect("not found host_write");
 
     assert!(addr == *symbol as usize)
 }

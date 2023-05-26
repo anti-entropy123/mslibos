@@ -3,7 +3,7 @@ pub mod handler;
 
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, Mutex, MutexGuard, Weak},
     thread,
 };
 
@@ -19,7 +19,7 @@ use crate::{
 };
 use config::IsolationConfig;
 
-type IsolTable = HashMap<IsolID, Arc<Isolation>>;
+type IsolTable = HashMap<IsolID, Weak<Isolation>>;
 lazy_static! {
     pub static ref ISOL_TABLE: Mutex<IsolTable> = Mutex::new(HashMap::new());
 }
@@ -33,7 +33,13 @@ pub struct IsolationInner {
     modules: HashMap<ServiceName, Arc<Service>>,
 }
 
-impl IsolationInner {}
+impl Drop for IsolationInner {
+    fn drop(&mut self) {
+        while !self.modules.is_empty() {
+            self.modules.clear()
+        }
+    }
+}
 
 pub struct Isolation {
     id: IsolID,
@@ -59,7 +65,7 @@ impl Isolation {
             inner: Mutex::new(IsolationInner::default()),
         });
 
-        get_isol_table().insert(isol.id, Arc::clone(&isol));
+        get_isol_table().insert(isol.id, Arc::downgrade(&isol));
 
         isol
     }

@@ -1,5 +1,6 @@
 #![feature(ip_in_core)]
 
+mod drop;
 mod setup_tap;
 
 use core::net::Ipv4Addr;
@@ -23,14 +24,19 @@ use crate::setup_tap::exec_tap_setup;
 
 thread_local! {
     static DEVICE: Mutex<TunTapInterface> = {
-        let netdev_name = NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24};
-        exec_tap_setup(&netdev_name);
+        let mut netdev_name = NETDEV_NAME.lock().unwrap();
+        if netdev_name.is_none() {
+            *netdev_name = Some(NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24});
+        };
 
-        Mutex::from(TunTapInterface::new(&netdev_name.name, Medium::Ethernet).unwrap())
+        exec_tap_setup(&netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
+
+        Mutex::from(TunTapInterface::new(&netdev_name.as_ref().unwrap().name, Medium::Ethernet).unwrap())
     };
 }
 
 lazy_static! {
+    pub static ref NETDEV_NAME: Mutex<Option<NetdevName>> = Mutex::default();
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
     static ref IFACE: Mutex<Interface> = {
         let mut iface = DEVICE.with(|device_tls| {

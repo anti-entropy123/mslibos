@@ -89,7 +89,7 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
             .arg("-A")
             .arg("FORWARD")
             .arg("-i")
-            .arg("tap0")
+            .arg(&netdev_name.name)
             .arg("-s")
             .arg(&subnet_mask_str)
             .arg("-j")
@@ -104,7 +104,7 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
             .arg("-A")
             .arg("FORWARD")
             .arg("-o")
-            .arg("tap0")
+            .arg(&netdev_name.name)
             .arg("-d")
             .arg(&subnet_mask_str)
             .arg("-j")
@@ -156,8 +156,7 @@ fn test_gen_tap_setup() {
     );
 }
 
-pub fn exec_tap_setup(netdev_name: &NetdevName) {
-    let commands = gen_tap_setup(&netdev_name);
+fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
     for mut comd in commands {
         let mut child = comd.spawn().expect(&format!("exec: {:?} failed", comd));
         child
@@ -168,9 +167,12 @@ pub fn exec_tap_setup(netdev_name: &NetdevName) {
             .write_all(b"cptbtptp")
             .unwrap();
         let result = child.wait().unwrap();
-        assert!(
-            result.success(),
-            "setup failed stderr: {}, stdout: {}",
+        if result.success() {
+            continue;
+        };
+        return Err(format!(
+            "exec command failed, command: {:?}, stderr: {}, stdout: {}",
+            comd,
             {
                 let mut error = String::new();
                 child.stderr.unwrap().read_to_string(&mut error).unwrap();
@@ -181,6 +183,74 @@ pub fn exec_tap_setup(netdev_name: &NetdevName) {
                 child.stdout.unwrap().read_to_string(&mut output).unwrap();
                 output
             }
-        );
+        ));
     }
+    Ok(())
+}
+
+pub fn exec_tap_setup(netdev_name: &NetdevName) -> Result<(), String> {
+    let commands = gen_tap_setup(&netdev_name);
+    exec_sudo_commands(commands)
+}
+
+fn gen_tap_cleanup(netdev_name: &NetdevName) -> Vec<Command> {
+    let mut commands = vec![];
+
+    // ip link set tap0 down
+    commands.push({
+        let mut comd = gen_sudo_command();
+        comd.arg("ip")
+            .arg("link")
+            .arg("set")
+            .arg(&netdev_name.name)
+            .arg("down");
+
+        comd
+    });
+
+    // ip tuntap del dev tap0 mode tap
+    commands.push({
+        let mut comd = gen_sudo_command();
+        comd.arg("ip")
+            .arg("tuntap")
+            .arg("del")
+            .arg("dev")
+            .arg(&netdev_name.name)
+            .arg("mode")
+            .arg("tap");
+
+        comd
+    });
+
+    commands
+}
+
+#[test]
+fn test_gen_tap_cleanup() {
+    let result = gen_tap_cleanup(&NetdevName {
+        name: "tap0".to_string(),
+        subnet: Ipv4Addr::new(192, 168, 69, 0),
+        mask: 24,
+    });
+
+    assert_eq!(
+        format!("{:?}", result[0]),
+        format!(
+            "\"sudo\" \"-S\" \"-n\" \"ip\" \"link\" \"set\" \"{}\" \"down\"",
+            "tap0"
+        )
+    );
+
+    assert_eq!(
+        format!("{:?}", result[1]),
+        format!(
+            "\"sudo\" \"-S\" \"-n\" \"ip\" \"tuntap\" \"del\" \"dev\" \"{}\" \"mode\" \"tap\"",
+            "tap0"
+        )
+    );
+}
+
+pub fn exec_tap_cleanup(netdev_name: &NetdevName) -> Result<(), String> {
+    let commands = gen_tap_cleanup(&netdev_name);
+    exec_sudo_commands(commands)
 }
