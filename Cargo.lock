@@ -701,7 +701,6 @@ dependencies = [
  "libc",
  "managed",
  "ms_hostcall",
- "ms_std",
  "rand",
  "smoltcp",
 ]

@@ -15,9 +15,11 @@ pub mod sync;
 
 #[cfg(feature = "no_std")]
 mod heap_alloc;
+
+use unwinding::panic;
+
 // #[cfg(feature = "no_std")]
 // use {core::panic::PanicInfo, init_context::isolation_ctx};
-use unwinding::panic;
 
 // #[cfg(feature = "no_std")]
 // #[panic_handler]

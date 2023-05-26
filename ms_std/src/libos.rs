@@ -3,8 +3,9 @@ use core::net::{Ipv4Addr, SocketAddrV4};
 use lazy_static::lazy_static;
 use ms_hostcall::{
     types::{
-        FindHostCallFunc, HostStdioFunc, HostWriteFunc, PanicHandlerFunc, SmoltcpAddrInfoFunc,
-        SmoltcpConnectFunc, SmoltcpRecvFunc, SmoltcpSendFunc, Transmutor,
+        FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetdevAllocFunc, NetdevName,
+        PanicHandlerFunc, SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpRecvFunc,
+        SmoltcpSendFunc, Transmutor,
     },
     CommonHostCall, HostCallID,
 };
@@ -20,6 +21,9 @@ pub struct UserHostCall {
     smoltcp_connect: Option<usize>,
     smoltcp_send: Option<usize>,
     smoltcp_recv: Option<usize>,
+    _init_netdev: Option<usize>,
+    netdev_alloc: Option<usize>,
+    netdev_dealloc: Option<usize>,
 }
 
 impl UserHostCall {
@@ -32,6 +36,9 @@ impl UserHostCall {
             smoltcp_connect: None,
             smoltcp_send: None,
             smoltcp_recv: None,
+            _init_netdev: None,
+            netdev_alloc: None,
+            netdev_dealloc: None,
         }
     }
 }
@@ -67,12 +74,20 @@ impl Transmutor for UserHostCall {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpConnect)) }
     }
 
-    fn smoltcp_send(&mut self) -> ms_hostcall::types::SmoltcpSendFunc {
+    fn smoltcp_send(&mut self) -> SmoltcpSendFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpSend)) }
     }
 
-    fn smoltcp_recv(&mut self) -> ms_hostcall::types::SmoltcpRecvFunc {
+    fn smoltcp_recv(&mut self) -> SmoltcpRecvFunc {
         unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpRecv)) }
+    }
+
+    fn netdev_alloc(&mut self) -> NetdevAllocFunc {
+        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::NetdevAlloc)) }
+    }
+
+    fn smoltcp_init_dev(&mut self) -> ms_hostcall::types::InitDevFunc {
+        todo!()
     }
 }
 
@@ -86,6 +101,8 @@ impl UserHostCall {
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
+            CommonHostCall::NetdevAlloc => &mut self.netdev_alloc,
+            CommonHostCall::NetdevDealloc => &mut self.netdev_dealloc,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
@@ -150,4 +167,13 @@ pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
     };
 
     recv(buf)
+}
+
+pub fn netdev_alloc() -> Result<NetdevName, ()> {
+    let netdev_alloc: NetdevAllocFunc = {
+        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
+        hostcall_table.netdev_alloc()
+    };
+
+    netdev_alloc()
 }

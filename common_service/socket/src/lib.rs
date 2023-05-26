@@ -1,5 +1,7 @@
 #![feature(ip_in_core)]
 
+mod setup_tap;
+
 use core::net::Ipv4Addr;
 use std::{cmp::min, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
@@ -9,14 +11,23 @@ use smoltcp::{
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
     socket::{
         dns::{self, GetQueryResultError},
-        tcp::{self},
+        tcp,
     },
     time::Instant,
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
 
+use ms_hostcall::types::NetdevName;
+
+use crate::setup_tap::exec_tap_setup;
+
 thread_local! {
-    static DEVICE: Mutex<TunTapInterface> = Mutex::from(TunTapInterface::new("tap0", Medium::Ethernet).unwrap()) ;
+    static DEVICE: Mutex<TunTapInterface> = {
+        let netdev_name = NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24};
+        exec_tap_setup(&netdev_name);
+
+        Mutex::from(TunTapInterface::new(&netdev_name.name, Medium::Ethernet).unwrap())
+    };
 }
 
 lazy_static! {

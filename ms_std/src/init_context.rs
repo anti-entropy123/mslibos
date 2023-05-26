@@ -25,7 +25,7 @@ fn isolation_ctx_mut() -> RefMut<'static, IsolationContext> {
 
 pub fn isolation_ctx() -> Ref<'static, IsolationContext> {
     let ctx = ISOLATION_CTX.access();
-    if ctx.panic_handler == 0 {
+    if ctx.find_handler == 0 {
         panic!("uninit")
     }
     ctx

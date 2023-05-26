@@ -9,13 +9,13 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std.workspace = true
+# ms_std = {  path = "../../ms_std", default-features = false }
 ms_hostcall.workspace = true
 
 lazy_static = "*"
 managed = { version = "0.8", default-features = false, features = ["map"] }
 defmt = { version = "0.3", optional = true }
-libc = { version = "0.2.18", optional = true }
+libc = { version = "0.2.138", optional = true }
 rand = "*"
 smoltcp = { version = "*", default-features = false, features = [
     "log",

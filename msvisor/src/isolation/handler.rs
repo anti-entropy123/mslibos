@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use ms_hostcall::{types::IsolationID, HostCallID};
+use ms_hostcall::{
+    types::{IsolationID, NetdevName},
+    CommonHostCall, HostCallID,
+};
 
 use crate::{isolation::ISOL_TABLE, logger};
 
@@ -23,18 +26,23 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
         let isol_table = ISOL_TABLE.lock().unwrap();
         Arc::clone(isol_table.get(&isol_id).unwrap())
     };
-    let svc_name = hc_id.belong_to();
-    logger::debug!(
-        "hostcall_{} belong to service: {}",
-        hc_id.to_string(),
-        svc_name
-    );
+    match hc_id {
+        HostCallID::Common(CommonHostCall::NetdevAlloc) => todo!(),
+        _ => {
+            let svc_name = hc_id.belong_to();
+            logger::debug!(
+                "hostcall_{} belong to service: {}",
+                hc_id.to_string(),
+                svc_name
+            );
 
-    let service = isol.service_or_load(&svc_name);
-    let addr = *service.interface::<fn()>(&hc_id.to_string()) as usize;
+            let service = isol.service_or_load(&svc_name);
+            let addr = *service.interface::<fn()>(&hc_id.to_string()) as usize;
 
-    log::debug!("host_write addr = 0x{:x}", addr);
-    addr
+            log::debug!("host_write addr = 0x{:x}", addr);
+            addr
+        }
+    }
 }
 
 #[test]
@@ -75,6 +83,10 @@ fn find_host_call_test() {
     let symbol = fs_svc.interface::<fn()>("host_write");
 
     assert!(addr == *symbol as usize)
+}
+
+pub fn netdev_alloc_handler() -> Result<NetdevName, ()> {
+    return Err(());
 }
 
 /// A panic handler that should be registered into hostcalls.
