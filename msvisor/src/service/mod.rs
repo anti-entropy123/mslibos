@@ -85,10 +85,10 @@ impl Service {
             Service::RustService(svc) => svc.run(),
         }
     }
-    pub fn interface<T>(&self, name: &str) -> Symbol<T> {
+    pub fn interface<T>(&self, name: &str) -> Option<Symbol<T>> {
         match self {
             Service::ElfService(svc) => svc.symbol(name),
-            Service::RustService(svc) => svc.symbol(name),
+            Service::RustService(svc) => Some(svc.symbol(name)),
         }
     }
     pub fn name(&self) -> ServiceName {
@@ -98,3 +98,12 @@ impl Service {
         }
     }
 }
+
+// impl Drop for Service {
+//     fn drop(&mut self) {
+//         match self {
+//             Service::ElfService(svc) => svc.,
+//             Service::RustService(_) => todo!(),
+//         }
+//     }
+// }

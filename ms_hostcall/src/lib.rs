@@ -26,6 +26,10 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "recv")]
     SmoltcpRecv,
+    #[display(fmt = "netdev_alloc")]
+    NetdevAlloc,
+    #[display(fmt = "netdev_dealloc")]
+    NetdevDealloc,
 }
 
 #[derive(Debug, Display)]
@@ -45,6 +49,8 @@ impl HostCallID {
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
                 CommonHostCall::SmoltcpSend => "socket".to_owned(),
                 CommonHostCall::SmoltcpRecv => "socket".to_owned(),
+                CommonHostCall::NetdevAlloc => "runtime".to_owned(),
+                CommonHostCall::NetdevDealloc => "runtime".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -53,9 +59,11 @@ impl HostCallID {
 
 #[test]
 fn format_hostcall_id() {
-    let result = HostCallID::Common(CommonHostCall::Write).to_string();
+    use crate::alloc::string::ToString;
+
+    let result = CommonHostCall::Write;
     assert!(
-        result.eq("host_write"),
+        result.to_string().eq("host_write"),
         "actual format result is {}",
         result
     )

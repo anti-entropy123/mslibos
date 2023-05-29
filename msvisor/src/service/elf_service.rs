@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
 use ms_hostcall::{
-    types::{IsolationID, ServiceName},
+    types::{DropHandlerFunc, IsolationID, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
 };
 
@@ -92,12 +92,16 @@ impl ELFService {
             heap_range,
         };
 
-        let set_handler: SetHandlerFuncSybmol = self.symbol("set_handler_addr");
+        let set_handler: SetHandlerFuncSybmol = self
+            .symbol("set_handler_addr")
+            .expect("missing set_handler_addr?");
         logger::info!("start set_handler...");
         unsafe { set_handler(isol_ctx) }.expect("service init failed.");
         logger::info!("set_handler complete.");
 
-        let get_handler: GetHandlerFuncSybmol = self.symbol("get_handler_addr");
+        let get_handler: GetHandlerFuncSybmol = self
+            .symbol("get_handler_addr")
+            .expect("missing get_handler_addr?");
         logger::debug!(
             "service_{} get_hander addr=0x{:x}.",
             self.name,
@@ -106,12 +110,12 @@ impl ELFService {
         assert!(unsafe { get_handler() } == find_host_call as usize)
     }
 
-    pub fn symbol<T>(&self, symbol: &str) -> Symbol<T> {
-        unsafe { self.lib.get(symbol.as_bytes()) }.expect("find symbol failed")
+    pub fn symbol<T>(&self, symbol: &str) -> Option<Symbol<T>> {
+        unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let rust_main: RustMainFuncSybmol = self.symbol("rust_main");
+        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
         log::info!(
             "service_{} rust_main={:x}",
             self.name,
@@ -125,6 +129,36 @@ impl ELFService {
         logger::info!("{} complete.", self.name);
         result
     }
+}
+
+impl Drop for ELFService {
+    fn drop(&mut self) {
+        // match self.symbol::<DropHandlerFunc>("drop") {
+        //     Some(drop_fn) => unsafe {
+        //         logger::info!("service {} will invoke drop symbol.", self.name);
+        //         drop_fn()
+        //     },
+        //     None => {}
+        // };
+        if let Some(drop_fn) = self.symbol::<DropHandlerFunc>("drop") {
+            logger::info!("service {} will invoke drop symbol.", self.name);
+            unsafe { drop_fn() }
+        }
+    }
+}
+
+#[test]
+fn service_drop_test() {
+    use crate::service::MetricBucket;
+    // std::env::set_var("RUST_LOG", "INFO");
+    // logger::init();
+
+    let bucket = MetricBucket::new();
+    let path = PathBuf::new().join("target/debug/libsocket.so");
+
+    let socket = ELFService::new("socket", &path, bucket.new_svc_metric("socket".to_owned()));
+
+    drop(socket)
 }
 
 fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
