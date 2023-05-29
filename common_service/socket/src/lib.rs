@@ -1,5 +1,8 @@
 #![feature(ip_in_core)]
 
+mod drop;
+mod setup_tap;
+
 use core::net::Ipv4Addr;
 use std::{cmp::min, net::SocketAddrV4, os::fd::AsRawFd, sync::Mutex};
 
@@ -9,17 +12,31 @@ use smoltcp::{
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
     socket::{
         dns::{self, GetQueryResultError},
-        tcp::{self},
+        tcp,
     },
     time::Instant,
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
 
+use ms_hostcall::types::NetdevName;
+
+use crate::setup_tap::exec_tap_setup;
+
 thread_local! {
-    static DEVICE: Mutex<TunTapInterface> = Mutex::from(TunTapInterface::new("tap0", Medium::Ethernet).unwrap()) ;
+    static DEVICE: Mutex<TunTapInterface> = {
+        let mut netdev_name = NETDEV_NAME.lock().unwrap();
+        if netdev_name.is_none() {
+            *netdev_name = Some(NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24});
+        };
+
+        exec_tap_setup(&netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
+
+        Mutex::from(TunTapInterface::new(&netdev_name.as_ref().unwrap().name, Medium::Ethernet).unwrap())
+    };
 }
 
 lazy_static! {
+    pub static ref NETDEV_NAME: Mutex<Option<NetdevName>> = Mutex::default();
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
     static ref IFACE: Mutex<Interface> = {
         let mut iface = DEVICE.with(|device_tls| {

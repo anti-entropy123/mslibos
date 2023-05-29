@@ -1,6 +1,7 @@
 use std::{fs, io::BufReader, path::PathBuf};
 
 use anyhow;
+use log::debug;
 use ms_hostcall::types::ServiceName;
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +31,7 @@ impl IsolationConfig {
             p
         };
 
+        debug!("config file path: {}", p.to_str().unwrap());
         let content = fs::File::open(p)?;
         let config = serde_json::from_reader(BufReader::new(content))?;
 
