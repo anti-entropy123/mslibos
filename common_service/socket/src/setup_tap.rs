@@ -10,7 +10,7 @@ use ms_hostcall::types::NetdevName;
 fn gen_sudo_command() -> Command {
     let mut comd = Command::new("sudo");
     comd.arg("-S")
-        .arg("-n")
+        // .arg("-n")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -157,6 +157,13 @@ fn test_gen_tap_setup() {
 }
 
 fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
+    let mut passwd = env::var("SUDO_PASSWD").expect("can't get root permission");
+    if !passwd.ends_with('\n') {
+        passwd = passwd + "\n";
+    }
+
+    // println!("the sudo passwd: {}", passwd);
+    assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
     for mut comd in commands {
         let mut child = comd.spawn().expect(&format!("exec: {:?} failed", comd));
         child
@@ -164,7 +171,7 @@ fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
             .as_mut()
             .ok_or("Failed")
             .unwrap()
-            .write_all(b"cptbtptp")
+            .write_all(passwd.as_bytes())
             .unwrap();
         let result = child.wait().unwrap();
         if result.success() {
@@ -174,14 +181,14 @@ fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
             "exec command failed, command: {:?}, stderr: {}, stdout: {}",
             comd,
             {
-                let mut error = String::new();
-                child.stderr.unwrap().read_to_string(&mut error).unwrap();
-                error
+                let mut buf = String::new();
+                child.stderr.unwrap().read_to_string(&mut buf).unwrap();
+                buf
             },
             {
-                let mut output = String::new();
-                child.stdout.unwrap().read_to_string(&mut output).unwrap();
-                output
+                let mut buf = String::new();
+                child.stdout.unwrap().read_to_string(&mut buf).unwrap();
+                buf
             }
         ));
     }

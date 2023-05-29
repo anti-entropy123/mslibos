@@ -149,8 +149,9 @@ impl Drop for ELFService {
 
 #[test]
 fn service_drop_test() {
-    env::set_var("RUST_LOG", "INFO");
-    logger::init();
+    use crate::service::MetricBucket;
+    // std::env::set_var("RUST_LOG", "INFO");
+    // logger::init();
 
     let bucket = MetricBucket::new();
     let path = PathBuf::new().join("target/debug/libsocket.so");
