@@ -78,23 +78,15 @@ impl UserHostCall {
     }
 }
 
-macro transmute($name:ident) {
-    fn binding() -> ms_hostcall::types::func_type!($name) {
-        let mut table = USER_HOST_CALL.exclusive_access();
-        unsafe { core::mem::transmute(table.get_or_find(ms_hostcall::hostcall_id!($name))) }
-    }
-    let $name = binding();
-}
-
 pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
-            transmute!($name);
+            fn binding() -> ms_hostcall::types::func_type!($name) {
+                let mut table = USER_HOST_CALL.exclusive_access();
+                unsafe { core::mem::transmute(table.get_or_find(ms_hostcall::hostcall_id!($name))) }
+            }
+            let $name = binding();
             $name($($arg_name),*)
         }
     }
-}
-
-fn test_libos_macro() {
-    let result = libos!(addrinfo("www.baidu.com"));
 }
