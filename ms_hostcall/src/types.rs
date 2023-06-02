@@ -52,13 +52,22 @@ pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
     fn host_panic_handler() -> PanicHandlerFunc;
 
-    fn host_write_func(&mut self) -> HostWriteFunc;
-    fn host_stdio_func(&mut self) -> HostStdioFunc;
+    // fn host_write_func(&mut self) -> HostWriteFunc;
+    // fn host_stdio_func(&mut self) -> HostStdioFunc;
 
-    fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc;
-    fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc;
-    fn smoltcp_send(&mut self) -> SmoltcpSendFunc;
-    fn smoltcp_recv(&mut self) -> SmoltcpRecvFunc;
-    fn smoltcp_init_dev(&mut self) -> InitDevFunc;
-    fn netdev_alloc(&mut self) -> NetdevAllocFunc;
+    // fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc;
+    // fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc;
+    // fn smoltcp_send(&mut self) -> SmoltcpSendFunc;
+    // fn smoltcp_recv(&mut self) -> SmoltcpRecvFunc;
+    // fn smoltcp_init_dev(&mut self) -> InitDevFunc;
+    // fn netdev_alloc(&mut self) -> NetdevAllocFunc;
+}
+
+pub macro func_type {
+    (write) => (ms_hostcall::types::HostWriteFunc),
+    (stdout) => (ms_hostcall::types::HostStdioFunc),
+    (addrinfo) => (ms_hostcall::types::SmoltcpAddrInfoFunc),
+    (connect) => (ms_hostcall::types::SmoltcpConnectFunc),
+    (send) => (ms_hostcall::types::SmoltcpSendFunc),
+    (recv) => (ms_hostcall::types::SmoltcpRecvFunc),
 }

@@ -4,9 +4,9 @@ use core::{
 };
 
 #[cfg(feature = "no_std")]
-use alloc::{vec::Vec};
+use alloc::vec::Vec;
 
-use crate::libos;
+use crate::libos::libos;
 
 #[derive(PartialEq, Debug)]
 enum State {
@@ -29,7 +29,7 @@ impl TcpStream {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
-        libos::connect(sockaddrv4).expect("libos::connect failed");
+        libos!(connect(sockaddrv4)).expect("libos::connect failed");
         stream.state = State::Request;
 
         Ok(stream)
@@ -37,14 +37,14 @@ impl TcpStream {
 
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
         assert_eq!(self.state, State::Request);
-        libos::send(data).expect("send data failed");
+        libos!(send(data)).expect("send data failed");
         self.state = State::Response;
         Ok(())
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
         assert_eq!(self.state, State::Response);
-        let len = libos::recv(buf).expect("recv data failed");
+        let len = libos!(recv(buf)).expect("recv data failed");
 
         Ok(len)
     }
@@ -78,7 +78,7 @@ impl From<&str> for SocketAddr {
             let addr = if let Ok(addr) = host_str.parse() {
                 addr
             } else {
-                libos::addr_info(host_str).expect("wrong tcp domain")
+                libos!(addrinfo(host_str)).expect("wrong tcp domain")
             };
 
             let port = match target_tuple.get(1) {
