@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(ip_in_core)]
+#![feature(decl_macro)]
 
 extern crate alloc;
 
@@ -55,6 +56,15 @@ impl HostCallID {
             HostCallID::Custom(_) => todo!(),
         }
     }
+}
+
+pub macro hostcall_id {
+    (write) => (ms_hostcall::CommonHostCall::Write),
+    (stdout) => (ms_hostcall::CommonHostCall::Stdout),
+    (addrinfo) => (ms_hostcall::CommonHostCall::SmoltcpAddrInfo),
+    (connect) => (ms_hostcall::CommonHostCall::SmoltcpConnect),
+    (send) => (ms_hostcall::CommonHostCall::SmoltcpSend),
+    (recv) => (ms_hostcall::CommonHostCall::SmoltcpRecv),
 }
 
 #[test]

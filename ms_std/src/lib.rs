@@ -3,6 +3,8 @@
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
 #![feature(ip_in_core)]
+#![feature(decl_macro)]
+#![feature(concat_idents)]
 #[cfg(feature = "no_std")]
 extern crate alloc;
 
