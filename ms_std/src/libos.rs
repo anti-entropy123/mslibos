@@ -1,12 +1,6 @@
-use core::net::{Ipv4Addr, SocketAddrV4};
-
 use lazy_static::lazy_static;
 use ms_hostcall::{
-    types::{
-        FindHostCallFunc, HostStdioFunc, HostWriteFunc, NetdevAllocFunc, NetdevName,
-        PanicHandlerFunc, SmoltcpAddrInfoFunc, SmoltcpConnectFunc, SmoltcpRecvFunc,
-        SmoltcpSendFunc, Transmutor,
-    },
+    types::{FindHostCallFunc, PanicHandlerFunc, Transmutor},
     CommonHostCall, HostCallID,
 };
 
@@ -57,42 +51,10 @@ impl Transmutor for UserHostCall {
     fn host_panic_handler() -> PanicHandlerFunc {
         unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
-
-    fn host_write_func(&mut self) -> HostWriteFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::Write)) }
-    }
-
-    fn host_stdio_func(&mut self) -> HostStdioFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::Stdout)) }
-    }
-
-    fn smoltcp_addrinfo(&mut self) -> SmoltcpAddrInfoFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpAddrInfo)) }
-    }
-
-    fn smoltcp_connect(&mut self) -> SmoltcpConnectFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpConnect)) }
-    }
-
-    fn smoltcp_send(&mut self) -> SmoltcpSendFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpSend)) }
-    }
-
-    fn smoltcp_recv(&mut self) -> SmoltcpRecvFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::SmoltcpRecv)) }
-    }
-
-    fn netdev_alloc(&mut self) -> NetdevAllocFunc {
-        unsafe { core::mem::transmute(self.get_or_find(CommonHostCall::NetdevAlloc)) }
-    }
-
-    fn smoltcp_init_dev(&mut self) -> ms_hostcall::types::InitDevFunc {
-        todo!()
-    }
 }
 
 impl UserHostCall {
-    fn get_or_find(&mut self, chc_id: CommonHostCall) -> usize {
+    pub fn get_or_find(&mut self, chc_id: CommonHostCall) -> usize {
         let entry_addr = match chc_id {
             CommonHostCall::Write => &mut self.write_addr,
             CommonHostCall::Stdout => &mut self.stdout_addr,
@@ -116,64 +78,15 @@ impl UserHostCall {
     }
 }
 
-pub fn host_write(fd: i32, buf: &str) -> isize {
-    let write: HostWriteFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.host_write_func()
-    };
-
-    write(fd, buf)
-}
-
-pub fn stdout(buf: &str) -> isize {
-    let stdout: HostStdioFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.host_stdio_func()
-    };
-
-    stdout(buf)
-}
-
-pub fn addr_info(name: &str) -> Result<Ipv4Addr, ()> {
-    let addr_info: SmoltcpAddrInfoFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.smoltcp_addrinfo()
-    };
-
-    addr_info(name)
-}
-
-pub fn connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
-    let connect: SmoltcpConnectFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.smoltcp_connect()
-    };
-    connect(sockaddr)
-}
-
-pub fn send(data: &[u8]) -> Result<(), ()> {
-    let send: SmoltcpSendFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.smoltcp_send()
-    };
-
-    send(data)
-}
-
-pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
-    let recv: SmoltcpRecvFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.smoltcp_recv()
-    };
-
-    recv(buf)
-}
-
-pub fn netdev_alloc() -> Result<NetdevName, ()> {
-    let netdev_alloc: NetdevAllocFunc = {
-        let mut hostcall_table = USER_HOST_CALL.exclusive_access();
-        hostcall_table.netdev_alloc()
-    };
-
-    netdev_alloc()
+pub macro libos {
+    ($name:ident($($arg_name:expr),*)) => {
+        {
+            fn binding() -> ms_hostcall::types::func_type!($name) {
+                let mut table = USER_HOST_CALL.exclusive_access();
+                unsafe { core::mem::transmute(table.get_or_find(ms_hostcall::hostcall_id!($name))) }
+            }
+            let $name = binding();
+            $name($($arg_name),*)
+        }
+    }
 }
