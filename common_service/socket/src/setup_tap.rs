@@ -159,13 +159,13 @@ fn test_gen_tap_setup() {
 fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
     let mut passwd = env::var("SUDO_PASSWD").expect("can't get root permission");
     if !passwd.ends_with('\n') {
-        passwd = passwd + "\n";
+        passwd += "\n";
     }
 
     // println!("the sudo passwd: {}", passwd);
     assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
     for mut comd in commands {
-        let mut child = comd.spawn().expect(&format!("exec: {:?} failed", comd));
+        let mut child = comd.spawn().unwrap_or_else(|_| panic!("exec: {:?} failed", comd));
         child
             .stdin
             .as_mut()
@@ -196,7 +196,7 @@ fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
 }
 
 pub fn exec_tap_setup(netdev_name: &NetdevName) -> Result<(), String> {
-    let commands = gen_tap_setup(&netdev_name);
+    let commands = gen_tap_setup(netdev_name);
     exec_sudo_commands(commands)
 }
 
@@ -258,6 +258,6 @@ fn test_gen_tap_cleanup() {
 }
 
 pub fn exec_tap_cleanup(netdev_name: &NetdevName) -> Result<(), String> {
-    let commands = gen_tap_cleanup(&netdev_name);
+    let commands = gen_tap_cleanup(netdev_name);
     exec_sudo_commands(commands)
 }

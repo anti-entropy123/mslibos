@@ -41,11 +41,13 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
             let service = isol.service_or_load(&svc_name);
             let symbol = service
                 .interface::<fn()>(&hc_id.to_string())
-                .expect(&format!(
-                    "not found interface {} in service {}",
-                    hc_id,
-                    hc_id.belong_to()
-                ));
+                .unwrap_or_else(|| {
+                    panic!(
+                        "not found interface {} in service {}",
+                        hc_id,
+                        hc_id.belong_to()
+                    )
+                });
             let addr = *symbol as usize;
 
             log::debug!("host_write addr = 0x{:x}", addr);
@@ -97,7 +99,7 @@ fn find_host_call_test() {
 }
 
 pub fn netdev_alloc_handler() -> Result<NetdevName, ()> {
-    return Err(());
+    Err(())
 }
 
 /// A panic handler that should be registered into hostcalls.

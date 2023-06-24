@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::result_unit_err)]
 
 extern crate alloc;
 
