@@ -1,4 +1,5 @@
 #![feature(ip_in_core)]
+#![allow(clippy::result_unit_err)]
 
 mod drop;
 mod setup_tap;
@@ -29,7 +30,7 @@ thread_local! {
             *netdev_name = Some(NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24});
         };
 
-        exec_tap_setup(&netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
+        exec_tap_setup(netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
 
         Mutex::from(TunTapInterface::new(&netdev_name.as_ref().unwrap().name, Medium::Ethernet).unwrap())
     };

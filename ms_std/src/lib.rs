@@ -5,6 +5,8 @@
 #![feature(ip_in_core)]
 #![feature(decl_macro)]
 #![feature(concat_idents)]
+#![allow(clippy::result_unit_err)]
+
 #[cfg(feature = "no_std")]
 extern crate alloc;
 
@@ -45,7 +47,7 @@ pub fn main() {
 
 #[no_mangle]
 pub fn rust_main() -> Result<(), ()> {
-    let result = panic::catch_unwind(|| main());
+    let result = panic::catch_unwind(main);
 
     if let Err(ref e) = result {
         println!("error: {:#?}", e)
