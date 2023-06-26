@@ -8,14 +8,17 @@ edition = "2021"
 crate-type = ["rlib"]
 
 [features]
-no_std = ["unwinding/panic-handler", "unwinding/personality"]
-
-default = ["no_std"]
+panic_def = []
+alloc_def = []
 
 [dependencies]
 ms_hostcall = { workspace = true }
 
-once_cell = "*"
-lazy_static = { version = "*", features = ["spin_no_std"] }
+# once_cell = "*"
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 buddy_system_allocator = "0.9"
-unwinding = { version = "*", default-features = false, features = [] }
+unwinding = { version = "0.1.7", features = [
+    "panic-handler",
+    "personality",
+], optional = true }
+cfg-if = "1.0.0"
