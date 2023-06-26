@@ -23,7 +23,6 @@ lazy_static! {
     static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
         let mut hs = HashSet::new();
         hs.insert("stdio".to_owned());
-        hs.insert("socket".to_owned());
         hs
     });
 }

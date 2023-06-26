@@ -19,16 +19,19 @@ use smoltcp::{
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
 };
 
-use ms_hostcall::types::NetdevName;
-use ms_std;
-
 use crate::setup_tap::exec_tap_setup;
+use ms_hostcall::types::NetdevName;
+use ms_std::init_context;
 
 thread_local! {
     static DEVICE: Mutex<TunTapInterface> = {
         let mut netdev_name = NETDEV_NAME.lock().unwrap();
         if netdev_name.is_none() {
-            *netdev_name = Some(NetdevName{name: "tap0".to_string(), subnet: Ipv4Addr::new(192, 168, 69, 0), mask: 24});
+            *netdev_name = Some(NetdevName{
+                name: format!("tap-{}", init_context::isolation_ctx().isol_id),
+                subnet: Ipv4Addr::new(192, 168, 69, 0),
+                mask: 24
+            });
         };
 
         exec_tap_setup(netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
@@ -38,6 +41,8 @@ thread_local! {
 }
 
 lazy_static! {
+    /// NETDEV_NAME use Option<> because the `socket` module may never be used so in
+    /// this case shouldn't ask for a NetdevName.
     pub static ref NETDEV_NAME: Mutex<Option<NetdevName>> = Mutex::default();
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
     static ref IFACE: Mutex<Interface> = {
@@ -58,8 +63,10 @@ lazy_static! {
 
         iface.update_ip_addrs(|ip_addrs| {
             ip_addrs
-                .push(IpCidr::new(IpAddress::v4(192, 168, 69, 1), 24))
-                .unwrap();
+                .push(IpCidr::new(IpAddress::v4(
+                                192, 168, 69,
+                                init_context::isolation_ctx().isol_id as u8
+                            ), 24)).unwrap();
         });
         iface
             .routes_mut()
