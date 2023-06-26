@@ -1,4 +1,3 @@
-#[cfg(feature = "no_std")]
 use alloc::format;
 
 use crate::libos::libos;

@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-# ms_std = {  path = "../../ms_std", default-features = false }
+# ms_std = { path = "../../ms_std", default-features = false, features = [] }
 ms_hostcall.workspace = true
 
 lazy_static = "1.4.0"

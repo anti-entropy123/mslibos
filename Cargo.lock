@@ -446,7 +446,6 @@ dependencies = [
  "buddy_system_allocator",
  "lazy_static",
  "ms_hostcall",
- "once_cell",
  "unwinding",
 ]
 
