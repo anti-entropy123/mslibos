@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { workspace = true }
+ms_std = { workspace = true, features = ["alloc_def", "panic_def"] }
 lazy_static = "*"
 spin = "*"
-ms_hostcall = {workspace = true}
+ms_hostcall = { workspace = true }

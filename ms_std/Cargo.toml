@@ -7,6 +7,10 @@ edition = "2021"
 [lib]
 crate-type = ["rlib"]
 
+[features]
+panic_def = []
+alloc_def = []
+
 [dependencies]
 ms_hostcall = { workspace = true }
 
@@ -17,3 +21,4 @@ unwinding = { version = "0.1.7", features = [
     "panic-handler",
     "personality",
 ], optional = true }
+cfg-if = "1.0.0"

@@ -20,5 +20,5 @@ jobs:
           profile: minimal
           toolchain: nightly-2023-04-15
           override: true
-      - run: cargo build --workspace && cargo test
+      - run: ./build.sh && cargo test
 

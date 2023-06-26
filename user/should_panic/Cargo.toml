@@ -9,4 +9,4 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = {workspace = true}
+ms_std = {workspace = true, features = ["alloc_def", "unwinding"]}

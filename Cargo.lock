@@ -444,6 +444,7 @@ name = "ms_std"
 version = "0.1.0"
 dependencies = [
  "buddy_system_allocator",
+ "cfg-if",
  "lazy_static",
  "ms_hostcall",
  "unwinding",
@@ -698,6 +699,7 @@ dependencies = [
  "libc",
  "managed",
  "ms_hostcall",
+ "ms_std",
  "rand",
  "smoltcp",
 ]
