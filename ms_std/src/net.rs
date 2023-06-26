@@ -3,7 +3,6 @@ use core::{
     net::{Ipv4Addr, SocketAddrV4},
 };
 
-#[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 
 use crate::libos::libos;
