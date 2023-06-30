@@ -24,8 +24,9 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
     if #[cfg(all(feature = "unwinding", feature = "panic_def"))] {
-        compile_error!("must only choose one in 'unwinding' and 'panic_def");
-    } else if #[cfg(feature = "panic_def")] {
+        compile_error!("must only choose one in 'unwinding' and 'panic_def'");
+    } else
+    if #[cfg(feature = "panic_def")] {
         mod panic_def {
             use crate::init_context::isolation_ctx;
             use core::panic::PanicInfo;

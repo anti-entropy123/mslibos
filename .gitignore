@@ -1,5 +1,8 @@
 target
+
 .VSCodeCounter
-*.log
 .gdbinit
+
 ./*.json
+*.log
+_members.txt
