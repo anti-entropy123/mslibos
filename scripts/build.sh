@@ -1,3 +1,7 @@
+###############################
+####### deprecated! ###########
+###############################
+
 # cargo build -p msvisor &&\
 # cargo build -p gen-file &&\
 # cargo build -p ms_hostcall &&\

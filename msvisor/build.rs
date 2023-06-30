@@ -1,49 +1,72 @@
+use lazy_static::lazy_static;
 use std::{
-    fs::{read, write},
-    path::PathBuf,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
 };
-use toml::Table;
 
-fn build_members() -> Vec<String> {
-    let toml_context = {
-        let file_path = PathBuf::new()
-            .join(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .expect("wrong parent")
-            .join("Cargo.toml");
+lazy_static! {
+    static ref WORKSPACE_ROOT_DIR: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf();
+}
 
-        let context = read(file_path).expect("read toml failed.");
-        String::from_utf8(context).unwrap()
+fn user_manifest_dirs() -> Vec<PathBuf> {
+    let all_dir_entry = {
+        let mut app_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("user"))
+            .unwrap()
+            .collect();
+        let mut common_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("common_service"))
+            .unwrap()
+            .collect();
+
+        let mut all_entries = vec![];
+        all_entries.append(&mut common_dir);
+        all_entries.append(&mut app_dir);
+        all_entries
     };
-    // assert!(toml_context.contains("workspace"))
-
-    let workspace_members = {
-        let value = toml_context.parse::<Table>().unwrap();
-        value["workspace"].as_table().expect("missing workspace?")["members"]
-            .as_array()
-            .expect("missing members?")
-            .clone()
-    };
-    // assert!(workspace_members.len() > 1, "{:?}", workspace_members);
 
     let mut result = vec![];
-    for member in workspace_members {
-        let t = PathBuf::from(member.as_str().unwrap());
-        let name = t.file_name().unwrap().to_str().unwrap();
-        if !name.eq("msvisor") {
-            result.push(name.to_owned())
+    for entry in all_dir_entry {
+        let entry = entry.unwrap().path().join("Cargo.toml");
+
+        if Path::is_file(&entry) {
+            result.push(entry.parent().unwrap().to_owned())
         }
     }
+
     result
 }
 
 fn main() {
-    let members = build_members();
-    let file_path = PathBuf::new()
-        .join(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .expect("wrong parent")
-        .join("_members.txt");
+    let target_dirs = user_manifest_dirs();
 
-    write(file_path, members.join(" ")).expect("write members failed.");
+    for lib_dir in target_dirs {
+        let mut cargo_commd = Command::new("cargo");
+        cargo_commd.args([
+            "build",
+            "--manifest-path",
+            &lib_dir.join("Cargo.toml").to_string_lossy(),
+        ]);
+        assert!(
+            cargo_commd.status().unwrap().success(),
+            "build {:?} failed.",
+            &lib_dir
+        );
+
+        let mut cp_commd = Command::new("cp");
+        cp_commd.args([
+            lib_dir.join(format!(
+                "target/debug/lib{}.so",
+                lib_dir.file_name().unwrap().to_string_lossy()
+            )),
+            WORKSPACE_ROOT_DIR.join("target/debug/"),
+        ]);
+        assert!(
+            cp_commd.status().unwrap().success(),
+            "cp failed, command: {:?}",
+            cp_commd
+        );
+    }
 }
