@@ -48,17 +48,16 @@ lazy_static! {
     static ref IFACE: Mutex<Interface> = {
         let mut iface = DEVICE.with(|device_tls| {
             let mut device = device_tls.lock().unwrap();
-            let mut config = Config::new();
-            match device.capabilities().medium {
+            let mut config = match device.capabilities().medium {
                 Medium::Ethernet => {
-                    config.hardware_addr =
-                        Some(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into());
+                    Config::new(EthernetAddress([0x02, 0x00, 0x00, 0x00, 0x00, 0x01]).into())
                 }
-                Medium::Ip => todo!(),
+                Medium::Ip => Config::new(smoltcp::wire::HardwareAddress::Ip),
                 // Medium::Ieee802154 => todo!(),
             };
+
             config.random_seed = rand::random();
-            Interface::new(config, &mut (*device))
+            Interface::new(config, &mut (*device), Instant::now())
         });
 
         iface.update_ip_addrs(|ip_addrs| {
