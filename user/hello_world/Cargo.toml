@@ -9,4 +9,4 @@ crate-type = ["dylib"]
 
 [dependencies]
 # ms_std = { workspace = true, features = ["unwinding"] }
-ms_std = { workspace = true, features = ["alloc_def", "panic_def"] }
+ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }

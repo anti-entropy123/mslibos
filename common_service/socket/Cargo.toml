@@ -9,8 +9,8 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { workspace = true, features = [] }
-ms_hostcall.workspace = true
+ms_std = { path = "../../ms_std", features = [] }
+ms_hostcall = { path = "../../ms_hostcall" }
 
 lazy_static = "1.4.0"
 managed = { version = "0.8", default-features = false, features = ["map"] }

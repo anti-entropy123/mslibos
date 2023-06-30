@@ -7,14 +7,10 @@ members = [
     "ms_hostcall",
 
     "ms_std",
-
-    "common_service/fdtab",
-    "common_service/stdio",
-    "common_service/socket",
-
-    "user/hello_world",
-    "user/should_panic",
-    "user/simple_http",
+]
+exclude = [
+    "user/",
+    "common_service/"
 ]
 default-members = ["msvisor"]
 
@@ -25,5 +21,3 @@ ms_hostcall = { path = "ms_hostcall" }
 ms_std = { path = "ms_std" }
 
 fstab = { path = "common_service/fdtab" }
-
-# [profile.dev.package.hello_world]

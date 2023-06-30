@@ -14,7 +14,6 @@ alloc_def = []
 [dependencies]
 ms_hostcall = { workspace = true }
 
-# once_cell = "*"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 buddy_system_allocator = "0.9"
 unwinding = { version = "0.1.7", features = [

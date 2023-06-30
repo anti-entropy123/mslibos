@@ -1,5 +1,0 @@
-[profile.dev]
-rustflags = ["-C relocation-model=pic"]
-
-[profile.release]
-rustflags = ["-C relocation-model=pic"]
