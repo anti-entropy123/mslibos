@@ -17,8 +17,8 @@ pub enum CommonHostCall {
     Write,
     #[display(fmt = "host_stdout")]
     Stdout,
-    #[display(fmt = "init_net_dev")]
-    SmoltcpInitDev,
+    // #[display(fmt = "init_net_dev")]
+    // SmoltcpInitDev,
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
     #[display(fmt = "connect")]
@@ -27,10 +27,10 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "recv")]
     SmoltcpRecv,
-    #[display(fmt = "netdev_alloc")]
-    NetdevAlloc,
-    #[display(fmt = "netdev_dealloc")]
-    NetdevDealloc,
+    // #[display(fmt = "netdev_alloc")]
+    // NetdevAlloc,
+    // #[display(fmt = "netdev_dealloc")]
+    // NetdevDealloc,
 }
 
 #[derive(Debug, Display)]
@@ -46,12 +46,12 @@ impl HostCallID {
                 CommonHostCall::Write => "fdtab".to_owned(),
                 CommonHostCall::Stdout => "stdio".to_owned(),
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
-                CommonHostCall::SmoltcpInitDev => "socket".to_owned(),
+                // CommonHostCall::SmoltcpInitDev => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
                 CommonHostCall::SmoltcpSend => "socket".to_owned(),
                 CommonHostCall::SmoltcpRecv => "socket".to_owned(),
-                CommonHostCall::NetdevAlloc => "runtime".to_owned(),
-                CommonHostCall::NetdevDealloc => "runtime".to_owned(),
+                // CommonHostCall::NetdevAlloc => "runtime".to_owned(),
+                // CommonHostCall::NetdevDealloc => "runtime".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

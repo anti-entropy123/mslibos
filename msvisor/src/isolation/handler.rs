@@ -1,6 +1,6 @@
 use ms_hostcall::{
     types::{IsolationID, NetdevName},
-    CommonHostCall, HostCallID,
+    HostCallID,
 };
 
 use crate::{isolation::ISOL_TABLE, logger};
@@ -28,32 +28,28 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
             .upgrade()
             .expect("isolation already stopped?")
     };
-    match hc_id {
-        HostCallID::Common(CommonHostCall::NetdevAlloc) => todo!(),
-        _ => {
-            let svc_name = hc_id.belong_to();
-            logger::debug!(
-                "hostcall_{} belong to service: {}",
-                hc_id.to_string(),
-                svc_name
-            );
 
-            let service = isol.service_or_load(&svc_name);
-            let symbol = service
-                .interface::<fn()>(&hc_id.to_string())
-                .unwrap_or_else(|| {
-                    panic!(
-                        "not found interface {} in service {}",
-                        hc_id,
-                        hc_id.belong_to()
-                    )
-                });
-            let addr = *symbol as usize;
+    let svc_name = hc_id.belong_to();
+    logger::debug!(
+        "hostcall_{} belong to service: {}",
+        hc_id.to_string(),
+        svc_name
+    );
 
-            log::debug!("host_write addr = 0x{:x}", addr);
-            addr
-        }
-    }
+    let service = isol.service_or_load(&svc_name);
+    let symbol = service
+        .interface::<fn()>(&hc_id.to_string())
+        .unwrap_or_else(|| {
+            panic!(
+                "not found interface {} in service {}",
+                hc_id,
+                hc_id.belong_to()
+            )
+        });
+    let addr = *symbol as usize;
+
+    log::debug!("host_write addr = 0x{:x}", addr);
+    addr
 }
 
 #[test]
