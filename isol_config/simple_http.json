@@ -13,8 +13,10 @@
       "target/debug/libsocket.so"
     ]
   ],
-  "app": [
-    "hello1",
-    "target/debug/libsimple_http.so"
+  "apps": [
+    [
+      "hello1",
+      "target/debug/libsimple_http.so"
+    ]
   ]
 }

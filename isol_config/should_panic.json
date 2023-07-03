@@ -5,12 +5,14 @@
       "target/debug/libfdtab.so"
     ],
     [
-        "stdio",
-        "target/debug/libstdio.so"
+      "stdio",
+      "target/debug/libstdio.so"
     ]
   ],
-  "app": [
-    "hello1",
-    "target/debug/libshould_panic.so"
+  "apps": [
+    [
+      "hello1",
+      "target/debug/libshould_panic.so"
+    ]
   ]
 }

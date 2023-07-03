@@ -74,10 +74,10 @@ fn find_host_call_test() {
 
         let isol = Isolation::new(IsolationConfig {
             services,
-            app: (
+            apps: vec![(
                 "hello1".to_owned(),
                 utils::TARGET_DEBUG_PATH.join("libhello_world.so"),
-            ),
+            )],
         });
         // isol_table.insert(1, Arc::clone(&isol));
         isol

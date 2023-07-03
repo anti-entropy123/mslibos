@@ -18,7 +18,6 @@ pub struct ServiceLoader {
     isol_id: IsolationID,
     registered: HashMap<ServiceName, PathBuf>,
     metric: Arc<MetricBucket>,
-    app_name: ServiceName,
 }
 
 impl ServiceLoader {
@@ -27,14 +26,13 @@ impl ServiceLoader {
             isol_id,
             registered: HashMap::new(),
             metric,
-            app_name: Default::default(),
         }
     }
 
     pub fn register(mut self, config: &IsolationConfig) -> Self {
-        self.app_name = config.app.0.clone();
-        self.registered
-            .insert(config.app.0.clone(), config.app.1.clone());
+        for app in &config.apps {
+            self.registered.insert(app.0.clone(), app.1.clone());
+        }
 
         for svc in &config.services {
             self.registered.insert(svc.0.clone(), svc.1.clone());
@@ -51,10 +49,6 @@ impl ServiceLoader {
         let service = Service::new(name, lib_path, self.metric.new_svc_metric(name.clone()));
         service.init(self.isol_id);
         Arc::from(service)
-    }
-
-    pub fn load_app(&self) -> Arc<Service> {
-        self.load(&self.app_name)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {

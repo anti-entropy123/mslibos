@@ -12,7 +12,7 @@ use crate::utils;
 #[derive(Serialize, Deserialize)]
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
-    pub app: (ServiceName, PathBuf),
+    pub apps: Vec<(ServiceName, PathBuf)>,
 }
 
 impl IsolationConfig {

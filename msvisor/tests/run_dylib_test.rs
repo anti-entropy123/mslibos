@@ -14,10 +14,10 @@ fn run_dylib_test() {
             ("fdtab".to_owned(), debug_target_dir.join("libfdtab.so")),
             ("stdio".to_owned(), debug_target_dir.join("libstdio.so")),
         ]),
-        app: (
+        apps: vec![(
             "hello1".to_owned(),
             debug_target_dir.join("libhello_world.so"),
-        ),
+        )],
     };
 
     let isol1 = Isolation::new(config1);
