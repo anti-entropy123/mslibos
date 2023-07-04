@@ -1,4 +1,5 @@
 # MSlibOS
+![CI](https://github.com/anti-entropy123/mslibos/actions/workflows/main.yml/badge.svg)
 
 ## 构建
 ```bash
