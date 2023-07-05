@@ -1,0 +1,18 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "target/debug/libfdtab.so"
+    ],
+    [
+      "stdio",
+      "target/debug/libstdio.so"
+    ]
+  ],
+  "apps": [
+    [
+      "func_a",
+      "target/debug/libfunc_a.so"
+    ]
+  ]
+}

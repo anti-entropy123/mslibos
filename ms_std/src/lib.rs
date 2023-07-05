@@ -5,7 +5,13 @@
 #![feature(ip_in_core)]
 #![feature(decl_macro)]
 #![feature(concat_idents)]
+#![feature(generic_const_exprs)]
 #![allow(clippy::result_unit_err)]
+#![allow(incomplete_features)]
+
+use core::{mem::size_of, ptr, slice};
+
+use alloc::vec::Vec;
 
 pub mod console;
 
@@ -46,9 +52,29 @@ cfg_if::cfg_if! {
     }
 }
 
+pub struct DataBuffer {
+    inner: Vec<u8>,
+}
+
+impl DataBuffer {
+    pub fn new<T>(mut raw: T) -> DataBuffer {
+        let p = ptr::addr_of_mut!(raw) as usize;
+        let p = p as *mut u8;
+        DataBuffer {
+            inner: Vec::from(unsafe { slice::from_raw_parts::<u8>(p, size_of::<T>()) }),
+        }
+    }
+
+    pub fn to<'a, T>(&'a mut self) -> &'a mut T {
+        assert_eq!(size_of::<T>(), self.inner.len());
+        let p = self.inner.as_mut_ptr() as usize as *mut T;
+        unsafe { &mut *p }
+    }
+}
+
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main() {
+pub fn main() -> Result<DataBuffer, ()> {
     panic!("need real main");
 }
 
@@ -67,7 +93,8 @@ pub fn rust_main() -> Result<(), ()> {
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        main();
+        let r = main();
+        assert!(r.is_ok());
         Ok(())
     }
 }
