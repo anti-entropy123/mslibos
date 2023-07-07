@@ -53,7 +53,7 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main() -> FaaSFuncResult<u8> {
+pub fn main() -> FaaSFuncResult<()> {
     panic!("need real main");
 }
 
@@ -65,15 +65,14 @@ pub fn rust_main() -> Result<(), ()> {
         let result = panic::catch_unwind(main);
 
         if let Err(ref e) = result {
-            println!("error: {:#?}", e)
+            println!("error: {:#?}", e);
+            return Err(());
         }
-
-        result.map_err(|_| ())
     }
     #[cfg(not(feature = "unwinding"))]
     {
         let r = main();
         assert!(r.is_ok());
-        Ok(())
     }
+    Ok(())
 }
