@@ -9,6 +9,10 @@
       "target/debug/libstdio.so"
     ],
     [
+      "buffer_alloc",
+      "target/debug/libbuffer_alloc.so"
+    ],
+    [
       "socket",
       "target/debug/libsocket.so"
     ]

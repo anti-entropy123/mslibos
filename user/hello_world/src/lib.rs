@@ -6,7 +6,7 @@ use ms_std::{
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    let r = DataBuffer::<()>::default();
+    // let r = DataBuffer::<()>::default();
     println!("Hello, world!");
-    Ok(r)
+    Ok(().into())
 }

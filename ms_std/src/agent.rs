@@ -1,6 +1,8 @@
-use core::{borrow::Borrow, mem::size_of};
+use core::{alloc::Layout, borrow::Borrow, mem::size_of};
 
 use alloc::rc::Rc;
+
+use crate::libos::libos;
 
 pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
 
@@ -14,8 +16,24 @@ impl<T> DataBuffer<T> {
     where
         T: Default,
     {
+        let l = Layout::new::<Rc<T>>();
+
+        let raw_ptr = {
+            let p = libos!(buffer_alloc(l)).expect("alloc failed.");
+            let buffer = p as *mut Rc<T>;
+            unsafe { core::ptr::write(buffer, Rc::default()) }
+            let rc = unsafe {
+                let rc = Rc::clone(&(*buffer));
+                // must guarantee strong == 1 and weak == 0.
+                buffer.drop_in_place();
+                rc
+            };
+
+            Rc::into_raw(rc)
+        };
+
         Self {
-            inner: Rc::default(),
+            inner: unsafe { Rc::from_raw(raw_ptr) },
             data_size: size_of::<T>(),
         }
     }

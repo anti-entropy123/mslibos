@@ -10,14 +10,11 @@ use crate::sync::UPSafeCell;
 pub struct UserHostCall {
     write_addr: Option<usize>,
     stdout_addr: Option<usize>,
-    // smoltcp_init_dev: Option<usize>,
     smoltcp_addrinfo_addr: Option<usize>,
     smoltcp_connect: Option<usize>,
     smoltcp_send: Option<usize>,
     smoltcp_recv: Option<usize>,
-    // init_netdev: Option<usize>,
-    // netdev_alloc: Option<usize>,
-    // netdev_dealloc: Option<usize>,
+    alloc_buffer: Option<usize>,
 }
 
 impl UserHostCall {
@@ -25,14 +22,11 @@ impl UserHostCall {
         UserHostCall {
             write_addr: None,
             stdout_addr: None,
-            // smoltcp_init_dev: None,
             smoltcp_addrinfo_addr: None,
             smoltcp_connect: None,
             smoltcp_send: None,
             smoltcp_recv: None,
-            // init_netdev: None,
-            // netdev_alloc: None,
-            // netdev_dealloc: None,
+            alloc_buffer: None,
         }
     }
 }
@@ -58,12 +52,10 @@ impl UserHostCall {
             CommonHostCall::Write => &mut self.write_addr,
             CommonHostCall::Stdout => &mut self.stdout_addr,
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
-            // CommonHostCall::SmoltcpInitDev => &mut self.smoltcp_init_dev,
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
-            // CommonHostCall::NetdevAlloc => &mut self.netdev_alloc,
-            // CommonHostCall::NetdevDealloc => &mut self.netdev_dealloc,
+            CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();

@@ -11,6 +11,10 @@
     [
       "socket",
       "target/debug/libsocket.so"
+    ],
+    [
+      "buffer_alloc",
+      "target/debug/libbuffer_alloc.so"
     ]
   ],
   "apps": [
@@ -20,7 +24,7 @@
     ],
     [
       "hello2",
-      "target/debug/libsimple_http.so"
+      "target/debug/libhello_world.so"
     ]
   ]
 }
