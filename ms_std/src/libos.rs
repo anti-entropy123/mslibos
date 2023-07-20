@@ -15,6 +15,7 @@ pub struct UserHostCall {
     smoltcp_send: Option<usize>,
     smoltcp_recv: Option<usize>,
     alloc_buffer: Option<usize>,
+    access_buffer: Option<usize>,
 }
 
 impl UserHostCall {
@@ -27,6 +28,7 @@ impl UserHostCall {
             smoltcp_send: None,
             smoltcp_recv: None,
             alloc_buffer: None,
+            access_buffer: None,
         }
     }
 }
@@ -56,6 +58,7 @@ impl UserHostCall {
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
+            CommonHostCall::AccessBuffer => &mut self.access_buffer,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();

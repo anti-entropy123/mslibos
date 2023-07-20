@@ -50,6 +50,7 @@ pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 
 // buffer_alloc
 pub type BufferAllocFunc = fn(Layout) -> Result<usize, ()>;
+pub type AccessBufferFunc = fn() -> Option<usize>;
 
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
@@ -63,5 +64,6 @@ pub macro func_type {
     (connect) => (ms_hostcall::types::SmoltcpConnectFunc),
     (send) => (ms_hostcall::types::SmoltcpSendFunc),
     (recv) => (ms_hostcall::types::SmoltcpRecvFunc),
-    (buffer_alloc) => (ms_hostcall::types::BufferAllocFunc)
+    (buffer_alloc) => (ms_hostcall::types::BufferAllocFunc),
+    (access_buffer) => (ms_hostcall::types::AccessBufferFunc)
 }

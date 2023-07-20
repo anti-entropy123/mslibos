@@ -33,6 +33,8 @@ pub enum CommonHostCall {
     // NetdevDealloc,
     #[display(fmt = "buffer_alloc")]
     BufferAlloc,
+    #[display(fmt = "access_buffer")]
+    AccessBuffer,
 }
 
 #[derive(Debug, Display)]
@@ -46,12 +48,16 @@ impl HostCallID {
         match self {
             Self::Common(common) => match common {
                 CommonHostCall::Write => "fdtab".to_owned(),
+
                 CommonHostCall::Stdout => "stdio".to_owned(),
+                
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
                 CommonHostCall::SmoltcpSend => "socket".to_owned(),
                 CommonHostCall::SmoltcpRecv => "socket".to_owned(),
-                CommonHostCall::BufferAlloc => "buffer_alloc".to_owned(),
+                
+                CommonHostCall::BufferAlloc => "buffer".to_owned(),
+                CommonHostCall::AccessBuffer => "buffer".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -65,7 +71,8 @@ pub macro hostcall_id {
     (connect) => (ms_hostcall::CommonHostCall::SmoltcpConnect),
     (send) => (ms_hostcall::CommonHostCall::SmoltcpSend),
     (recv) => (ms_hostcall::CommonHostCall::SmoltcpRecv),
-    (buffer_alloc) => (ms_hostcall::CommonHostCall::BufferAlloc)
+    (buffer_alloc) => (ms_hostcall::CommonHostCall::BufferAlloc),
+    (access_buffer) => (ms_hostcall::CommonHostCall::AccessBuffer)
 }
 
 #[test]

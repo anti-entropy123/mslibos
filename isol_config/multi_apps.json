@@ -13,8 +13,8 @@
       "target/debug/libsocket.so"
     ],
     [
-      "buffer_alloc",
-      "target/debug/libbuffer_alloc.so"
+      "buffer",
+      "target/debug/libbuffer.so"
     ]
   ],
   "apps": [

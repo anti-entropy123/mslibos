@@ -24,7 +24,6 @@ pub fn main() -> Result<MyComplexData> {
     d.some_str = "abc".to_owned();
 
     println!("construct d ok.");
-    println!("try recovery data.");
     println!("some_str={}, some_int={}", d.some_str, d.some_int);
     Ok(d)
 }

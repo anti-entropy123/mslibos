@@ -9,14 +9,18 @@
       "target/debug/libstdio.so"
     ],
     [
-      "buffer_alloc",
-      "target/debug/libbuffer_alloc.so"
+      "buffer",
+      "target/debug/libbuffer.so"
     ]
   ],
   "apps": [
     [
       "func_a",
       "target/debug/libfunc_a.so"
+    ],
+    [
+      "func_b",
+      "target/debug/libfunc_b.so"
     ]
   ]
 }

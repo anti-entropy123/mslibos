@@ -18,9 +18,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "buffer_alloc"
+name = "buffer"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
  "ms_std",
 ]
 

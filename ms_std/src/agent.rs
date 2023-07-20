@@ -37,6 +37,15 @@ impl<T> DataBuffer<T> {
             data_size: size_of::<T>(),
         }
     }
+
+    pub fn from_buffer() -> Option<Self> {
+        let raw_ptr = libos!(access_buffer());
+
+        raw_ptr.map(|raw_ptr| Self {
+            inner: unsafe { Rc::clone(&*(raw_ptr as *mut Rc<T>)) },
+            data_size: size_of::<T>(),
+        })
+    }
 }
 
 impl<T> Default for DataBuffer<T>
