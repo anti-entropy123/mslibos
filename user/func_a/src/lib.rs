@@ -7,9 +7,10 @@ use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
 };
+use ms_std_proc_macro::Verify;
 
 #[allow(dead_code)]
-#[derive(Default)]
+#[derive(Default, Verify)]
 pub struct MyComplexData {
     pub some_int: i64,
     pub some_str: String,

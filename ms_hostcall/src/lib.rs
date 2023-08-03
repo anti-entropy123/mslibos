@@ -50,12 +50,12 @@ impl HostCallID {
                 CommonHostCall::Write => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
-                
+
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
                 CommonHostCall::SmoltcpSend => "socket".to_owned(),
                 CommonHostCall::SmoltcpRecv => "socket".to_owned(),
-                
+
                 CommonHostCall::BufferAlloc => "buffer".to_owned(),
                 CommonHostCall::AccessBuffer => "buffer".to_owned(),
             },
@@ -97,3 +97,7 @@ pub struct IsolationContext {
 }
 
 pub const SERVICE_HEAP_SIZE: usize = 4096 * 8;
+
+pub trait Verify {
+    fn __fingerprint() -> u64;
+}

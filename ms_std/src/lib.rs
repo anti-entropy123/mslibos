@@ -9,7 +9,7 @@
 #![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
 
-use agent::FaaSFuncResult;
+use agent::{FaaSFuncResult, Zero};
 
 pub mod console;
 
@@ -53,7 +53,7 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main() -> FaaSFuncResult<()> {
+pub fn main() -> FaaSFuncResult<Zero> {
     panic!("need real main");
 }
 

@@ -46,7 +46,9 @@ dependencies = [
 name = "func_b"
 version = "0.1.0"
 dependencies = [
+ "ms_hostcall",
  "ms_std",
+ "ms_std_proc_macro",
 ]
 
 [[package]]
@@ -84,6 +86,16 @@ dependencies = [
  "cfg-if",
  "lazy_static",
  "ms_hostcall",
+ "ms_std_proc_macro",
+]
+
+[[package]]
+name = "ms_std_proc_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

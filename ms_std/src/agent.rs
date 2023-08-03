@@ -1,17 +1,27 @@
-use core::{alloc::Layout, borrow::Borrow, mem::size_of};
+use core::{alloc::Layout, borrow::Borrow};
 
 use alloc::rc::Rc;
+use ms_hostcall::Verify;
 
 use crate::libos::libos;
 
+use ms_std_proc_macro::Verify as VerifyMacro;
+
 pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
 
-pub struct DataBuffer<T> {
+#[derive(Debug)]
+pub struct DataBuffer<T>
+where
+    T: Verify,
+{
     inner: Rc<T>,
-    data_size: usize,
+    // fingerprint: u64,
 }
 
-impl<T> DataBuffer<T> {
+impl<T> DataBuffer<T>
+where
+    T: Verify,
+{
     pub fn new() -> Self
     where
         T: Default,
@@ -34,7 +44,7 @@ impl<T> DataBuffer<T> {
 
         Self {
             inner: unsafe { Rc::from_raw(raw_ptr) },
-            data_size: size_of::<T>(),
+            // fingerprint: T::__fingerprint(),
         }
     }
 
@@ -43,39 +53,45 @@ impl<T> DataBuffer<T> {
 
         raw_ptr.map(|raw_ptr| Self {
             inner: unsafe { Rc::clone(&*(raw_ptr as *mut Rc<T>)) },
-            data_size: size_of::<T>(),
+            // fingerprint: T::__fingerprint(),
         })
     }
 }
 
 impl<T> Default for DataBuffer<T>
 where
-    T: Default,
+    T: Default + Verify,
 {
     fn default() -> DataBuffer<T> {
         Self::new()
     }
 }
 
-impl<T> core::ops::Deref for DataBuffer<T> {
+impl<T> core::ops::Deref for DataBuffer<T>
+where
+    T: Verify,
+{
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        assert_eq!(size_of::<Self::Target>(), self.data_size);
+        // assert_eq!(T::__fingerprint(), self.fingerprint);
         self.inner.borrow()
     }
 }
 
-impl<T> core::ops::DerefMut for DataBuffer<T> {
+impl<T> core::ops::DerefMut for DataBuffer<T>
+where
+    T: Verify,
+{
     fn deref_mut(&mut self) -> &mut Self::Target {
-        assert_eq!(size_of::<Self::Target>(), self.data_size);
+        // assert_eq!(T::__fingerprint(), self.fingerprint);
         Rc::get_mut(&mut self.inner).unwrap()
     }
 }
 
 impl<T> From<T> for DataBuffer<T>
 where
-    T: Default,
+    T: Default + Verify,
 {
     fn from(value: T) -> Self {
         let mut t = DataBuffer::<T>::default();
@@ -83,3 +99,6 @@ where
         t
     }
 }
+
+#[derive(VerifyMacro, Default)]
+pub struct Zero {}

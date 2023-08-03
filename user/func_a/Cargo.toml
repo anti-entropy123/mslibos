@@ -10,3 +10,5 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }
+ms_hostcall = { path = "../../ms_hostcall" }
+ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
