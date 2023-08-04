@@ -12,7 +12,7 @@
   "apps": [
     [
       "hello1",
-      "target/debug/libshould_panic.so"
+      "target/debug/libhello_world.so"
     ]
   ]
 }

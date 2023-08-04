@@ -1,17 +1,8 @@
 # cargo-features = ["profile-rustflags"]
 
 [workspace]
-members = [
-    "msvisor",
-    "gen-file",
-    "ms_hostcall",
-
-    "ms_std",
-]
-exclude = [
-    "user/",
-    "common_service/"
-]
+members = ["msvisor", "gen-file", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
+exclude = ["user/", "common_service/"]
 default-members = ["msvisor"]
 
 [workspace.dependencies]
@@ -19,5 +10,3 @@ msvisor = { path = "msvisor" }
 
 ms_hostcall = { path = "ms_hostcall" }
 ms_std = { path = "ms_std" }
-
-fstab = { path = "common_service/fdtab" }

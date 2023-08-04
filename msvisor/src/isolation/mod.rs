@@ -43,8 +43,9 @@ impl Drop for IsolationInner {
 
 pub struct Isolation {
     id: IsolID,
-    loader: ServiceLoader,
+    loader: Arc<ServiceLoader>,
     pub metric: Arc<MetricBucket>,
+    app_names: Vec<ServiceName>,
 
     inner: Mutex<IsolationInner>,
 }
@@ -56,12 +57,14 @@ impl Isolation {
 
         let metric = Arc::from(MetricBucket::new());
 
-        let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(&config);
+        let loader = Arc::from(ServiceLoader::new(new_id, Arc::clone(&metric)).register(&config));
 
         let isol = Arc::from(Self {
             id: new_id,
             loader,
             metric,
+            app_names: config.apps.iter().map(|app| app.0.clone()).collect(),
+
             inner: Mutex::new(IsolationInner::default()),
         });
 
@@ -87,8 +90,22 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let user_app = self.loader.load_app();
-        let handler = thread::spawn(move || user_app.run());
+        let loader = Arc::clone(&self.loader);
+        let app_names = self.app_names.clone();
+
+        let thread_builder =
+            thread::Builder::new().name(format!("isol-{}-{}", self.id, app_names.get(0).unwrap()));
+
+        let handler = thread_builder
+            .spawn(move || {
+                for app in app_names {
+                    let app = loader.load_service(&app);
+                    let result = app.run();
+                    result?
+                }
+                Ok(())
+            })
+            .expect("thread spawn failed");
 
         handler.join().expect("Join isolation app-thread failed")
     }

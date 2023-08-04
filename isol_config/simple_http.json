@@ -9,12 +9,18 @@
       "target/debug/libstdio.so"
     ],
     [
+      "buffer",
+      "target/debug/libbuffer.so"
+    ],
+    [
       "socket",
       "target/debug/libsocket.so"
     ]
   ],
-  "app": [
-    "hello1",
-    "target/debug/libsimple_http.so"
+  "apps": [
+    [
+      "hello1",
+      "target/debug/libsimple_http.so"
+    ]
   ]
 }

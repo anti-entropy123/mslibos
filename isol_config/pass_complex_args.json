@@ -15,8 +15,12 @@
   ],
   "apps": [
     [
-      "hello1",
-      "target/debug/libhello_world.so"
+      "func_a",
+      "target/debug/libfunc_a.so"
+    ],
+    [
+      "func_b",
+      "target/debug/libfunc_b.so"
     ]
   ]
 }
