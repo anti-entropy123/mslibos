@@ -49,8 +49,8 @@ pub type InitDevFunc = fn(NetdevName);
 pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 
 // buffer_alloc
-pub type BufferAllocFunc = fn(Layout) -> Result<usize, ()>;
-pub type AccessBufferFunc = fn() -> Option<usize>;
+pub type BufferAllocFunc = fn(Layout, u64) -> Result<usize, ()>;
+pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
 
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;

@@ -10,10 +10,21 @@ use ms_std::{
 use ms_std_proc_macro::Verify;
 
 #[allow(dead_code)]
-#[derive(Default, Verify)]
+#[derive(Verify)]
 pub struct MyComplexData {
     pub some_int: i64,
     pub some_str: String,
+    pub big_data: [u8; 4096],
+}
+
+impl Default for MyComplexData {
+    fn default() -> Self {
+        Self {
+            some_int: Default::default(),
+            some_str: Default::default(),
+            big_data: [0; 4096],
+        }
+    }
 }
 
 #[allow(clippy::result_unit_err)]

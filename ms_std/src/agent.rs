@@ -3,7 +3,7 @@ use core::{alloc::Layout, borrow::Borrow};
 use alloc::rc::Rc;
 use ms_hostcall::Verify;
 
-use crate::libos::libos;
+use crate::{libos::libos, println};
 
 use ms_std_proc_macro::Verify as VerifyMacro;
 
@@ -29,7 +29,9 @@ where
         let l = Layout::new::<Rc<T>>();
 
         let raw_ptr = {
-            let p = libos!(buffer_alloc(l)).expect("alloc failed.");
+            let fingerprint = T::__fingerprint();
+            // println!("fingerprint: {}", fingerprint);
+            let p = libos!(buffer_alloc(l, fingerprint)).expect("alloc failed.");
             let buffer = p as *mut Rc<T>;
             unsafe { core::ptr::write(buffer, Rc::default()) }
             let rc = unsafe {
@@ -49,11 +51,17 @@ where
     }
 
     pub fn from_buffer() -> Option<Self> {
-        let raw_ptr = libos!(access_buffer());
+        let buffer_meta = libos!(access_buffer());
 
-        raw_ptr.map(|raw_ptr| Self {
-            inner: unsafe { Rc::clone(&*(raw_ptr as *mut Rc<T>)) },
-            // fingerprint: T::__fingerprint(),
+        buffer_meta.map(|(raw_ptr, fingerprint)| {
+            if fingerprint != T::__fingerprint() {
+                println!("wrong data type, {}, {}", fingerprint, T::__fingerprint());
+                panic!("");
+            };
+            Self {
+                inner: unsafe { Rc::clone(&*(raw_ptr as *mut Rc<T>)) },
+                // fingerprint: T::__fingerprint(),
+            }
         })
     }
 }
