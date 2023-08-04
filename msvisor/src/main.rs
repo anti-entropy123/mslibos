@@ -24,7 +24,9 @@ fn main() {
     let config1 = IsolationConfig::from_file(args.file.into()).expect("Open config file failed.");
 
     let isol1 = Isolation::new(config1);
-    isol1.run().expect("isolation user function error.");
+    if isol1.run().is_err() {
+        logger::error!("isolation user function error.")
+    }
 
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
     isol1.metric.analyze();

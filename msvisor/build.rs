@@ -14,16 +14,16 @@ lazy_static! {
 
 fn user_manifest_dirs() -> Vec<PathBuf> {
     let all_dir_entry = {
-        let mut app_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("user"))
-            .unwrap()
-            .collect();
+        // let mut app_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("user"))
+        //     .unwrap()
+        //     .collect();
         let mut common_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("common_service"))
             .unwrap()
             .collect();
 
         let mut all_entries = vec![];
         all_entries.append(&mut common_dir);
-        all_entries.append(&mut app_dir);
+        // all_entries.append(&mut app_dir);
         all_entries
     };
 

@@ -5,10 +5,15 @@
 #![feature(ip_in_core)]
 #![feature(decl_macro)]
 #![feature(concat_idents)]
+#![feature(generic_const_exprs)]
 #![allow(clippy::result_unit_err)]
+#![allow(incomplete_features)]
+
+use agent::{FaaSFuncResult, Zero};
 
 pub mod console;
 
+pub mod agent;
 pub mod init_context;
 pub mod libos;
 pub mod net;
@@ -48,7 +53,7 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main() {
+pub fn main() -> FaaSFuncResult<Zero> {
     panic!("need real main");
 }
 
@@ -60,14 +65,14 @@ pub fn rust_main() -> Result<(), ()> {
         let result = panic::catch_unwind(main);
 
         if let Err(ref e) = result {
-            println!("error: {:#?}", e)
+            println!("error: {:#?}", e);
+            return Err(());
         }
-
-        result.map_err(|_| ())
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        main();
-        Ok(())
+        let r = main();
+        assert!(r.is_ok());
     }
+    Ok(())
 }

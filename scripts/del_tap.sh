@@ -1,4 +1,4 @@
 #!/bin/bash
 
-sudo ip link set tap0 down \
-  && sudo ip tuntap del dev tap0 mode tap
+sudo ip link set tap-1 down \
+  && sudo ip tuntap del dev tap-1 mode tap

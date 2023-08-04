@@ -4,14 +4,20 @@ use msvisor::isolation::config::IsolationConfig;
 
 fn main() {
     let config1 = IsolationConfig {
-        services: Vec::from([(
-            "fdtab".to_owned(),
-            PathBuf::from("target/debug/libfdtab.so"),
-        )]),
-        app: (
+        services: vec![
+            (
+                "fdtab".to_owned(),
+                PathBuf::from("target/debug/libfdtab.so"),
+            ),
+            (
+                "stdio".to_owned(),
+                PathBuf::from("target/debug/libstdio.so"),
+            ),
+        ],
+        apps: vec![(
             "hello1".to_owned(),
             PathBuf::from("target/debug/libhello_world.so"),
-        ),
+        )],
     };
 
     config1
