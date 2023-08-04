@@ -93,14 +93,19 @@ impl Isolation {
         let loader = Arc::clone(&self.loader);
         let app_names = self.app_names.clone();
 
-        let handler = thread::spawn(move || {
-            for app in app_names {
-                let app = loader.load_service(&app);
-                let result = app.run();
-                result?
-            }
-            Ok(())
-        });
+        let thread_builder =
+            thread::Builder::new().name(format!("isol-{}-{}", self.id, app_names.get(0).unwrap()));
+
+        let handler = thread_builder
+            .spawn(move || {
+                for app in app_names {
+                    let app = loader.load_service(&app);
+                    let result = app.run();
+                    result?
+                }
+                Ok(())
+            })
+            .expect("thread spawn failed");
 
         handler.join().expect("Join isolation app-thread failed")
     }
