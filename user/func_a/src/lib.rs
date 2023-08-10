@@ -6,12 +6,14 @@ use alloc::{borrow::ToOwned, string::String};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
+    time::SystemTime,
 };
 use ms_std_proc_macro::Verify;
 
 #[allow(dead_code)]
 #[derive(Verify)]
 pub struct MyComplexData {
+    pub current_time: SystemTime,
     pub some_int: i64,
     pub some_str: String,
     pub big_data: [u8; 4096],
@@ -20,6 +22,7 @@ pub struct MyComplexData {
 impl Default for MyComplexData {
     fn default() -> Self {
         Self {
+            current_time: SystemTime::now(),
             some_int: Default::default(),
             some_str: Default::default(),
             big_data: [0; 4096],

@@ -35,6 +35,8 @@ pub enum CommonHostCall {
     BufferAlloc,
     #[display(fmt = "access_buffer")]
     AccessBuffer,
+    #[display(fmt = "get_time")]
+    GetTime,
 }
 
 #[derive(Debug, Display)]
@@ -58,21 +60,11 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc => "buffer".to_owned(),
                 CommonHostCall::AccessBuffer => "buffer".to_owned(),
+                CommonHostCall::GetTime => "get_time".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
     }
-}
-
-pub macro hostcall_id {
-    (write) => (ms_hostcall::CommonHostCall::Write),
-    (stdout) => (ms_hostcall::CommonHostCall::Stdout),
-    (addrinfo) => (ms_hostcall::CommonHostCall::SmoltcpAddrInfo),
-    (connect) => (ms_hostcall::CommonHostCall::SmoltcpConnect),
-    (send) => (ms_hostcall::CommonHostCall::SmoltcpSend),
-    (recv) => (ms_hostcall::CommonHostCall::SmoltcpRecv),
-    (buffer_alloc) => (ms_hostcall::CommonHostCall::BufferAlloc),
-    (access_buffer) => (ms_hostcall::CommonHostCall::AccessBuffer)
 }
 
 #[test]

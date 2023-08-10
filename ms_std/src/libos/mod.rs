@@ -7,6 +7,9 @@ use ms_hostcall::{
 use crate::init_context::isolation_ctx;
 use crate::sync::UPSafeCell;
 
+mod utils;
+pub use utils::libos;
+
 pub struct UserHostCall {
     write_addr: Option<usize>,
     stdout_addr: Option<usize>,
@@ -16,6 +19,7 @@ pub struct UserHostCall {
     smoltcp_recv: Option<usize>,
     alloc_buffer: Option<usize>,
     access_buffer: Option<usize>,
+    get_time: Option<usize>,
 }
 
 impl UserHostCall {
@@ -29,6 +33,7 @@ impl UserHostCall {
             smoltcp_recv: None,
             alloc_buffer: None,
             access_buffer: None,
+            get_time: None,
         }
     }
 }
@@ -59,6 +64,7 @@ impl UserHostCall {
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
             CommonHostCall::AccessBuffer => &mut self.access_buffer,
+            CommonHostCall::GetTime => &mut self.get_time,
         };
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
@@ -68,19 +74,6 @@ impl UserHostCall {
             addr
         } else {
             entry_addr.unwrap()
-        }
-    }
-}
-
-pub macro libos {
-    ($name:ident($($arg_name:expr),*)) => {
-        {
-            fn binding() -> ms_hostcall::types::func_type!($name) {
-                let mut table = USER_HOST_CALL.exclusive_access();
-                unsafe { core::mem::transmute(table.get_or_find(ms_hostcall::hostcall_id!($name))) }
-            }
-            let $name = binding();
-            $name($($arg_name),*)
         }
     }
 }
