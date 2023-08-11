@@ -60,7 +60,7 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc => "buffer".to_owned(),
                 CommonHostCall::AccessBuffer => "buffer".to_owned(),
-                CommonHostCall::GetTime => "get_time".to_owned(),
+                CommonHostCall::GetTime => "time".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

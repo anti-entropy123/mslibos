@@ -1,5 +1,7 @@
 use core::time::Duration;
 
+use crate::libos::libos;
+
 #[derive(Clone, Copy)]
 pub struct SystemTime {
     nanos: u128,
@@ -7,7 +9,9 @@ pub struct SystemTime {
 
 impl SystemTime {
     pub fn now() -> Self {
-        Self { nanos: 1000 }
+        Self {
+            nanos: libos!(get_time()).unwrap(),
+        }
     }
 
     pub fn duration_since(&self, earlier: SystemTime) -> Duration {

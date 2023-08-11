@@ -16,7 +16,7 @@ pub struct MyComplexData {
     pub current_time: SystemTime,
     pub some_int: i64,
     pub some_str: String,
-    pub big_data: [u8; 4096],
+    pub big_data: [u8; 4096 * 7],
 }
 
 impl Default for MyComplexData {
@@ -25,7 +25,7 @@ impl Default for MyComplexData {
             current_time: SystemTime::now(),
             some_int: Default::default(),
             some_str: Default::default(),
-            big_data: [0; 4096],
+            big_data: [0; 4096 * 7],
         }
     }
 }
