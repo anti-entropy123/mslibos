@@ -51,6 +51,10 @@ impl ServiceLoader {
         Arc::from(service)
     }
 
+    pub fn load_app(&self, name: &ServiceName) -> Arc<Service> {
+        self.load(name)
+    }
+
     pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {
         self.metric.mark(MetricEvent::LoadService);
         self.load(name)

@@ -9,7 +9,7 @@ use std::io;
 
 use crate::utils;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
     pub apps: Vec<(ServiceName, PathBuf)>,
