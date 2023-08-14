@@ -18,6 +18,7 @@ pub mod init_context;
 pub mod libos;
 pub mod net;
 pub mod sync;
+pub mod time;
 
 extern crate alloc;
 
