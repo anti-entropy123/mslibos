@@ -9,6 +9,7 @@ use std::{
 
 use lazy_static::lazy_static;
 
+use log::info;
 use ms_hostcall::types::{IsolationID as IsolID, ServiceName};
 
 use crate::{
@@ -73,6 +74,16 @@ impl Isolation {
         isol
     }
 
+    pub fn preload(&self, mut config: IsolationConfig) {
+        let mut modules = config.services;
+        modules.append(&mut config.apps);
+
+        for service in modules {
+            let svc_name = service.0;
+            self.service_or_load(&svc_name);
+        }
+    }
+
     pub fn inner_access(&self) -> MutexGuard<'_, IsolationInner> {
         self.inner.lock().unwrap()
     }
@@ -80,17 +91,22 @@ impl Isolation {
     pub fn service_or_load(&self, name: &ServiceName) -> Arc<Service> {
         let mut isol_inner = self.inner_access();
         match isol_inner.modules.get(name) {
-            Some(fs) => Arc::clone(fs),
+            Some(svc) => Arc::clone(svc),
             None => {
-                let fs = self.loader.load_service(name);
-                isol_inner.modules.insert(name.to_owned(), Arc::clone(&fs));
-                fs
+                info!("first load {}.", name);
+                let svc = self.loader.load_service(name);
+                isol_inner.modules.insert(name.to_owned(), Arc::clone(&svc));
+                svc
             }
         }
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let loader = Arc::clone(&self.loader);
+        let isol = {
+            let binding = get_isol_table();
+            let isol = binding.get(&self.id).expect("isol doesn't exist?");
+            isol.upgrade().expect("isol doesn't exist?")
+        };
         let app_names = self.app_names.clone();
 
         let thread_builder =
@@ -99,7 +115,7 @@ impl Isolation {
         let handler = thread_builder
             .spawn(move || {
                 for app in app_names {
-                    let app = loader.load_service(&app);
+                    let app = isol.service_or_load(&app);
                     let result = app.run();
                     result?
                 }
