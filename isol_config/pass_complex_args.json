@@ -11,6 +11,10 @@
     [
       "buffer",
       "target/debug/libbuffer.so"
+    ],
+    [
+      "time",
+      "target/debug/libtime.so"
     ]
   ],
   "apps": [

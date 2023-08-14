@@ -48,6 +48,9 @@ pub type SmoltcpRecvFunc = fn(&mut [u8]) -> Result<usize, ()>;
 pub type InitDevFunc = fn(NetdevName);
 pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 
+// time
+pub type GetTimeFunc = fn() -> Result<u128, ()>;
+
 // buffer_alloc
 pub type BufferAllocFunc = fn(Layout, u64) -> Result<usize, ()>;
 pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
@@ -55,15 +58,4 @@ pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
     fn host_panic_handler() -> PanicHandlerFunc;
-}
-
-pub macro func_type {
-    (write) => (ms_hostcall::types::HostWriteFunc),
-    (stdout) => (ms_hostcall::types::HostStdioFunc),
-    (addrinfo) => (ms_hostcall::types::SmoltcpAddrInfoFunc),
-    (connect) => (ms_hostcall::types::SmoltcpConnectFunc),
-    (send) => (ms_hostcall::types::SmoltcpSendFunc),
-    (recv) => (ms_hostcall::types::SmoltcpRecvFunc),
-    (buffer_alloc) => (ms_hostcall::types::BufferAllocFunc),
-    (access_buffer) => (ms_hostcall::types::AccessBufferFunc)
 }
