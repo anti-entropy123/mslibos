@@ -40,6 +40,7 @@ fn user_manifest_dirs() -> Vec<PathBuf> {
 }
 
 fn main() {
+    return;
     let target_dirs = user_manifest_dirs();
 
     for lib_dir in target_dirs {

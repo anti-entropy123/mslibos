@@ -17,7 +17,7 @@ ms_std_proc_macro = { path = "../ms_std_proc_macro" }
 
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 buddy_system_allocator = "0.9"
-unwinding = { version = "0.1.7", features = [
+unwinding = { version = "0.2.0", features = [
     "panic-handler",
     "personality",
 ], optional = true }

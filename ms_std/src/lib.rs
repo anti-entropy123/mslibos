@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(lang_items)]
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
 #![feature(ip_in_core)]
@@ -29,9 +28,9 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
-    if #[cfg(all(feature = "unwinding", feature = "panic_def"))] {
-        compile_error!("must only choose one in 'unwinding' and 'panic_def'");
-    } else
+    // if #[cfg(all(feature = "unwinding", feature = "panic_def"))] {
+    //     compile_error!("must only choose one in 'unwinding' and 'panic_def'");
+    // } else
     if #[cfg(feature = "panic_def")] {
         mod panic_def {
             use crate::init_context::isolation_ctx;
@@ -46,9 +45,10 @@ cfg_if::cfg_if! {
                 unsafe { host_panic_handler() }
             }
 
-            #[lang = "eh_personality"]
-            extern "C" fn eh_personality() {}
         }
+    } else
+    if #[cfg(feature = "unwinding")] {
+        use unwinding;
     }
 }
 
@@ -59,21 +59,10 @@ pub fn main() -> FaaSFuncResult<Zero> {
 }
 
 #[no_mangle]
-pub fn rust_main() -> Result<(), ()> {
-    #[cfg(feature = "unwinding")]
-    {
-        use unwinding::panic;
-        let result = panic::catch_unwind(main);
+pub extern "C-unwind" fn rust_main() -> Result<(), ()> {
+    panic!("need real main");
+    let r = main();
+    assert!(r.is_ok());
 
-        if let Err(ref e) = result {
-            println!("error: {:#?}", e);
-            return Err(());
-        }
-    }
-    #[cfg(not(feature = "unwinding"))]
-    {
-        let r = main();
-        assert!(r.is_ok());
-    }
     Ok(())
 }

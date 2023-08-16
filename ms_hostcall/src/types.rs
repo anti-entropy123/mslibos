@@ -32,7 +32,7 @@ pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 pub type DropHandlerFunc = unsafe fn();
 
 // app main
-pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
+pub type RustMainFunc = extern "C-unwind" fn() -> Result<(), ()>;
 
 // fdtab
 pub type HostWriteFunc = fn(i32, &str) -> isize;
