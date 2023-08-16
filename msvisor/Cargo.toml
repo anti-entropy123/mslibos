@@ -18,6 +18,6 @@ log = "0.4.19"
 env_logger = "0.10.0"
 xmas-elf = "0.9.0"                                     # use to parse dynlib elf file.
 nix = "0.26.2"                                         # use to call mmap, pthread_exit.
-serde = { version = "1.0.164", features = ["derive"] }
+serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.99"
 clap = { version = "4.3.9", features = ["derive"] }
