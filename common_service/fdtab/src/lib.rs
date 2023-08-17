@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use ms_std::{self, libos::libos};
 
-struct File;
+struct File {}
 
 lazy_static! {
     static ref _FD_TABLE: Vec<File> = Vec::new();
@@ -15,7 +15,7 @@ lazy_static! {
 #[no_mangle]
 pub fn host_write(fd: i32, buf: &str) -> isize {
     match fd {
-        1 => {
+        1 | 2 => {
             libos!(stdout(buf));
             buf.len() as isize
         }

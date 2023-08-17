@@ -12,6 +12,7 @@ pub use utils::libos;
 
 pub struct UserHostCall {
     write_addr: Option<usize>,
+    open_addr: Option<usize>,
     stdout_addr: Option<usize>,
     smoltcp_addrinfo_addr: Option<usize>,
     smoltcp_connect: Option<usize>,
@@ -26,6 +27,7 @@ impl UserHostCall {
     fn new() -> Self {
         UserHostCall {
             write_addr: None,
+            open_addr: None,
             stdout_addr: None,
             smoltcp_addrinfo_addr: None,
             smoltcp_connect: None,
@@ -57,6 +59,7 @@ impl UserHostCall {
     pub fn get_or_find(&mut self, chc_id: CommonHostCall) -> usize {
         let entry_addr = match chc_id {
             CommonHostCall::Write => &mut self.write_addr,
+            CommonHostCall::Open => todo!(),
             CommonHostCall::Stdout => &mut self.stdout_addr,
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,

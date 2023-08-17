@@ -11,6 +11,7 @@ pub type IsolationID = u64;
 pub type ServiceName = String;
 pub type SymbolName = String;
 pub type HostCallResult = Result<(), HostCallError>;
+
 pub struct NetdevName {
     pub name: String, // like "tap-7a323b"
     pub subnet: core::net::Ipv4Addr,
@@ -38,9 +39,13 @@ pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
 
 // fdtab
 pub type HostWriteFunc = fn(i32, &str) -> isize;
+pub type HostOpenFunc = fn(&str, i32, i32) -> Result<usize, ()>;
 
 // stdio
 pub type HostStdioFunc = fn(&str) -> isize;
+
+// Fatfs
+pub type FatfsOpen = fn(&str) -> Result<u32, ()>;
 
 // socket
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
