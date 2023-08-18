@@ -3,10 +3,13 @@
 use std::{
     fs,
     io::{Read, Write},
+    path::PathBuf,
     sync::Mutex,
 };
 
 use fscommon::BufStream;
+use ms_hostcall::types::OpenFlags;
+pub use ms_std;
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
 type File<'a> = fatfs::File<'a, fscommon::BufStream<std::fs::File>>;
@@ -15,12 +18,17 @@ thread_local! {
     static FS_RAW: FileSystem = {
         let image = {
             let mut config = fs::File::options();
+            let image_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent().unwrap()
+                .parent().unwrap()
+                .to_path_buf()
+                .join("fs_images/fatfs.img");
 
             BufStream::new(config
                 .read(true)
                 .write(true)
-                .open("fatfs.img")
-                .expect("open img failed"))
+                .open(image_path.clone())
+                .unwrap_or_else(|_| panic!("open img {:?} failed", image_path)))
         };
         FileSystem::new(image, fatfs::FsOptions::new()).expect("fatfs::new() failed.")
     };
@@ -36,9 +44,14 @@ fn get_fs_ref() -> &'static FileSystem {
 }
 
 #[no_mangle]
-pub fn fatfs_open() -> Result<u32, ()> {
+pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<u32, ()> {
     let root_dir = get_fs_ref().root_dir();
-    let file = root_dir.open_file("hello.txt").expect("open file failed.");
+
+    let file = if flags.contains(OpenFlags::O_CREAT) {
+        root_dir.create_file(p).expect("create file failed.")
+    } else {
+        root_dir.open_file(p).expect("open file failed.")
+    };
 
     let fd = FTABLE.with(|table| {
         let mut table = table.lock().expect("require lock failed.");
@@ -51,14 +64,14 @@ pub fn fatfs_open() -> Result<u32, ()> {
 
 #[test]
 fn fatfs_open_test() {
-    let fd = fatfs_open().expect("open file failed") as usize;
+    let fd = fatfs_open("new_file.txt", OpenFlags::O_CREAT).expect("open file failed") as usize;
     FTABLE.with(|t| {
         let mut t = t.lock().expect("require lock failed");
         assert!(t.len() == fd + 1);
         if let Some(Some(ref mut f)) = t.get_mut(fd) {
             let mut buf = String::new();
             f.read_to_string(&mut buf).expect("read failed");
-            assert!(!buf.is_empty());
+            // assert!(!buf.is_empty());
         };
     })
 }

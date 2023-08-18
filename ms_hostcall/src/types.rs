@@ -7,6 +7,8 @@ use alloc::string::String;
 
 use crate::{HostCallID, IsolationContext};
 
+use bitflags::bitflags;
+
 pub type IsolationID = u64;
 pub type ServiceName = String;
 pub type SymbolName = String;
@@ -38,14 +40,27 @@ pub type DropHandlerFunc = unsafe fn();
 pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
 
 // fdtab
+bitflags! {
+    pub struct OpenFlags: u32 {
+       const O_APPEND = 1;
+       const O_CREAT = 2;
+    }
+
+}
+pub enum OpenMode {
+    RDONLY,
+    WRONLY,
+    RDWR,
+}
 pub type HostWriteFunc = fn(i32, &str) -> isize;
-pub type HostOpenFunc = fn(&str, i32, i32) -> Result<usize, ()>;
+pub type HostOpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<u32, ()>;
 
 // stdio
 pub type HostStdioFunc = fn(&str) -> isize;
 
 // Fatfs
-pub type FatfsOpen = fn(&str) -> Result<u32, ()>;
+
+pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<u32, ()>;
 
 // socket
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;

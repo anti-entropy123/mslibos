@@ -2,6 +2,8 @@ use crate::libos::USER_HOST_CALL;
 
 pub macro func_type {
     (write) => (ms_hostcall::types::HostWriteFunc),
+    (open) => (ms_hostcall::types::HostOpenFunc),
+    (fatfs_open) => (ms_hostcall::types::FatfsOpenFunc),
     (stdout) => (ms_hostcall::types::HostStdioFunc),
     (addrinfo) => (ms_hostcall::types::SmoltcpAddrInfoFunc),
     (connect) => (ms_hostcall::types::SmoltcpConnectFunc),
@@ -14,6 +16,8 @@ pub macro func_type {
 
 pub macro hostcall_id {
     (write) => (ms_hostcall::CommonHostCall::Write),
+    (open) => (ms_hostcall::CommonHostCall::Open),
+    (fatfs_open) => (ms_hostcall::CommonHostCall::FatfsOpen),
     (stdout) => (ms_hostcall::CommonHostCall::Stdout),
     (addrinfo) => (ms_hostcall::CommonHostCall::SmoltcpAddrInfo),
     (connect) => (ms_hostcall::CommonHostCall::SmoltcpConnect),

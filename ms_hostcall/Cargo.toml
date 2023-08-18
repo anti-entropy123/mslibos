@@ -9,8 +9,9 @@ edition = "2021"
 
 [dependencies]
 # smoltcp.workspace = true
-thiserror = "*"
-derive_more = "*"
+thiserror = "1.0.47"
+derive_more = "0.99.17"
+bitflags = "2.4.0"
 # managed = { version = "0.8", default-features = false, features = ["map"] }
 # defmt = { version = "0.3", optional = true }
 # libc = { version = "0.2.18", optional = true }

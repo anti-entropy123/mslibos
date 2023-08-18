@@ -11,6 +11,10 @@
         [
             "buffer",
             "target/debug/libbuffer.so"
+        ],
+        [
+            "fatfs",
+            "target/debug/libfatfs.so"
         ]
     ],
     "apps": [

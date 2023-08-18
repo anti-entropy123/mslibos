@@ -19,8 +19,10 @@ pub enum CommonHostCall {
     Stdout,
     #[display(fmt = "host_open")]
     Open,
-    // #[display(fmt = "init_net_dev")]
-    // SmoltcpInitDev,
+
+    #[display(fmt = "fatfs_open")]
+    FatfsOpen,
+
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
     #[display(fmt = "connect")]
@@ -29,6 +31,7 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "recv")]
     SmoltcpRecv,
+
     // #[display(fmt = "netdev_alloc")]
     // NetdevAlloc,
     // #[display(fmt = "netdev_dealloc")]
@@ -37,6 +40,7 @@ pub enum CommonHostCall {
     BufferAlloc,
     #[display(fmt = "access_buffer")]
     AccessBuffer,
+
     #[display(fmt = "get_time")]
     GetTime,
 }
@@ -56,6 +60,8 @@ impl HostCallID {
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
 
+                CommonHostCall::FatfsOpen => "fatfs".to_owned(),
+
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
                 CommonHostCall::SmoltcpSend => "socket".to_owned(),
@@ -63,6 +69,7 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc => "buffer".to_owned(),
                 CommonHostCall::AccessBuffer => "buffer".to_owned(),
+
                 CommonHostCall::GetTime => "time".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
