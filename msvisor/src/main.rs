@@ -18,6 +18,10 @@ struct Args {
     /// Preload all user modules to speed up.
     #[arg(long, default_value_t = false)]
     preload: bool,
+
+    /// show metrics json.
+    #[arg(long, default_value_t = false)]
+    metrics: bool,
 }
 
 fn main() {
@@ -38,6 +42,9 @@ fn main() {
     }
 
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
-    isol1.metric.analyze();
+    if args.metrics {
+        isol1.metric.analyze();
+    }
+
     drop(isol1);
 }
