@@ -20,5 +20,6 @@ jobs:
           profile: minimal
           toolchain: nightly-2023-08-04
           override: true
-      - run: cargo build --workspace && ./scripts/build_user.sh && cargo test
-
+      - run: cargo build --workspace && \
+              ./scripts/build_user.sh && \
+              cargo test

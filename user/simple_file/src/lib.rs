@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use ms_std::{
     agent::{FaaSFuncResult as Result, Zero},
     fs::File,
@@ -14,12 +14,15 @@ use ms_std::{
 pub fn main() -> Result<Zero> {
     let path = "lines.txt";
 
+    let data = "Rust LibOS Cool.";
     let mut output = File::create(path)?;
-    write!(output, "Rust\n💖\nFun").expect("");
+    write!(output, "{}", data).expect("");
 
     let mut input = File::open(path)?;
     let mut buf = Vec::new();
     input.read_to_end(&mut buf).expect("read failed");
+
+    assert_eq!(String::from_utf8_lossy(&buf), data);
 
     Ok(Zero::default().into())
 }

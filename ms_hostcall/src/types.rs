@@ -49,21 +49,25 @@ bitflags! {
 pub type Fd = u32;
 pub type Size = usize;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum OpenMode {
     RDONLY,
     WRONLY,
     RDWR,
 }
 pub type HostOpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
-pub type HostWriteFunc = fn(Fd, &str) -> Result<Size, ()>;
+pub type HostWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
+pub type HostReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
+pub type HostCloseFunc = fn(Fd) -> Result<(), ()>;
 
 // stdio
-pub type HostStdioFunc = fn(&str) -> Size;
+pub type HostStdioFunc = fn(&[u8]) -> Size;
 
 // Fatfs
 pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<Fd, ()>;
-pub type FatfsWriteFunc = fn(Fd, &str) -> Result<Size, ()>;
+pub type FatfsWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
+pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
+pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
 
 // socket
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;

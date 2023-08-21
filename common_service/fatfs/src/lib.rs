@@ -43,6 +43,26 @@ fn get_fs_ref() -> &'static FileSystem {
     unsafe { &*(fs_addr as *const FileSystem) }
 }
 
+fn get_file_mut(fd: Fd) -> &'static mut File<'static> {
+    FTABLE.with(|ft| {
+        let mut ft = ft.lock().expect("require lock failed.");
+        if let Some(Some(file)) = ft.get_mut(fd as usize) {
+            let file_addr = file as *const _ as usize;
+            // println!("get_file_mut: file addr=0x{:x}", file_addr);
+            unsafe { &mut *(file_addr as *mut File) }
+        } else {
+            panic!("fd don't exist");
+        }
+    })
+}
+
+#[no_mangle]
+pub fn fatfs_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
+    let file = get_file_mut(fd);
+
+    Ok(file.read(buf).expect("fatfs_read failed."))
+}
+
 #[no_mangle]
 pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<Fd, ()> {
     let root_dir = get_fs_ref().root_dir();
@@ -76,31 +96,39 @@ fn fatfs_open_test() {
     })
 }
 
-fn write(mut file: File, data: &[u8]) -> Size {
-    file.write_all(data).expect("write file failed");
-    data.len()
-}
-
 #[no_mangle]
-pub fn fatfs_write(fd: Fd, data: &[u8]) -> Result<Size, ()> {
-    let file = FTABLE.with(|ft| {
-        let ft = ft.lock().expect("require lock failed.");
-        if let Some(Some(file)) = ft.get(fd as usize) {
-            file.clone()
-        } else {
-            panic!("fd don't exist");
-        }
-    });
+pub fn fatfs_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
+    let file = get_file_mut(fd);
+    file.write_all(buf).expect("write file failed");
 
-    Ok(write(file, data))
+    Ok(buf.len())
 }
 
 #[test]
 fn fatfs_write_test() {
     let root_dir = get_fs_ref().root_dir();
-    let file = root_dir
+    let mut file = root_dir
         .create_file("hello.txt")
         .expect("create file failed");
 
-    assert!(write(file, b"Hello World!") > 0);
+    assert!(file.write(b"Hello World!").expect("write failed") > 0);
+}
+
+#[no_mangle]
+pub fn fatfs_close(fd: Fd) -> Result<(), ()> {
+    let mut old_file = None;
+
+    FTABLE.with(|ftable| {
+        let mut ftable = ftable.lock().expect("require lock failed.");
+        if (fd as usize) < ftable.len() {
+            std::mem::swap(&mut ftable[fd as usize], &mut old_file)
+        };
+    });
+
+    if let Some(file) = old_file {
+        drop(file);
+        Ok(())
+    } else {
+        Err(())
+    }
 }
