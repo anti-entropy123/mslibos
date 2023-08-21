@@ -1,3 +1,5 @@
+#![allow(improper_ctypes_definitions)]
+
 use core::{alloc::Layout, net::SocketAddrV4};
 
 use alloc::string::String;
