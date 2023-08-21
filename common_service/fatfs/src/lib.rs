@@ -76,17 +76,31 @@ fn fatfs_open_test() {
     })
 }
 
-#[no_mangle]
-pub fn fatfs_write() {
-    let root_dir = get_fs_ref().root_dir();
-    let mut file = root_dir
-        .create_file("hello.txt")
-        .expect("create file failed");
+fn write(mut file: File, data: &[u8]) -> usize {
+    file.write_all(data).expect("write file failed");
+    data.len()
+}
 
-    file.write_all(b"Hello World!").expect("write file failed");
+#[no_mangle]
+pub fn fatfs_write(fd: u32, data: &[u8]) {
+    let file = FTABLE.with(|ft| {
+        let ft = ft.lock().expect("require lock failed.");
+        if let Some(Some(file)) = ft.get(fd as usize) {
+            file.clone()
+        } else {
+            panic!("fd don't exist");
+        }
+    });
+
+    write(file, data);
 }
 
 #[test]
 fn fatfs_write_test() {
-    fatfs_write()
+    let root_dir = get_fs_ref().root_dir();
+    let file = root_dir
+        .create_file("hello.txt")
+        .expect("create file failed");
+
+    assert!(write(file, b"Hello World!") > 0);
 }
