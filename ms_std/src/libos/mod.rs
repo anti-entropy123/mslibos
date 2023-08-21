@@ -16,6 +16,7 @@ pub struct UserHostCall {
     stdout_addr: Option<usize>,
 
     fatfs_open_addr: Option<usize>,
+    fatfs_write_addr: Option<usize>,
 
     smoltcp_addrinfo_addr: Option<usize>,
     smoltcp_connect: Option<usize>,
@@ -36,6 +37,7 @@ impl UserHostCall {
             stdout_addr: None,
 
             fatfs_open_addr: None,
+            fatfs_write_addr: None,
 
             smoltcp_addrinfo_addr: None,
             smoltcp_connect: None,
@@ -74,6 +76,7 @@ impl UserHostCall {
             CommonHostCall::Stdout => &mut self.stdout_addr,
 
             CommonHostCall::FatfsOpen => &mut self.fatfs_open_addr,
+            CommonHostCall::FatfsWrite => &mut self.fatfs_write_addr,
 
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,

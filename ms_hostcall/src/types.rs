@@ -45,28 +45,31 @@ bitflags! {
        const O_APPEND = 1;
        const O_CREAT = 2;
     }
-
 }
+pub type Fd = u32;
+pub type Size = usize;
+
+#[derive(PartialEq)]
 pub enum OpenMode {
     RDONLY,
     WRONLY,
     RDWR,
 }
-pub type HostWriteFunc = fn(i32, &str) -> isize;
-pub type HostOpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<u32, ()>;
+pub type HostOpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
+pub type HostWriteFunc = fn(Fd, &str) -> Result<Size, ()>;
 
 // stdio
-pub type HostStdioFunc = fn(&str) -> isize;
+pub type HostStdioFunc = fn(&str) -> Size;
 
 // Fatfs
-
-pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<u32, ()>;
+pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<Fd, ()>;
+pub type FatfsWriteFunc = fn(Fd, &str) -> Result<Size, ()>;
 
 // socket
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
 pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<(), ()>;
 pub type SmoltcpSendFunc = fn(&[u8]) -> Result<(), ()>;
-pub type SmoltcpRecvFunc = fn(&mut [u8]) -> Result<usize, ()>;
+pub type SmoltcpRecvFunc = fn(&mut [u8]) -> Result<Size, ()>;
 pub type InitDevFunc = fn(NetdevName);
 pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 

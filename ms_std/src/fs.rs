@@ -29,17 +29,19 @@ impl File {
 }
 
 impl Write for File {
-    fn write_str(&mut self, _s: &str) -> core::fmt::Result {
-        todo!()
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        let _size = libos!(write(self.raw_fd, s)).expect("");
+
+        Ok(())
     }
 }
 
 impl Read for File {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, crate::io::Error> {
+    fn read(&mut self, _buf: &mut [u8]) -> Result<usize, crate::io::Error> {
         todo!()
     }
 
-    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize, crate::io::Error> {
+    fn read_to_end(&mut self, _buf: &mut Vec<u8>) -> Result<usize, crate::io::Error> {
         todo!()
     }
 }

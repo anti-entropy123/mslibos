@@ -22,6 +22,8 @@ pub enum CommonHostCall {
 
     #[display(fmt = "fatfs_open")]
     FatfsOpen,
+    #[display(fmt = "fatfs_write")]
+    FatfsWrite,
 
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
@@ -61,6 +63,7 @@ impl HostCallID {
                 CommonHostCall::Stdout => "stdio".to_owned(),
 
                 CommonHostCall::FatfsOpen => "fatfs".to_owned(),
+                CommonHostCall::FatfsWrite => "fatfs".to_owned(),
 
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),

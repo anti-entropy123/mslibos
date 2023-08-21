@@ -8,7 +8,7 @@ use std::{
 };
 
 use fscommon::BufStream;
-use ms_hostcall::types::OpenFlags;
+use ms_hostcall::types::{Fd, OpenFlags, Size};
 pub use ms_std;
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
@@ -44,7 +44,7 @@ fn get_fs_ref() -> &'static FileSystem {
 }
 
 #[no_mangle]
-pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<u32, ()> {
+pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<Fd, ()> {
     let root_dir = get_fs_ref().root_dir();
 
     let file = if flags.contains(OpenFlags::O_CREAT) {
@@ -76,13 +76,13 @@ fn fatfs_open_test() {
     })
 }
 
-fn write(mut file: File, data: &[u8]) -> usize {
+fn write(mut file: File, data: &[u8]) -> Size {
     file.write_all(data).expect("write file failed");
     data.len()
 }
 
 #[no_mangle]
-pub fn fatfs_write(fd: u32, data: &[u8]) {
+pub fn fatfs_write(fd: Fd, data: &[u8]) -> Result<Size, ()> {
     let file = FTABLE.with(|ft| {
         let ft = ft.lock().expect("require lock failed.");
         if let Some(Some(file)) = ft.get(fd as usize) {
@@ -92,7 +92,7 @@ pub fn fatfs_write(fd: u32, data: &[u8]) {
         }
     });
 
-    write(file, data);
+    Ok(write(file, data))
 }
 
 #[test]

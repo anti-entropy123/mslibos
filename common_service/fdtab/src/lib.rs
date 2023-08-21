@@ -5,8 +5,8 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
-use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{self, libos::libos};
+use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Size};
+use ms_std::{self, libos::libos, println};
 use spin::Mutex;
 
 enum DataSource {
@@ -15,7 +15,7 @@ enum DataSource {
 }
 
 struct File {
-    raw_fd: u32,
+    raw_fd: Fd,
     mode: OpenMode,
     src: DataSource,
 }
@@ -25,13 +25,30 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub fn host_write(fd: i32, buf: &str) -> isize {
+pub fn host_write(fd: Fd, buf: &str) -> Result<Size, ()> {
     match fd {
         1 | 2 => {
             libos!(stdout(buf));
-            buf.len() as isize
+            Ok(buf.len())
         }
-        _ => panic!(),
+        _ => {
+            let fdtab = FD_TABLE.lock();
+            println!("host_write: fd={}, fd_table.len()={}", fd, fdtab.len());
+            let file = fdtab
+                .get(fd as usize - 3)
+                .unwrap_or_else(|| panic!("file fd={} not exist?", fd));
+
+            if file.mode == OpenMode::RDONLY {
+                return Err(());
+            }
+
+            match file.src {
+                DataSource::FatFS => {
+                    Ok(libos!(fatfs_write(file.raw_fd, buf)).expect("fatfs write failed."))
+                }
+                DataSource::_Net => todo!(),
+            }
+        }
     }
 }
 
