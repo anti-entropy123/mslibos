@@ -104,7 +104,7 @@ pub fn host_open(path: &str, flags: OpenFlags, mode: OpenMode) -> Result<Fd, ()>
 #[no_mangle]
 pub fn host_close(fd: Fd) -> Result<(), ()> {
     match fd {
-        0 | 1 | 2 => Err(()),
+        0..=2 => Err(()),
         _ => {
             let file = get_file(fd);
             let mut fdtab = FD_TABLE.lock();
@@ -112,7 +112,8 @@ pub fn host_close(fd: Fd) -> Result<(), ()> {
 
             match file.src {
                 DataSource::FatFS => {
-                    Ok(libos!(fatfs_close(file.raw_fd)).expect("fatfs read failed."))
+                    libos!(fatfs_close(file.raw_fd)).expect("fatfs read failed.");
+                    Ok(())
                 }
                 DataSource::_Net => todo!(),
             }
