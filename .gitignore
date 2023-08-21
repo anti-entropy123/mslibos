@@ -6,5 +6,3 @@ target
 ./*.json
 *.log
 _members.txt
-
-**/*.img
