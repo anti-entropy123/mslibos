@@ -14,7 +14,9 @@ use agent::{FaaSFuncResult, Zero};
 pub mod console;
 
 pub mod agent;
+pub mod fs;
 pub mod init_context;
+pub mod io;
 pub mod libos;
 pub mod net;
 pub mod sync;

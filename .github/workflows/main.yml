@@ -14,11 +14,18 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout github repo (+ download lfs dependencies)
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Checkout LFS objects
+        run: git lfs checkout
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: nightly-2023-08-04
           override: true
-      - run: cargo build --workspace && ./scripts/build_user.sh && cargo test
-
+      - name: Build
+        run: cargo build --workspace && ./scripts/build_user.sh
+      - name: Rust Test
+        run: RUST_BACKTRACE=1 cargo test

@@ -5,7 +5,8 @@ use core::fmt;
 
 #[allow(unused)]
 pub fn print(args: fmt::Arguments) {
-    libos!(write(1, &format!("{}", args)));
+    let s = &format!("{}", args);
+    libos!(write(1, s.as_bytes()));
 }
 
 #[macro_export]
