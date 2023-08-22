@@ -15,10 +15,25 @@ use derive_more::Display;
 pub enum CommonHostCall {
     #[display(fmt = "host_write")]
     Write,
+    #[display(fmt = "host_read")]
+    Read,
+    #[display(fmt = "host_open")]
+    Open,
+    #[display(fmt = "host_close")]
+    Close,
+
     #[display(fmt = "host_stdout")]
     Stdout,
-    // #[display(fmt = "init_net_dev")]
-    // SmoltcpInitDev,
+
+    #[display(fmt = "fatfs_open")]
+    FatfsOpen,
+    #[display(fmt = "fatfs_write")]
+    FatfsWrite,
+    #[display(fmt = "fatfs_read")]
+    FatfsRead,
+    #[display(fmt = "fatfs_close")]
+    FatfsClose,
+
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
     #[display(fmt = "connect")]
@@ -27,6 +42,7 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "recv")]
     SmoltcpRecv,
+
     // #[display(fmt = "netdev_alloc")]
     // NetdevAlloc,
     // #[display(fmt = "netdev_dealloc")]
@@ -35,6 +51,7 @@ pub enum CommonHostCall {
     BufferAlloc,
     #[display(fmt = "access_buffer")]
     AccessBuffer,
+
     #[display(fmt = "get_time")]
     GetTime,
 }
@@ -50,8 +67,16 @@ impl HostCallID {
         match self {
             Self::Common(common) => match common {
                 CommonHostCall::Write => "fdtab".to_owned(),
+                CommonHostCall::Open => "fdtab".to_owned(),
+                CommonHostCall::Read => "fdtab".to_owned(),
+                CommonHostCall::Close => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
+
+                CommonHostCall::FatfsOpen => "fatfs".to_owned(),
+                CommonHostCall::FatfsWrite => "fatfs".to_owned(),
+                CommonHostCall::FatfsRead => "fatfs".to_owned(),
+                CommonHostCall::FatfsClose => "fatfs".to_owned(),
 
                 CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
                 CommonHostCall::SmoltcpConnect => "socket".to_owned(),
@@ -60,6 +85,7 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc => "buffer".to_owned(),
                 CommonHostCall::AccessBuffer => "buffer".to_owned(),
+
                 CommonHostCall::GetTime => "time".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),

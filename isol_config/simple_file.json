@@ -1,0 +1,26 @@
+{
+    "services": [
+        [
+            "fdtab",
+            "target/debug/libfdtab.so"
+        ],
+        [
+            "stdio",
+            "target/debug/libstdio.so"
+        ],
+        [
+            "buffer",
+            "target/debug/libbuffer.so"
+        ],
+        [
+            "fatfs",
+            "target/debug/libfatfs.so"
+        ]
+    ],
+    "apps": [
+        [
+            "hello1",
+            "target/debug/libsimple_file.so"
+        ]
+    ]
+}
