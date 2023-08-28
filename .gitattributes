@@ -1,1 +1,1 @@
-fs_images/fatfs.img filter=lfs diff=lfs merge=lfs -text
+# fs_images/fatfs.img filter=lfs diff=lfs merge=lfs -text

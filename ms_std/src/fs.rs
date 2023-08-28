@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use ms_hostcall::types::{Fd, OpenFlags, OpenMode};
 
 use crate::{
@@ -30,7 +29,7 @@ impl File {
 
 impl Write for File {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let _size = libos!(write(self.raw_fd, s.as_bytes())).expect("");
+        let _size = libos!(write(self.raw_fd, s.as_bytes())).expect("write failed.");
 
         Ok(())
     }
@@ -39,24 +38,6 @@ impl Write for File {
 impl Read for File {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, crate::io::Error> {
         libos!(read(self.raw_fd, buf))
-    }
-
-    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize, crate::io::Error> {
-        let mut size = 0;
-        let mut buffer = [0; 1024];
-
-        loop {
-            let s = self.read(&mut buffer).expect("File::read failed.");
-            // println!("read {} bytes, total {} bytes.", s, size);
-            if s == 0 {
-                break;
-            }
-            size += s;
-
-            buf.extend_from_slice(&buffer[0..s])
-        }
-
-        Ok(size)
     }
 }
 

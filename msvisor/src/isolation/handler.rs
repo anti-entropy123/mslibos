@@ -41,14 +41,14 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
         .interface::<fn()>(&hc_id.to_string())
         .unwrap_or_else(|| {
             panic!(
-                "not found interface {} in service {}",
+                "not found interface \"{}\" in service \"{}\"",
                 hc_id,
                 hc_id.belong_to()
             )
         });
     let addr = *symbol as usize;
 
-    log::debug!("host_write addr = 0x{:x}", addr);
+    log::debug!("interface '{}' addr = 0x{:x}", hc_id, addr);
     addr
 }
 
@@ -88,8 +88,8 @@ fn find_host_call_test() {
 
     let fs_svc = isol.service_or_load(&"fdtab".to_string());
     let symbol = fs_svc
-        .interface::<fn()>("host_write")
-        .expect("not found host_write");
+        .interface::<fn()>("write")
+        .expect("not found interface 'write'");
 
     assert!(addr == *symbol as usize)
 }
