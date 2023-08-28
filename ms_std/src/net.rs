@@ -4,8 +4,9 @@ use core::{
 };
 
 use alloc::vec::Vec;
+use ms_hostcall::types::Fd;
 
-use crate::libos::libos;
+use crate::{io::Write, libos::libos};
 
 #[derive(PartialEq, Debug)]
 enum State {
@@ -15,37 +16,54 @@ enum State {
 }
 
 pub struct TcpStream {
+    raw_fd: Fd,
     state: State,
 }
 
 impl TcpStream {
     pub fn connect(addr: SocketAddr) -> Result<Self, ()> {
         // println!("connect to {}", addr);
-        let mut stream = Self {
-            state: State::Connect,
-        };
+
         let sockaddrv4 = match addr.inner {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
-        libos!(connect(sockaddrv4)).expect("libos::connect failed");
+        let raw_fd = libos!(connect(sockaddrv4)).expect("libos::connect failed");
+        let mut stream = Self {
+            raw_fd,
+            state: State::Connect,
+        };
         stream.state = State::Request;
 
         Ok(stream)
     }
 
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
-        assert_eq!(self.state, State::Request);
-        libos!(send(data)).expect("send data failed");
+        if self.state != State::Request {
+            return Err(());
+        }
+
+        libos!(write(self.raw_fd, data)).expect("send data failed");
         self.state = State::Response;
         Ok(())
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
-        assert_eq!(self.state, State::Response);
-        let len = libos!(recv(buf)).expect("recv data failed");
+        if self.state != State::Response {
+            return Err(());
+        }
+
+        let len = libos!(read(self.raw_fd, buf)).expect("recv data failed");
 
         Ok(len)
+    }
+}
+
+impl Write for TcpStream {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.write_all(s.as_bytes()).expect("write_all failed.");
+
+        Ok(())
     }
 }
 

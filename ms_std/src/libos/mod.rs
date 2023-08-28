@@ -15,6 +15,7 @@ pub struct UserHostCall {
     open_addr: Option<usize>,
     read_addr: Option<usize>,
     close_addr: Option<usize>,
+    connect_addr: Option<usize>,
 
     stdout_addr: Option<usize>,
 
@@ -41,6 +42,7 @@ impl UserHostCall {
             open_addr: None,
             read_addr: None,
             close_addr: None,
+            connect_addr: None,
 
             stdout_addr: None,
 
@@ -84,6 +86,7 @@ impl UserHostCall {
             CommonHostCall::Open => &mut self.open_addr,
             CommonHostCall::Read => &mut self.read_addr,
             CommonHostCall::Close => &mut self.close_addr,
+            CommonHostCall::Connect => &mut self.connect_addr,
 
             CommonHostCall::Stdout => &mut self.stdout_addr,
 
@@ -102,6 +105,7 @@ impl UserHostCall {
 
             CommonHostCall::GetTime => &mut self.get_time,
         };
+
         if entry_addr.is_none() {
             let find_host_call = UserHostCall::find_host_call();
             let addr =

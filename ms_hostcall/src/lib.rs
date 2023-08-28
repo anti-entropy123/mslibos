@@ -13,14 +13,16 @@ use derive_more::Display;
 #[derive(Debug, Display)]
 #[repr(C)]
 pub enum CommonHostCall {
-    #[display(fmt = "host_write")]
+    #[display(fmt = "write")]
     Write,
-    #[display(fmt = "host_read")]
+    #[display(fmt = "read")]
     Read,
-    #[display(fmt = "host_open")]
+    #[display(fmt = "open")]
     Open,
-    #[display(fmt = "host_close")]
+    #[display(fmt = "close")]
     Close,
+    #[display(fmt = "connect")]
+    Connect,
 
     #[display(fmt = "host_stdout")]
     Stdout,
@@ -36,11 +38,11 @@ pub enum CommonHostCall {
 
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
-    #[display(fmt = "connect")]
+    #[display(fmt = "smol_connect")]
     SmoltcpConnect,
-    #[display(fmt = "send")]
+    #[display(fmt = "smol_send")]
     SmoltcpSend,
-    #[display(fmt = "recv")]
+    #[display(fmt = "smol_recv")]
     SmoltcpRecv,
 
     // #[display(fmt = "netdev_alloc")]
@@ -66,25 +68,25 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
-                CommonHostCall::Write => "fdtab".to_owned(),
-                CommonHostCall::Open => "fdtab".to_owned(),
-                CommonHostCall::Read => "fdtab".to_owned(),
-                CommonHostCall::Close => "fdtab".to_owned(),
+                CommonHostCall::Write
+                | CommonHostCall::Open
+                | CommonHostCall::Read
+                | CommonHostCall::Close
+                | CommonHostCall::Connect => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
 
-                CommonHostCall::FatfsOpen => "fatfs".to_owned(),
-                CommonHostCall::FatfsWrite => "fatfs".to_owned(),
-                CommonHostCall::FatfsRead => "fatfs".to_owned(),
-                CommonHostCall::FatfsClose => "fatfs".to_owned(),
+                CommonHostCall::FatfsOpen
+                | CommonHostCall::FatfsWrite
+                | CommonHostCall::FatfsRead
+                | CommonHostCall::FatfsClose => "fatfs".to_owned(),
 
-                CommonHostCall::SmoltcpAddrInfo => "socket".to_owned(),
-                CommonHostCall::SmoltcpConnect => "socket".to_owned(),
-                CommonHostCall::SmoltcpSend => "socket".to_owned(),
-                CommonHostCall::SmoltcpRecv => "socket".to_owned(),
+                CommonHostCall::SmoltcpAddrInfo
+                | CommonHostCall::SmoltcpConnect
+                | CommonHostCall::SmoltcpSend
+                | CommonHostCall::SmoltcpRecv => "socket".to_owned(),
 
-                CommonHostCall::BufferAlloc => "buffer".to_owned(),
-                CommonHostCall::AccessBuffer => "buffer".to_owned(),
+                CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },
@@ -99,7 +101,7 @@ fn format_hostcall_id() {
 
     let result = CommonHostCall::Write;
     assert!(
-        result.to_string().eq("host_write"),
+        result.to_string().eq("write"),
         "actual format result is {}",
         result
     )
