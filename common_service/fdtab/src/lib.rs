@@ -8,14 +8,14 @@ use core::net::SocketAddrV4;
 
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
-use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Size};
+use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Size, Socket};
 use ms_std::{self, libos::libos};
 use spin::Mutex;
 
 #[derive(Clone)]
 enum DataSource {
     FatFS(Fd),
-    Net,
+    Net(Socket),
 }
 
 #[derive(Clone)]
@@ -59,8 +59,8 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
                 DataSource::FatFS(raw_fd) => {
                     Ok(libos!(fatfs_read(raw_fd, buf)).expect("fatfs read failed."))
                 }
-                DataSource::Net => {
-                    libos!(recv(buf))
+                DataSource::Net(socket) => {
+                    libos!(recv(socket, buf))
                 }
             }
         }
@@ -85,7 +85,7 @@ pub fn write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
                 DataSource::FatFS(raw_fd) => {
                     Ok(libos!(fatfs_write(raw_fd, buf)).expect("fatfs write failed."))
                 }
-                DataSource::Net => libos!(send(buf)).map(|_| buf.len()),
+                DataSource::Net(socket) => libos!(send(socket, buf)).map(|_| buf.len()),
             }
         }
     }
@@ -118,7 +118,7 @@ pub fn close(fd: Fd) -> Result<(), ()> {
                     libos!(fatfs_close(raw_fd)).expect("fatfs read failed.");
                     Ok(())
                 }
-                DataSource::Net => todo!(),
+                DataSource::Net(_socket) => todo!(),
             }
         }
     }
@@ -126,10 +126,10 @@ pub fn close(fd: Fd) -> Result<(), ()> {
 
 #[no_mangle]
 pub fn connect(addr: SocketAddrV4) -> Result<Fd, ()> {
-    libos!(smol_connect(addr)).map(|_| {
+    libos!(smol_connect(addr)).map(|socket| {
         let file = File {
             mode: OpenMode::RDWR,
-            src: DataSource::Net,
+            src: DataSource::Net(socket),
         };
 
         add_new_file(file)

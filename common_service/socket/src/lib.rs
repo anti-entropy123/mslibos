@@ -20,7 +20,7 @@ use smoltcp::{
 };
 
 use crate::setup_tap::exec_tap_setup;
-use ms_hostcall::types::{NetdevName, Size};
+use ms_hostcall::types::{NetdevName, Size, Socket};
 use ms_std::init_context;
 
 thread_local! {
@@ -76,6 +76,14 @@ lazy_static! {
     };
 }
 
+fn from_socket(handle: Socket) -> SocketHandle {
+    unsafe { core::mem::transmute(handle) }
+}
+
+fn to_socket(handle: SocketHandle) -> Socket {
+    unsafe { core::mem::transmute(handle) }
+}
+
 #[no_mangle]
 pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
     let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
@@ -121,7 +129,7 @@ pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
 }
 
 #[no_mangle]
-pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
+pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<Socket, ()> {
     // let address = address
     // Create sockets
     let tcp_socket = {
@@ -143,11 +151,11 @@ pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
     let local_port = 49152 + rand::random::<u16>() % 16384;
     socket.connect(cx, sockaddr, local_port).unwrap();
 
-    Ok(())
+    Ok(to_socket(tcp_handle))
 }
 
 #[no_mangle]
-pub fn smol_send(data: &[u8]) -> Result<(), ()> {
+pub fn smol_send(handle: Socket, data: &[u8]) -> Result<(), ()> {
     let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
     let mut iface = IFACE.lock().unwrap();
 
@@ -159,7 +167,7 @@ pub fn smol_send(data: &[u8]) -> Result<(), ()> {
         });
 
         let mut sockets = SOCKETS.lock().unwrap();
-        let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
+        let socket = sockets.get_mut::<tcp::Socket>(from_socket(handle));
 
         if socket.may_send() {
             socket.send_slice(data).expect("cannot send");
@@ -172,7 +180,7 @@ pub fn smol_send(data: &[u8]) -> Result<(), ()> {
 }
 
 #[no_mangle]
-pub fn smol_recv(buf: &mut [u8]) -> Result<Size, ()> {
+pub fn smol_recv(handle: Socket, buf: &mut [u8]) -> Result<Size, ()> {
     let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
     let mut iface = IFACE.lock().unwrap();
 
@@ -186,7 +194,7 @@ pub fn smol_recv(buf: &mut [u8]) -> Result<Size, ()> {
         });
 
         let mut sockets = SOCKETS.lock().unwrap();
-        let socket = sockets.get_mut::<tcp::Socket>(SocketHandle::default());
+        let socket = sockets.get_mut::<tcp::Socket>(from_socket(handle));
 
         if freesize == 0 || !socket.may_recv() {
             return Ok(cursor);

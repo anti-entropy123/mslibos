@@ -71,10 +71,12 @@ pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
 pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
 
 // socket
+pub type Socket = usize;
+
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
-pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<(), ()>;
-pub type SmoltcpSendFunc = fn(&[u8]) -> Result<(), ()>;
-pub type SmoltcpRecvFunc = fn(&mut [u8]) -> Result<Size, ()>;
+pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<Socket, ()>;
+pub type SmoltcpSendFunc = fn(Socket, &[u8]) -> Result<(), ()>;
+pub type SmoltcpRecvFunc = fn(Socket, &mut [u8]) -> Result<Size, ()>;
 // pub type InitDevFunc = fn(NetdevName);
 // pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 
