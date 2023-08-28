@@ -101,7 +101,7 @@ fn format_hostcall_id() {
 
     let result = CommonHostCall::Write;
     assert!(
-        result.to_string().eq("host_write"),
+        result.to_string().eq("write"),
         "actual format result is {}",
         result
     )
