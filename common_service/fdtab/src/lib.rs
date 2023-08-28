@@ -1,7 +1,10 @@
 #![no_std]
+#![feature(ip_in_core)]
 #![allow(clippy::result_unit_err)]
 
 extern crate alloc;
+
+use core::net::SocketAddrV4;
 
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
@@ -11,19 +14,24 @@ use spin::Mutex;
 
 #[derive(Clone)]
 enum DataSource {
-    FatFS,
-    _Net,
+    FatFS(Fd),
+    Net,
 }
 
 #[derive(Clone)]
 struct File {
-    raw_fd: Fd,
     mode: OpenMode,
     src: DataSource,
 }
 
 lazy_static! {
     static ref FD_TABLE: Mutex<Vec<Option<File>>> = Mutex::new(Vec::new());
+}
+
+fn add_new_file(file: File) -> Fd {
+    let mut fdtab = FD_TABLE.lock();
+    fdtab.push(Some(file));
+    (fdtab.len() + 2) as Fd
 }
 
 fn get_file(fd: Fd) -> File {
@@ -37,7 +45,7 @@ fn get_file(fd: Fd) -> File {
 }
 
 #[no_mangle]
-pub fn host_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
+pub fn read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
     match fd {
         0 => unimplemented!(),
         1 | 2 => Err(()),
@@ -48,17 +56,19 @@ pub fn host_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
             }
 
             match file.src {
-                DataSource::FatFS => {
-                    Ok(libos!(fatfs_read(file.raw_fd, buf)).expect("fatfs read failed."))
+                DataSource::FatFS(raw_fd) => {
+                    Ok(libos!(fatfs_read(raw_fd, buf)).expect("fatfs read failed."))
                 }
-                DataSource::_Net => todo!(),
+                DataSource::Net => {
+                    libos!(recv(buf))
+                }
             }
         }
     }
 }
 
 #[no_mangle]
-pub fn host_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
+pub fn write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
     match fd {
         0 => unimplemented!(),
         1 | 2 => {
@@ -72,37 +82,30 @@ pub fn host_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
             }
 
             match file.src {
-                DataSource::FatFS => {
-                    Ok(libos!(fatfs_write(file.raw_fd, buf)).expect("fatfs write failed."))
+                DataSource::FatFS(raw_fd) => {
+                    Ok(libos!(fatfs_write(raw_fd, buf)).expect("fatfs write failed."))
                 }
-                DataSource::_Net => todo!(),
+                DataSource::Net => libos!(send(buf)).map(|_| buf.len()),
             }
         }
     }
 }
 
 #[no_mangle]
-pub fn host_open(path: &str, flags: OpenFlags, mode: OpenMode) -> Result<Fd, ()> {
+pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> Result<Fd, ()> {
     let file = {
-        let fd = libos!(fatfs_open(path, flags)).expect("fatfs open file failed");
+        let raw_fd = libos!(fatfs_open(path, flags)).expect("fatfs open file failed");
         File {
-            raw_fd: fd,
             mode,
-            src: DataSource::FatFS,
+            src: DataSource::FatFS(raw_fd),
         }
     };
 
-    let fd = {
-        let mut fdtab = FD_TABLE.lock();
-        fdtab.push(Some(file));
-        fdtab.len() + 2
-    };
-
-    Ok(fd as Fd)
+    Ok(add_new_file(file))
 }
 
 #[no_mangle]
-pub fn host_close(fd: Fd) -> Result<(), ()> {
+pub fn close(fd: Fd) -> Result<(), ()> {
     match fd {
         0..=2 => Err(()),
         _ => {
@@ -111,12 +114,24 @@ pub fn host_close(fd: Fd) -> Result<(), ()> {
             fdtab[fd as usize - 3] = None;
 
             match file.src {
-                DataSource::FatFS => {
-                    libos!(fatfs_close(file.raw_fd)).expect("fatfs read failed.");
+                DataSource::FatFS(raw_fd) => {
+                    libos!(fatfs_close(raw_fd)).expect("fatfs read failed.");
                     Ok(())
                 }
-                DataSource::_Net => todo!(),
+                DataSource::Net => todo!(),
             }
         }
     }
+}
+
+#[no_mangle]
+pub fn connect(addr: SocketAddrV4) -> Result<Fd, ()> {
+    libos!(smol_connect(addr)).map(|_| {
+        let file = File {
+            mode: OpenMode::RDWR,
+            src: DataSource::Net,
+        };
+
+        add_new_file(file)
+    })
 }

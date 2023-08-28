@@ -20,7 +20,7 @@ use smoltcp::{
 };
 
 use crate::setup_tap::exec_tap_setup;
-use ms_hostcall::types::NetdevName;
+use ms_hostcall::types::{NetdevName, Size};
 use ms_std::init_context;
 
 thread_local! {
@@ -121,7 +121,7 @@ pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
 }
 
 #[no_mangle]
-pub fn connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
+pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
     // let address = address
     // Create sockets
     let tcp_socket = {
@@ -147,7 +147,7 @@ pub fn connect(sockaddr: SocketAddrV4) -> Result<(), ()> {
 }
 
 #[no_mangle]
-pub fn send(data: &[u8]) -> Result<(), ()> {
+pub fn smol_send(data: &[u8]) -> Result<(), ()> {
     let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
     let mut iface = IFACE.lock().unwrap();
 
@@ -172,7 +172,7 @@ pub fn send(data: &[u8]) -> Result<(), ()> {
 }
 
 #[no_mangle]
-pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
+pub fn smol_recv(buf: &mut [u8]) -> Result<Size, ()> {
     let fd = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
     let mut iface = IFACE.lock().unwrap();
 
@@ -211,4 +211,4 @@ pub fn recv(buf: &mut [u8]) -> Result<usize, ()> {
 }
 
 #[no_mangle]
-pub fn close_tcp() {}
+pub fn smol_close() {}

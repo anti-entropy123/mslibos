@@ -55,10 +55,11 @@ pub enum OpenMode {
     WRONLY,
     RDWR,
 }
-pub type HostOpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
-pub type HostWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
-pub type HostReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
-pub type HostCloseFunc = fn(Fd) -> Result<(), ()>;
+pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
+pub type WriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
+pub type ReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
+pub type CloseFunc = fn(Fd) -> Result<(), ()>;
+pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
 
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;
@@ -74,8 +75,8 @@ pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
 pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<(), ()>;
 pub type SmoltcpSendFunc = fn(&[u8]) -> Result<(), ()>;
 pub type SmoltcpRecvFunc = fn(&mut [u8]) -> Result<Size, ()>;
-pub type InitDevFunc = fn(NetdevName);
-pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
+// pub type InitDevFunc = fn(NetdevName);
+// pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;

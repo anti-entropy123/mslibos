@@ -4,6 +4,7 @@ use core::{
 };
 
 use alloc::vec::Vec;
+use ms_hostcall::types::Fd;
 
 use crate::libos::libos;
 
@@ -15,20 +16,23 @@ enum State {
 }
 
 pub struct TcpStream {
+    _fd: Fd,
     state: State,
 }
 
 impl TcpStream {
     pub fn connect(addr: SocketAddr) -> Result<Self, ()> {
         // println!("connect to {}", addr);
-        let mut stream = Self {
-            state: State::Connect,
-        };
+
         let sockaddrv4 = match addr.inner {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
-        libos!(connect(sockaddrv4)).expect("libos::connect failed");
+        let fd = libos!(connect(sockaddrv4)).expect("libos::connect failed");
+        let mut stream = Self {
+            _fd: fd,
+            state: State::Connect,
+        };
         stream.state = State::Request;
 
         Ok(stream)

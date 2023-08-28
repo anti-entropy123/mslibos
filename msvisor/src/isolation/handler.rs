@@ -41,7 +41,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
         .interface::<fn()>(&hc_id.to_string())
         .unwrap_or_else(|| {
             panic!(
-                "not found interface {} in service {}",
+                "not found interface \"{}\" in service \"{}\"",
                 hc_id,
                 hc_id.belong_to()
             )
