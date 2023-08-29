@@ -100,6 +100,7 @@ fn fatfs_open_test() {
 pub fn fatfs_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
     let file = get_file_mut(fd);
     file.write_all(buf).expect("write file failed");
+    file.flush().expect("flush failed");
 
     Ok(buf.len())
 }

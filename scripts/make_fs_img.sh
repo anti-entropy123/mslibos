@@ -1,8 +1,15 @@
 #!/bin/bash
 
-if [ ! -d "./fs_images" ]; then
-  mkdir ./fs_images
+dir="./fs_images"
+image="$dir/fatfs.img"
+
+if [ ! -d "$dir" ]; then
+  mkdir "$dir"
 fi
 
-dd if=/dev/zero of=./fs_images/fatfs.img bs=1M seek=128 count=0 && \
-    mkfs.fat ./fs_images/fatfs.img
+if [ -f "$image" ]; then
+  rm "$image"
+fi
+
+dd if=/dev/zero of="$image" bs=1M seek=32 count=0 && \
+    mkfs.fat "$image"

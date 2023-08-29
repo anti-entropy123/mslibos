@@ -20,6 +20,12 @@ jobs:
         #   lfs: true
       # - name: Checkout LFS objects
       #   run: git lfs checkout
+      - run: mkdir fs_images
+      - name: pull Fatfs image
+        uses: schmiddim/action-wget-unzip@v2
+        with:
+          url: 'http://47.92.106.203:3306/fatfs.zip'
+          destination: fs_images/
       - name: install rust toolchain
         uses: actions-rs/toolchain@v1
         with:
