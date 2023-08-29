@@ -5,7 +5,7 @@ use core::{alloc::Layout, net::SocketAddrV4};
 use alloc::string::String;
 // use smoltcp::{iface::Interface, phy::TunTapInterface};
 
-use crate::{HostCallID, IsolationContext};
+use crate::{err::LibOSResult, HostCallID, IsolationContext};
 
 use bitflags::bitflags;
 
@@ -45,21 +45,23 @@ bitflags! {
        const O_APPEND = 1;
        const O_CREAT = 2;
     }
+
+    #[derive(PartialEq, Clone)]
+    pub struct OpenMode: u32 {
+        const RD = 1;
+        const WR = 2;
+        const RDWR = 3;
+    }
 }
 pub type Fd = u32;
 pub type Size = usize;
 
-#[derive(PartialEq, Clone)]
-pub enum OpenMode {
-    RDONLY,
-    WRONLY,
-    RDWR,
-}
 pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
-pub type WriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
-pub type ReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
+pub type WriteFunc = fn(Fd, &[u8]) -> LibOSResult<Size>;
+pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
 pub type CloseFunc = fn(Fd) -> Result<(), ()>;
 pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
+pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
 
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;

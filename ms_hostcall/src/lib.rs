@@ -4,7 +4,9 @@
 
 extern crate alloc;
 
+pub mod err;
 pub mod types;
+
 use alloc::{borrow::ToOwned, string::String};
 use types::{IsolationID, ServiceName};
 
@@ -23,6 +25,10 @@ pub enum CommonHostCall {
     Close,
     #[display(fmt = "connect")]
     Connect,
+    #[display(fmt = "socket")]
+    Socket,
+    #[display(fmt = "bind")]
+    Bind,
 
     #[display(fmt = "host_stdout")]
     Stdout,
@@ -72,7 +78,9 @@ impl HostCallID {
                 | CommonHostCall::Open
                 | CommonHostCall::Read
                 | CommonHostCall::Close
-                | CommonHostCall::Connect => "fdtab".to_owned(),
+                | CommonHostCall::Connect
+                | CommonHostCall::Socket
+                | CommonHostCall::Bind => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
 

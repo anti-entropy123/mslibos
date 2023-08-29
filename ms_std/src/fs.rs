@@ -19,7 +19,7 @@ impl File {
     }
 
     pub fn open(p: &str) -> Result<Self, ()> {
-        let mode = OpenMode::RDONLY;
+        let mode = OpenMode::RD;
         let flags = OpenFlags::empty();
         let raw_fd = libos!(open(p, flags, mode)).expect("open file failed.");
 
@@ -29,15 +29,17 @@ impl File {
 
 impl Write for File {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let _size = libos!(write(self.raw_fd, s.as_bytes())).expect("write failed.");
-
-        Ok(())
+        if libos!(write(self.raw_fd, s.as_bytes())).is_err() {
+            Err(core::fmt::Error)
+        } else {
+            Ok(())
+        }
     }
 }
 
 impl Read for File {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, crate::io::Error> {
-        libos!(read(self.raw_fd, buf))
+        libos!(read(self.raw_fd, buf)).map_err(|_| ())
     }
 }
 

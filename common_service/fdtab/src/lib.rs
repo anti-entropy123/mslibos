@@ -8,7 +8,10 @@ use core::net::SocketAddrV4;
 
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
-use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Size, Socket};
+use ms_hostcall::{
+    err::{LibOSErr, LibOSResult},
+    types::{Fd, OpenFlags, OpenMode, Size, Socket},
+};
 use ms_std::{self, libos::libos};
 use spin::Mutex;
 
@@ -22,6 +25,18 @@ enum DataSource {
 struct File {
     mode: OpenMode,
     src: DataSource,
+}
+
+impl File {
+    fn can_read(&self) -> bool {
+        // OpenMode::RDWR => 011;
+        // OpenMode::RD   => 001;
+        self.mode.contains(OpenMode::RD)
+    }
+
+    fn can_write(&self) -> bool {
+        self.mode.contains(OpenMode::WR)
+    }
 }
 
 lazy_static! {
@@ -45,47 +60,52 @@ fn get_file(fd: Fd) -> File {
 }
 
 #[no_mangle]
-pub fn read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
+pub fn read(fd: Fd, buf: &mut [u8]) -> LibOSResult<Size> {
     match fd {
+        // Maybe stdin can be implemented.
         0 => unimplemented!(),
-        1 | 2 => Err(()),
+        1 | 2 => Err(LibOSErr::BadFileDescriptor),
         _ => {
             let file = get_file(fd);
-            if file.mode == OpenMode::WRONLY {
-                return Err(());
+            if !file.can_read() {
+                return Err(LibOSErr::NoReadPerm);
             }
 
             match file.src {
                 DataSource::FatFS(raw_fd) => {
-                    Ok(libos!(fatfs_read(raw_fd, buf)).expect("fatfs read failed."))
+                    libos!(fatfs_read(raw_fd, buf)).map_err(|_| LibOSErr::Unknown)
                 }
-                DataSource::Net(socket) => {
-                    libos!(recv(socket, buf))
-                }
+                DataSource::Net(socket) => libos!(recv(socket, buf)).map_err(|_| LibOSErr::Unknown),
             }
         }
     }
 }
 
 #[no_mangle]
-pub fn write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
+pub fn write(fd: Fd, buf: &[u8]) -> LibOSResult<Size> {
     match fd {
-        0 => unimplemented!(),
+        0 => Err(LibOSErr::BadFileDescriptor),
         1 | 2 => {
             libos!(stdout(buf));
             Ok(buf.len())
         }
         _ => {
             let file = get_file(fd);
-            if file.mode == OpenMode::RDONLY {
-                return Err(());
+            if !file.can_write() {
+                return Err(LibOSErr::NoWritePerm);
             }
 
             match file.src {
                 DataSource::FatFS(raw_fd) => {
-                    Ok(libos!(fatfs_write(raw_fd, buf)).expect("fatfs write failed."))
+                    libos!(fatfs_write(raw_fd, buf)).map_err(|_| LibOSErr::Unknown)
                 }
-                DataSource::Net(socket) => libos!(send(socket, buf)).map(|_| buf.len()),
+                DataSource::Net(socket) => {
+                    if libos!(send(socket, buf)).is_err() {
+                        Err(LibOSErr::Unknown)
+                    } else {
+                        Ok(buf.len())
+                    }
+                }
             }
         }
     }
@@ -134,4 +154,9 @@ pub fn connect(addr: SocketAddrV4) -> Result<Fd, ()> {
 
         add_new_file(file)
     })
+}
+
+#[no_mangle]
+pub fn bind(_addr: SocketAddrV4) -> LibOSResult<Fd> {
+    Err(LibOSErr::Unknown)
 }

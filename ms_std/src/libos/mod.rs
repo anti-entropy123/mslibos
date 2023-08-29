@@ -16,6 +16,8 @@ pub struct UserHostCall {
     read_addr: Option<usize>,
     close_addr: Option<usize>,
     connect_addr: Option<usize>,
+    socket_addr: Option<usize>,
+    bind_addr: Option<usize>,
 
     stdout_addr: Option<usize>,
 
@@ -43,6 +45,8 @@ impl UserHostCall {
             read_addr: None,
             close_addr: None,
             connect_addr: None,
+            socket_addr: None,
+            bind_addr: None,
 
             stdout_addr: None,
 
@@ -87,6 +91,8 @@ impl UserHostCall {
             CommonHostCall::Read => &mut self.read_addr,
             CommonHostCall::Close => &mut self.close_addr,
             CommonHostCall::Connect => &mut self.connect_addr,
+            CommonHostCall::Socket => &mut self.socket_addr,
+            CommonHostCall::Bind => &mut self.bind_addr,
 
             CommonHostCall::Stdout => &mut self.stdout_addr,
 
