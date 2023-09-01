@@ -50,11 +50,9 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "smol_recv")]
     SmoltcpRecv,
+    #[display(fmt = "smol_bind")]
+    SmoltcpBind,
 
-    // #[display(fmt = "netdev_alloc")]
-    // NetdevAlloc,
-    // #[display(fmt = "netdev_dealloc")]
-    // NetdevDealloc,
     #[display(fmt = "buffer_alloc")]
     BufferAlloc,
     #[display(fmt = "access_buffer")]
@@ -92,7 +90,8 @@ impl HostCallID {
                 CommonHostCall::SmoltcpAddrInfo
                 | CommonHostCall::SmoltcpConnect
                 | CommonHostCall::SmoltcpSend
-                | CommonHostCall::SmoltcpRecv => "socket".to_owned(),
+                | CommonHostCall::SmoltcpRecv
+                | CommonHostCall::SmoltcpBind => "socket".to_owned(),
 
                 CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
 

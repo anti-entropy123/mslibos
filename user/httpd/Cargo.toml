@@ -10,4 +10,4 @@ build = "../../build_user.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = ["panic_def", "alloc_def"] }
+ms_std = { path = "../../ms_std", features = ["unwinding", "alloc_def"] }

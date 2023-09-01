@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use ms_hostcall::{
     err::{LibOSErr, LibOSResult},
-    types::{Fd, OpenFlags, OpenMode, Size, Socket},
+    types::{Fd, OpenFlags, OpenMode, Size, SockFd},
 };
 use ms_std::{self, libos::libos};
 use spin::Mutex;
@@ -18,7 +18,7 @@ use spin::Mutex;
 #[derive(Clone)]
 enum DataSource {
     FatFS(Fd),
-    Net(Socket),
+    Net(SockFd),
 }
 
 #[derive(Clone)]
@@ -145,11 +145,11 @@ pub fn close(fd: Fd) -> Result<(), ()> {
 }
 
 #[no_mangle]
-pub fn connect(addr: SocketAddrV4) -> Result<Fd, ()> {
-    libos!(smol_connect(addr)).map(|socket| {
+pub fn connect(addr: SocketAddrV4) -> Result<SockFd, ()> {
+    libos!(smol_connect(addr)).map(|sockfd| {
         let file = File {
             mode: OpenMode::RDWR,
-            src: DataSource::Net(socket),
+            src: DataSource::Net(sockfd),
         };
 
         add_new_file(file)
@@ -157,6 +157,13 @@ pub fn connect(addr: SocketAddrV4) -> Result<Fd, ()> {
 }
 
 #[no_mangle]
-pub fn bind(_addr: SocketAddrV4) -> LibOSResult<Fd> {
-    Err(LibOSErr::Unknown)
+pub fn bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
+    libos!(smol_bind(addr)).map(|listened_sockfd| {
+        let file = File {
+            mode: OpenMode::RD,
+            src: DataSource::Net(listened_sockfd),
+        };
+
+        add_new_file(file)
+    })
 }

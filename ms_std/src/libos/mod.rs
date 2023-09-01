@@ -30,6 +30,7 @@ pub struct UserHostCall {
     smoltcp_connect: Option<usize>,
     smoltcp_send: Option<usize>,
     smoltcp_recv: Option<usize>,
+    smoltcp_bind: Option<usize>,
 
     alloc_buffer: Option<usize>,
     access_buffer: Option<usize>,
@@ -59,6 +60,7 @@ impl UserHostCall {
             smoltcp_connect: None,
             smoltcp_send: None,
             smoltcp_recv: None,
+            smoltcp_bind: None,
 
             alloc_buffer: None,
             access_buffer: None,
@@ -105,6 +107,7 @@ impl UserHostCall {
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
+            CommonHostCall::SmoltcpBind => &mut self.smoltcp_bind,
 
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
             CommonHostCall::AccessBuffer => &mut self.access_buffer,

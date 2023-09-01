@@ -17,6 +17,7 @@ enum State {
 
 pub struct TcpStream {
     raw_fd: Fd,
+    // FIXME: TcpStream should not manage TCP state. 
     state: State,
 }
 
