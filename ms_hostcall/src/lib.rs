@@ -29,6 +29,8 @@ pub enum CommonHostCall {
     Socket,
     #[display(fmt = "bind")]
     Bind,
+    #[display(fmt = "accept")]
+    Accept,
 
     #[display(fmt = "host_stdout")]
     Stdout,
@@ -52,6 +54,8 @@ pub enum CommonHostCall {
     SmoltcpRecv,
     #[display(fmt = "smol_bind")]
     SmoltcpBind,
+    #[display(fmt = "smol_accept")]
+    SmoltcpAccept,
 
     #[display(fmt = "buffer_alloc")]
     BufferAlloc,
@@ -78,7 +82,8 @@ impl HostCallID {
                 | CommonHostCall::Close
                 | CommonHostCall::Connect
                 | CommonHostCall::Socket
-                | CommonHostCall::Bind => "fdtab".to_owned(),
+                | CommonHostCall::Bind
+                | CommonHostCall::Accept => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
 
@@ -91,7 +96,8 @@ impl HostCallID {
                 | CommonHostCall::SmoltcpConnect
                 | CommonHostCall::SmoltcpSend
                 | CommonHostCall::SmoltcpRecv
-                | CommonHostCall::SmoltcpBind => "socket".to_owned(),
+                | CommonHostCall::SmoltcpBind
+                | CommonHostCall::SmoltcpAccept => "socket".to_owned(),
 
                 CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
 

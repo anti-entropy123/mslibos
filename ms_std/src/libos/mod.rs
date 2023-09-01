@@ -10,6 +10,11 @@ use crate::sync::UPSafeCell;
 mod utils;
 pub use utils::libos;
 
+lazy_static! {
+    pub static ref USER_HOST_CALL: UPSafeCell<UserHostCall> =
+        unsafe { UPSafeCell::new(UserHostCall::new()) };
+}
+
 pub struct UserHostCall {
     write_addr: Option<usize>,
     open_addr: Option<usize>,
@@ -18,6 +23,7 @@ pub struct UserHostCall {
     connect_addr: Option<usize>,
     socket_addr: Option<usize>,
     bind_addr: Option<usize>,
+    accept_addr: Option<usize>,
 
     stdout_addr: Option<usize>,
 
@@ -31,6 +37,7 @@ pub struct UserHostCall {
     smoltcp_send: Option<usize>,
     smoltcp_recv: Option<usize>,
     smoltcp_bind: Option<usize>,
+    smoltcp_accept: Option<usize>,
 
     alloc_buffer: Option<usize>,
     access_buffer: Option<usize>,
@@ -48,6 +55,7 @@ impl UserHostCall {
             connect_addr: None,
             socket_addr: None,
             bind_addr: None,
+            accept_addr: None,
 
             stdout_addr: None,
 
@@ -61,27 +69,13 @@ impl UserHostCall {
             smoltcp_send: None,
             smoltcp_recv: None,
             smoltcp_bind: None,
+            smoltcp_accept: None,
 
             alloc_buffer: None,
             access_buffer: None,
 
             get_time: None,
         }
-    }
-}
-
-lazy_static! {
-    pub static ref USER_HOST_CALL: UPSafeCell<UserHostCall> =
-        unsafe { UPSafeCell::new(UserHostCall::new()) };
-}
-
-impl Transmutor for UserHostCall {
-    fn find_host_call() -> FindHostCallFunc {
-        unsafe { core::mem::transmute(isolation_ctx().find_handler) }
-    }
-
-    fn host_panic_handler() -> PanicHandlerFunc {
-        unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
 }
 
@@ -95,6 +89,7 @@ impl UserHostCall {
             CommonHostCall::Connect => &mut self.connect_addr,
             CommonHostCall::Socket => &mut self.socket_addr,
             CommonHostCall::Bind => &mut self.bind_addr,
+            CommonHostCall::Accept => &mut self.accept_addr,
 
             CommonHostCall::Stdout => &mut self.stdout_addr,
 
@@ -108,6 +103,7 @@ impl UserHostCall {
             CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
             CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
             CommonHostCall::SmoltcpBind => &mut self.smoltcp_bind,
+            CommonHostCall::SmoltcpAccept => &mut self.smoltcp_accept,
 
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
             CommonHostCall::AccessBuffer => &mut self.access_buffer,
@@ -124,5 +120,15 @@ impl UserHostCall {
         } else {
             entry_addr.unwrap()
         }
+    }
+}
+
+impl Transmutor for UserHostCall {
+    fn find_host_call() -> FindHostCallFunc {
+        unsafe { core::mem::transmute(isolation_ctx().find_handler) }
+    }
+
+    fn host_panic_handler() -> PanicHandlerFunc {
+        unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
 }

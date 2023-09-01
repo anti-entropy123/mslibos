@@ -13,7 +13,7 @@ use smoltcp::{
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
     socket::{
         dns::{self, GetQueryResultError},
-        tcp,
+        tcp::{self, Socket, State},
     },
     time::Instant,
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
@@ -270,4 +270,32 @@ pub fn smol_bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
     }
 
     Ok(to_sockfd(tcp_handle))
+}
+
+#[no_mangle]
+pub fn smol_accept(handle: SockFd) -> LibOSResult<SockFd> {
+    let mut iface = IFACE.lock().unwrap();
+    let mut sockets = SOCKETS.lock().unwrap();
+
+    let conned_sock = loop {
+        let timestamp = iface_poll(&mut iface, &mut sockets);
+        let listened_sock = sockets.get_mut::<tcp::Socket>(from_sockfd(handle));
+
+        println!("{:?}", listened_sock.state());
+        if listened_sock.state() != State::Listen {
+            break listened_sock;
+        }
+
+        if try_phy_wait(timestamp, &mut iface, &mut sockets).is_err() {
+            return Err(LibOSErr::PhyWaitErr);
+        }
+    };
+
+    // println!("sock state is {:?}", sock.state());
+    let local = conned_sock.local_endpoint().unwrap().port;
+
+    drop(iface);
+    drop(sockets);
+
+    smol_bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), local))
 }

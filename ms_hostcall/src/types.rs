@@ -62,6 +62,7 @@ pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
 pub type CloseFunc = fn(Fd) -> Result<(), ()>;
 pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
 pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
+pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
 
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;
@@ -80,6 +81,7 @@ pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<SockFd, ()>;
 pub type SmoltcpSendFunc = fn(SockFd, &[u8]) -> Result<(), ()>;
 pub type SmoltcpRecvFunc = fn(SockFd, &mut [u8]) -> Result<Size, ()>;
 pub type SmoltcpBindFunc = fn(SocketAddrV4) -> LibOSResult<SockFd>;
+pub type SmoltcpAcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;

@@ -17,8 +17,8 @@ enum State {
 
 pub struct TcpStream {
     raw_fd: Fd,
-    // FIXME: TcpStream should not manage TCP state. 
-    state: State,
+    // FIXME: TcpStream should not manage TCP state.
+    _state: State,
 }
 
 impl TcpStream {
@@ -32,27 +32,27 @@ impl TcpStream {
         let raw_fd = libos!(connect(sockaddrv4)).expect("libos::connect failed");
         let mut stream = Self {
             raw_fd,
-            state: State::Connect,
+            _state: State::Connect,
         };
-        stream.state = State::Request;
+        // stream.state = State::Request;
 
         Ok(stream)
     }
 
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
-        if self.state != State::Request {
-            return Err(());
-        }
+        // if self.state != State::Request {
+        //     return Err(());
+        // }
 
         if libos!(write(self.raw_fd, data)).is_err() {
             return Err(());
         };
-        self.state = State::Response;
+        self._state = State::Response;
         Ok(())
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
-        if self.state != State::Response {
+        if self._state != State::Response {
             return Err(());
         }
 
@@ -73,14 +73,18 @@ impl Write for TcpStream {
 }
 
 pub struct Incoming<'a> {
-    _listener: &'a TcpListener,
+    listener: &'a TcpListener,
 }
 
 impl<'a> Iterator for Incoming<'a> {
-    type Item = u8;
+    type Item = TcpStream;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(0)
+        let conn_fd = libos!(accept(self.listener.raw_fd)).expect("accept failed");
+        Some(Self::Item {
+            raw_fd: conn_fd,
+            _state: State::Connect,
+        })
     }
 }
 
@@ -99,7 +103,7 @@ impl TcpListener {
     }
 
     pub fn incoming(&self) -> Incoming {
-        Incoming { _listener: self }
+        Incoming { listener: self }
     }
 }
 
