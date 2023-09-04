@@ -15,6 +15,7 @@ lazy_static! {
         unsafe { UPSafeCell::new(UserHostCall::new()) };
 }
 
+#[derive(Default)]
 pub struct UserHostCall {
     write_addr: Option<usize>,
     open_addr: Option<usize>,
@@ -33,49 +34,22 @@ pub struct UserHostCall {
     fatfs_close_addr: Option<usize>,
 
     smoltcp_addrinfo_addr: Option<usize>,
-    smoltcp_connect: Option<usize>,
-    smoltcp_send: Option<usize>,
-    smoltcp_recv: Option<usize>,
-    smoltcp_bind: Option<usize>,
-    smoltcp_accept: Option<usize>,
+    smoltcp_connect_addr: Option<usize>,
+    smoltcp_send_addr: Option<usize>,
+    smoltcp_recv_addr: Option<usize>,
+    smoltcp_bind_addr: Option<usize>,
+    smoltcp_accept_addr: Option<usize>,
+    smoltcp_close_addr: Option<usize>,
 
-    alloc_buffer: Option<usize>,
-    access_buffer: Option<usize>,
+    alloc_buffer_addr: Option<usize>,
+    access_buffer_addr: Option<usize>,
 
-    get_time: Option<usize>,
+    get_time_addr: Option<usize>,
 }
 
 impl UserHostCall {
     fn new() -> Self {
-        UserHostCall {
-            write_addr: None,
-            open_addr: None,
-            read_addr: None,
-            close_addr: None,
-            connect_addr: None,
-            socket_addr: None,
-            bind_addr: None,
-            accept_addr: None,
-
-            stdout_addr: None,
-
-            fatfs_open_addr: None,
-            fatfs_write_addr: None,
-            fatfs_read_addr: None,
-            fatfs_close_addr: None,
-
-            smoltcp_addrinfo_addr: None,
-            smoltcp_connect: None,
-            smoltcp_send: None,
-            smoltcp_recv: None,
-            smoltcp_bind: None,
-            smoltcp_accept: None,
-
-            alloc_buffer: None,
-            access_buffer: None,
-
-            get_time: None,
-        }
+        UserHostCall::default()
     }
 }
 
@@ -99,16 +73,17 @@ impl UserHostCall {
             CommonHostCall::FatfsClose => &mut self.fatfs_close_addr,
 
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
-            CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
-            CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
-            CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
-            CommonHostCall::SmoltcpBind => &mut self.smoltcp_bind,
-            CommonHostCall::SmoltcpAccept => &mut self.smoltcp_accept,
+            CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect_addr,
+            CommonHostCall::SmoltcpSend => &mut self.smoltcp_send_addr,
+            CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv_addr,
+            CommonHostCall::SmoltcpBind => &mut self.smoltcp_bind_addr,
+            CommonHostCall::SmoltcpAccept => &mut self.smoltcp_accept_addr,
+            CommonHostCall::SmoltcpClose => &mut self.smoltcp_close_addr,
 
-            CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
-            CommonHostCall::AccessBuffer => &mut self.access_buffer,
+            CommonHostCall::BufferAlloc => &mut self.alloc_buffer_addr,
+            CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
 
-            CommonHostCall::GetTime => &mut self.get_time,
+            CommonHostCall::GetTime => &mut self.get_time_addr,
         };
 
         if entry_addr.is_none() {

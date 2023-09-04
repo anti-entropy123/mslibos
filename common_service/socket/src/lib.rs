@@ -13,7 +13,7 @@ use smoltcp::{
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
     socket::{
         dns::{self, GetQueryResultError},
-        tcp::{self, Socket, State},
+        tcp::{self, State},
     },
     time::Instant,
     wire::{DnsQueryType, EthernetAddress, IpAddress, IpCidr, Ipv4Address},
@@ -219,13 +219,15 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
 
     let mut cursor = 0;
     let mut freesize = buf.len();
+
+    // should return data if buffer is not empty. otherwise will block until closed TCP.
     loop {
         let timestamp = iface_poll(&mut iface, &mut sockets);
 
         let tcp_socket = sockets.get_mut::<tcp::Socket>(from_sockfd(handle));
 
-        if freesize == 0 || !tcp_socket.may_recv() {
-            return Ok(cursor);
+        if cursor != 0 || !tcp_socket.may_recv() {
+            break;
         } else if tcp_socket.can_recv() {
             tcp_socket
                 .recv(|data| {
@@ -242,10 +244,21 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
 
         try_phy_wait(timestamp, &mut iface, &mut sockets).expect("wait error");
     }
+
+    Ok(cursor)
 }
 
 #[no_mangle]
-pub fn smol_close() {}
+pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
+    let mut sockets = SOCKETS.lock().unwrap();
+    let handle = from_sockfd(handle);
+    let tcp_socket = sockets.get_mut::<tcp::Socket>(handle);
+
+    tcp_socket.close();
+    sockets.remove(handle);
+
+    Ok(())
+}
 
 #[no_mangle]
 pub fn smol_bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
@@ -281,7 +294,7 @@ pub fn smol_accept(handle: SockFd) -> LibOSResult<SockFd> {
         let timestamp = iface_poll(&mut iface, &mut sockets);
         let listened_sock = sockets.get_mut::<tcp::Socket>(from_sockfd(handle));
 
-        println!("{:?}", listened_sock.state());
+        // println!("{:?}", listened_sock.state());
         if listened_sock.state() != State::Listen {
             break listened_sock;
         }

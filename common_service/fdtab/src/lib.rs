@@ -52,7 +52,7 @@ fn add_new_file(fdtab: &mut Vec<Option<File>>, file: File) -> Fd {
         }
 
         *item = Some(file);
-        return (idx + 2) as Fd;
+        return (idx + 3) as Fd;
     }
 
     fdtab.push(Some(file));
@@ -167,11 +167,8 @@ pub fn close(fd: Fd) -> Result<(), ()> {
     fdtab[fd as usize - 3] = None;
 
     match file.src {
-        DataSource::FatFS(raw_fd) => {
-            libos!(fatfs_close(raw_fd)).expect("fatfs read failed.");
-            Ok(())
-        }
-        DataSource::Net(_socket) => todo!(),
+        DataSource::FatFS(raw_fd) => Ok(libos!(fatfs_close(raw_fd))?),
+        DataSource::Net(socket) => libos!(smol_close(socket)).map_err(|_| ()),
     }
 }
 
@@ -213,17 +210,14 @@ pub fn accept(listened_sockfd: SockFd) -> LibOSResult<SockFd> {
     };
 
     let listened_sockfd = if let DataSource::Net(sockfd) = old_sock.src {
-        println!("sockfd is {}", sockfd);
+        // println!("sockfd is {}", sockfd);
         sockfd
     } else {
         return Err(LibOSErr::BadFileDescriptor);
     };
 
-    match libos!(smol_accept(listened_sockfd)) {
-        // old file is still listened socket, with new socket handle.
-        Ok(sockfd) => old_sock.src = DataSource::Net(sockfd),
-        Err(e) => return Err(e),
-    };
+    // old file is still listened socket, with new socket handle.
+    old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd))?);
 
     // new file will be connected socket, with old socket handle.
     let new_sock = File {

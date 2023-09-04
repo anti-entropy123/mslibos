@@ -17,7 +17,7 @@ pub fn main() -> Result<Zero> {
     stream.write_all(b"GET / HTTP/1.0\r\n\r\n")?;
     let mut buffer = [0; 4096];
     loop {
-        let n = stream.read(&mut buffer)?;
+        let n = stream.read(&mut buffer).expect("read failed");
         if n == 0 {
             break;
         }

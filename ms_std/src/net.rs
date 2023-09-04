@@ -3,22 +3,13 @@ use core::{
     net::{Ipv4Addr, SocketAddrV4},
 };
 
-use alloc::vec::Vec;
+use alloc::{format, string::String, vec::Vec};
 use ms_hostcall::{err::LibOSErr, types::Fd};
 
 use crate::{io::Write, libos::libos};
 
-#[derive(PartialEq, Debug)]
-enum State {
-    Connect,
-    Request,
-    Response,
-}
-
 pub struct TcpStream {
     raw_fd: Fd,
-    // FIXME: TcpStream should not manage TCP state.
-    _state: State,
 }
 
 impl TcpStream {
@@ -30,37 +21,20 @@ impl TcpStream {
             core::net::SocketAddr::V6(_) => todo!(),
         };
         let raw_fd = libos!(connect(sockaddrv4)).expect("libos::connect failed");
-        let mut stream = Self {
-            raw_fd,
-            _state: State::Connect,
-        };
-        // stream.state = State::Request;
+        let stream = Self { raw_fd };
 
         Ok(stream)
     }
 
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
-        // if self.state != State::Request {
-        //     return Err(());
-        // }
-
         if libos!(write(self.raw_fd, data)).is_err() {
             return Err(());
         };
-        self._state = State::Response;
         Ok(())
     }
 
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
-        if self._state != State::Response {
-            return Err(());
-        }
-
-        if let Ok(len) = libos!(read(self.raw_fd, buf)) {
-            Ok(len)
-        } else {
-            Err(())
-        }
+    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, String> {
+        libos!(read(self.raw_fd, buf)).map_err(|e| format!("{}", e))
     }
 }
 
@@ -69,6 +43,12 @@ impl Write for TcpStream {
         self.write_all(s.as_bytes()).expect("write_all failed.");
 
         Ok(())
+    }
+}
+
+impl Drop for TcpStream {
+    fn drop(&mut self) {
+        libos!(close(self.raw_fd)).expect("close tcp error?")
     }
 }
 
@@ -81,10 +61,7 @@ impl<'a> Iterator for Incoming<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let conn_fd = libos!(accept(self.listener.raw_fd)).expect("accept failed");
-        Some(Self::Item {
-            raw_fd: conn_fd,
-            _state: State::Connect,
-        })
+        Some(Self::Item { raw_fd: conn_fd })
     }
 }
 

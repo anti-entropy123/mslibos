@@ -82,6 +82,7 @@ pub type SmoltcpSendFunc = fn(SockFd, &[u8]) -> Result<(), ()>;
 pub type SmoltcpRecvFunc = fn(SockFd, &mut [u8]) -> Result<Size, ()>;
 pub type SmoltcpBindFunc = fn(SocketAddrV4) -> LibOSResult<SockFd>;
 pub type SmoltcpAcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
+pub type SmoltcpCloseFunc = fn(SockFd) -> LibOSResult<()>;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
