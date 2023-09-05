@@ -2,6 +2,7 @@
 #![allow(clippy::result_unit_err)]
 
 mod drop_tap;
+// mod logs;
 mod setup_tap;
 
 use core::net::Ipv4Addr;
@@ -59,6 +60,8 @@ lazy_static! {
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
 
     static ref IFACE: Mutex<Interface> = {
+        // logs::setup_logging("");
+
         let mut iface = DEVICE.with(|device_tls| {
             let mut device = device_tls.lock().unwrap();
             let mut config = match device.capabilities().medium {
@@ -197,14 +200,24 @@ pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<SockFd, ()> {
 pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
     let mut iface = IFACE.lock().unwrap();
     let mut sockets = SOCKETS.lock().unwrap();
+    let mut cursor = 0;
 
     loop {
         let timestamp = iface_poll(&mut iface, &mut sockets);
 
         let socket = sockets.get_mut::<tcp::Socket>(from_sockfd(handle));
 
+        // send_slice doesn't mean it's actually sent
         if socket.may_send() {
-            socket.send_slice(data).expect("cannot send");
+            // println!(
+            //     "sock_{} remote={:?}, send slice: {:?},",
+            //     handle,
+            //     socket.remote_endpoint(),
+            //     String::from_utf8_lossy(&data[cursor..])
+            // );
+            cursor += socket.send_slice(&data[cursor..]).expect("cannot send");
+        }
+        if cursor == data.len() {
             return Ok(());
         }
 
@@ -250,12 +263,38 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
 
 #[no_mangle]
 pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
-    let mut sockets = SOCKETS.lock().unwrap();
-    let handle = from_sockfd(handle);
-    let tcp_socket = sockets.get_mut::<tcp::Socket>(handle);
+    let mut iface = IFACE.lock().unwrap();
 
-    tcp_socket.close();
-    sockets.remove(handle);
+    let handle = from_sockfd(handle);
+    let mut has_close = false;
+
+    loop {
+        let mut sockets = SOCKETS.lock().unwrap();
+        let timestamp = iface_poll(&mut iface, &mut sockets);
+
+        let tcp_socket = sockets.get_mut::<tcp::Socket>(handle);
+        if !has_close && tcp_socket.send_queue() == 0 {
+            // println!(
+            //     "send queue is empty, can close sock: {}, state: {}",
+            //     handle,
+            //     tcp_socket.state()
+            // );
+            
+            // Should not remove socket from sockets. Because smoltcp will 
+            // update state of tcp connect by sockets. 
+            tcp_socket.close();
+            has_close = true;
+        }
+
+        // println!("{:?}", tcp_socket.state());
+        if tcp_socket.state() == State::TimeWait {
+            break;
+        }
+
+        if try_phy_wait(timestamp, &mut iface, &mut sockets).is_err() {
+            return Err(LibOSErr::PhyWaitErr);
+        };
+    }
 
     Ok(())
 }
@@ -305,6 +344,7 @@ pub fn smol_accept(handle: SockFd) -> LibOSResult<SockFd> {
     };
 
     // println!("sock state is {:?}", sock.state());
+    // println!("remote is {}", conned_sock.remote_endpoint().unwrap());
     let local = conned_sock.local_endpoint().unwrap().port;
 
     drop(iface);

@@ -42,41 +42,77 @@ impl File {
 }
 
 lazy_static! {
-    static ref FD_TABLE: Mutex<Vec<Option<File>>> = Mutex::new(Vec::new());
+    static ref FD_TABLE: FdTable = FdTable::new();
 }
 
-fn add_new_file(fdtab: &mut Vec<Option<File>>, file: File) -> Fd {
-    for (idx, item) in fdtab.iter_mut().enumerate() {
-        if item.is_some() {
-            continue;
+struct FdTable {
+    inner: Mutex<Vec<Option<File>>>,
+}
+
+impl FdTable {
+    fn new() -> Self {
+        FdTable {
+            inner: Mutex::default(),
+        }
+    }
+
+    fn with_file<F, T>(&self, fd: Fd, f: F) -> T
+    where
+        F: FnOnce(Option<&File>) -> T,
+    {
+        let fdtab = self.inner.lock();
+        // println!("get_file: fd={}, fd_table.len()={}", fd, fdtab.len());
+        let file = if let Some(Some(file)) = fdtab.get(fd as usize - 3) {
+            Some(file)
+        } else {
+            println!("file fd={} not exist?", fd);
+            None
+        };
+
+        f(file)
+    }
+
+    fn with_file_mut<F, T>(&self, fd: Fd, f: F) -> T
+    where
+        F: FnOnce(Option<&mut File>) -> T,
+    {
+        // println!("get_file: fd={}, fd_table.len()={}", fd, fdtab.len());
+        let mut fdtab = self.inner.lock();
+        let file = if let Some(Some(file)) = fdtab.get_mut(fd as usize - 3) {
+            Some(file)
+        } else {
+            println!("file fd={} not exist?", fd);
+            None
+        };
+
+        f(file)
+    }
+
+    fn add_file(&self, file: File) -> Fd {
+        let mut fdtab = self.inner.lock();
+        for (idx, item) in fdtab.iter_mut().enumerate() {
+            if item.is_some() {
+                continue;
+            }
+
+            *item = Some(file);
+            return (idx + 3) as Fd;
         }
 
-        *item = Some(file);
-        return (idx + 3) as Fd;
+        fdtab.push(Some(file));
+        (fdtab.len() + 2) as Fd
     }
 
-    fdtab.push(Some(file));
-    (fdtab.len() + 2) as Fd
-}
+    fn remove_file(&self, fd: Fd) -> Option<File> {
+        let mut fdtab = self.inner.lock();
+        if fd as usize - 3 >= fdtab.len() {
+            return None;
+        }
 
-fn get_file(fd: Fd) -> Option<File> {
-    let fdtab = FD_TABLE.lock();
-    // println!("get_file: fd={}, fd_table.len()={}", fd, fdtab.len());
-    if let Some(Some(file)) = fdtab.get(fd as usize - 3) {
-        Some(file.clone())
-    } else {
-        println!("file fd={} not exist?", fd);
-        None
-    }
-}
+        let old = fdtab[fd as usize - 3].clone();
+        fdtab[fd as usize - 3] = None;
 
-fn get_file_mut(fdtab: &mut [Option<File>], fd: Fd) -> Option<&mut File> {
-    // println!("get_file: fd={}, fd_table.len()={}", fd, fdtab.len());
-    if let Some(Some(file)) = fdtab.get_mut(fd as usize - 3) {
-        Some(file)
-    } else {
-        println!("file fd={} not exist?", fd);
-        None
+        old
     }
 }
 
@@ -89,20 +125,23 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> LibOSResult<Size> {
         _ => {}
     }
 
-    let file = match get_file(fd) {
-        Some(f) => f,
-        None => return Err(LibOSErr::BadFileDescriptor),
-    };
+    FD_TABLE.with_file(fd, |file| {
+        let file = if let Some(file) = file {
+            file
+        } else {
+            return Err(LibOSErr::BadFileDescriptor);
+        };
 
-    if !file.can_read() {
-        return Err(LibOSErr::NoReadPerm);
-    }
+        if !file.can_read() {
+            return Err(LibOSErr::NoReadPerm);
+        }
 
-    match file.src {
-        DataSource::FatFS(raw_fd) => libos!(fatfs_read(raw_fd, buf)),
-        DataSource::Net(socket) => libos!(recv(socket, buf)),
-    }
-    .map_err(|_| LibOSErr::Unknown)
+        match file.src {
+            DataSource::FatFS(raw_fd) => libos!(fatfs_read(raw_fd, buf)),
+            DataSource::Net(socket) => libos!(recv(socket, buf)),
+        }
+        .map_err(|_| LibOSErr::Unknown)
+    })
 }
 
 #[no_mangle]
@@ -116,27 +155,30 @@ pub fn write(fd: Fd, buf: &[u8]) -> LibOSResult<Size> {
         _ => {}
     }
 
-    let file = match get_file(fd) {
-        Some(f) => f,
-        None => return Err(LibOSErr::BadFileDescriptor),
-    };
+    FD_TABLE.with_file(fd, |file| {
+        let file = if let Some(file) = file {
+            file
+        } else {
+            return Err(LibOSErr::BadFileDescriptor);
+        };
 
-    if !file.can_write() {
-        return Err(LibOSErr::NoWritePerm);
-    }
-
-    match file.src {
-        DataSource::FatFS(raw_fd) => {
-            libos!(fatfs_write(raw_fd, buf)).map_err(|_| LibOSErr::Unknown)
+        if !file.can_write() {
+            return Err(LibOSErr::NoWritePerm);
         }
-        DataSource::Net(socket) => {
-            if libos!(send(socket, buf)).is_err() {
-                Err(LibOSErr::Unknown)
-            } else {
-                Ok(buf.len())
+
+        match file.src {
+            DataSource::FatFS(raw_fd) => {
+                libos!(fatfs_write(raw_fd, buf)).map_err(|_| LibOSErr::Unknown)
+            }
+            DataSource::Net(sockfd) => {
+                if libos!(send(sockfd, buf)).is_err() {
+                    Err(LibOSErr::Unknown)
+                } else {
+                    Ok(buf.len())
+                }
             }
         }
-    }
+    })
 }
 
 #[no_mangle]
@@ -149,7 +191,7 @@ pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> Result<Fd, ()> {
         }
     };
 
-    Ok(add_new_file(&mut FD_TABLE.lock(), file))
+    Ok(FD_TABLE.add_file(file))
 }
 
 #[no_mangle]
@@ -158,13 +200,10 @@ pub fn close(fd: Fd) -> Result<(), ()> {
         return Err(());
     };
 
-    let file = match get_file(fd) {
+    let file = match FD_TABLE.remove_file(fd) {
         Some(f) => f,
         None => return Err(()),
     };
-
-    let mut fdtab = FD_TABLE.lock();
-    fdtab[fd as usize - 3] = None;
 
     match file.src {
         DataSource::FatFS(raw_fd) => Ok(libos!(fatfs_close(raw_fd))?),
@@ -180,7 +219,7 @@ pub fn connect(addr: SocketAddrV4) -> Result<SockFd, ()> {
             src: DataSource::Net(sockfd),
         };
 
-        add_new_file(&mut FD_TABLE.lock(), file)
+        FD_TABLE.add_file(file)
     })
 }
 
@@ -192,7 +231,7 @@ pub fn bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
             src: DataSource::Net(listened_sockfd),
         };
 
-        add_new_file(&mut FD_TABLE.lock(), file)
+        FD_TABLE.add_file(file)
     })
 }
 
@@ -202,29 +241,30 @@ pub fn accept(listened_sockfd: SockFd) -> LibOSResult<SockFd> {
         return Err(LibOSErr::BadFileDescriptor);
     };
 
-    let mut fdtab = FD_TABLE.lock();
+    let listened_sockfd = FD_TABLE.with_file_mut(listened_sockfd, |file| {
+        let old_sock = match file {
+            None => return Err(LibOSErr::BadFileDescriptor),
+            Some(f) => f,
+        };
 
-    let old_sock = match get_file_mut(&mut fdtab, listened_sockfd) {
-        None => return Err(LibOSErr::BadFileDescriptor),
-        Some(f) => f,
-    };
+        let listened_sockfd = if let DataSource::Net(sockfd) = old_sock.src {
+            // println!("sockfd is {}", sockfd);
+            sockfd
+        } else {
+            return Err(LibOSErr::BadFileDescriptor);
+        };
 
-    let listened_sockfd = if let DataSource::Net(sockfd) = old_sock.src {
-        // println!("sockfd is {}", sockfd);
-        sockfd
-    } else {
-        return Err(LibOSErr::BadFileDescriptor);
-    };
-
-    // old file is still listened socket, with new socket handle.
-    old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd))?);
+        // old file is still listened socket, with new socket handle.
+        old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd))?);
+        Ok(listened_sockfd)
+    })?;
 
     // new file will be connected socket, with old socket handle.
     let new_sock = File {
         mode: OpenMode::RDWR,
         src: DataSource::Net(listened_sockfd),
     };
-    let connected_sockfd = add_new_file(&mut fdtab, new_sock);
+    let connected_sockfd = FD_TABLE.add_file(new_sock);
 
     Ok(connected_sockfd)
 }
