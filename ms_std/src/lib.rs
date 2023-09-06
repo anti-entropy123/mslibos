@@ -36,8 +36,9 @@ cfg_if::cfg_if! {
     } else
     if #[cfg(feature = "panic_def")] {
         mod panic_def {
-            use crate::init_context::isolation_ctx;
             use core::panic::PanicInfo;
+
+            use crate::init_context::isolation_ctx;
 
             #[panic_handler]
             fn panic_handler(_info: &PanicInfo) -> ! {

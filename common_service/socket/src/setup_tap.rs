@@ -77,6 +77,8 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
             .arg("POSTROUTING")
             .arg("-s")
             .arg(&subnet_mask_str)
+            .arg("-d")
+            .arg(&subnet_mask_str)
             .arg("-j")
             .arg("MASQUERADE");
         comd

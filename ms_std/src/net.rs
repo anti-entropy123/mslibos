@@ -3,21 +3,13 @@ use core::{
     net::{Ipv4Addr, SocketAddrV4},
 };
 
-use alloc::vec::Vec;
-use ms_hostcall::types::Fd;
+use alloc::{format, string::String, vec::Vec};
+use ms_hostcall::{err::LibOSErr, types::Fd};
 
 use crate::{io::Write, libos::libos};
 
-#[derive(PartialEq, Debug)]
-enum State {
-    Connect,
-    Request,
-    Response,
-}
-
 pub struct TcpStream {
     raw_fd: Fd,
-    state: State,
 }
 
 impl TcpStream {
@@ -29,33 +21,20 @@ impl TcpStream {
             core::net::SocketAddr::V6(_) => todo!(),
         };
         let raw_fd = libos!(connect(sockaddrv4)).expect("libos::connect failed");
-        let mut stream = Self {
-            raw_fd,
-            state: State::Connect,
-        };
-        stream.state = State::Request;
+        let stream = Self { raw_fd };
 
         Ok(stream)
     }
 
     pub fn write_all(&mut self, data: &[u8]) -> Result<(), ()> {
-        if self.state != State::Request {
+        if libos!(write(self.raw_fd, data)).is_err() {
             return Err(());
-        }
-
-        libos!(write(self.raw_fd, data)).expect("send data failed");
-        self.state = State::Response;
+        };
         Ok(())
     }
 
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, ()> {
-        if self.state != State::Response {
-            return Err(());
-        }
-
-        let len = libos!(read(self.raw_fd, buf)).expect("recv data failed");
-
-        Ok(len)
+    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, String> {
+        libos!(read(self.raw_fd, buf)).map_err(|e| format!("{}", e))
     }
 }
 
@@ -64,6 +43,44 @@ impl Write for TcpStream {
         self.write_all(s.as_bytes()).expect("write_all failed.");
 
         Ok(())
+    }
+}
+
+impl Drop for TcpStream {
+    fn drop(&mut self) {
+        libos!(close(self.raw_fd)).expect("close tcp error?")
+    }
+}
+
+pub struct Incoming<'a> {
+    listener: &'a TcpListener,
+}
+
+impl<'a> Iterator for Incoming<'a> {
+    type Item = TcpStream;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let conn_fd = libos!(accept(self.listener.raw_fd)).expect("accept failed");
+        Some(Self::Item { raw_fd: conn_fd })
+    }
+}
+
+pub struct TcpListener {
+    raw_fd: Fd,
+}
+
+impl TcpListener {
+    pub fn bind(url: &str) -> Result<Self, LibOSErr> {
+        let addr: SocketAddr = url.into();
+        let sockaddrv4 = match addr.inner {
+            core::net::SocketAddr::V4(addr) => addr,
+            core::net::SocketAddr::V6(_) => todo!(),
+        };
+        libos!(bind(sockaddrv4)).map(|raw_fd| Self { raw_fd })
+    }
+
+    pub fn incoming(&self) -> Incoming {
+        Incoming { listener: self }
     }
 }
 

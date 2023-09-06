@@ -12,6 +12,8 @@ crate-type = ["dylib"]
 ms_std = { path = "../../ms_std", features = [] }
 ms_hostcall = { path = "../../ms_hostcall" }
 
+log = "0.4.20"
+env_logger = "0.10.0"
 lazy_static = "1.4.0"
 managed = { version = "0.8", default-features = false, features = ["map"] }
 defmt = { version = "0.3", optional = true }

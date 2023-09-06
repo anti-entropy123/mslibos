@@ -4,7 +4,9 @@
 
 extern crate alloc;
 
+pub mod err;
 pub mod types;
+
 use alloc::{borrow::ToOwned, string::String};
 use types::{IsolationID, ServiceName};
 
@@ -23,6 +25,12 @@ pub enum CommonHostCall {
     Close,
     #[display(fmt = "connect")]
     Connect,
+    #[display(fmt = "socket")]
+    Socket,
+    #[display(fmt = "bind")]
+    Bind,
+    #[display(fmt = "accept")]
+    Accept,
 
     #[display(fmt = "host_stdout")]
     Stdout,
@@ -44,11 +52,13 @@ pub enum CommonHostCall {
     SmoltcpSend,
     #[display(fmt = "smol_recv")]
     SmoltcpRecv,
+    #[display(fmt = "smol_bind")]
+    SmoltcpBind,
+    #[display(fmt = "smol_accept")]
+    SmoltcpAccept,
+    #[display(fmt = "smol_close")]
+    SmoltcpClose,
 
-    // #[display(fmt = "netdev_alloc")]
-    // NetdevAlloc,
-    // #[display(fmt = "netdev_dealloc")]
-    // NetdevDealloc,
     #[display(fmt = "buffer_alloc")]
     BufferAlloc,
     #[display(fmt = "access_buffer")]
@@ -72,7 +82,10 @@ impl HostCallID {
                 | CommonHostCall::Open
                 | CommonHostCall::Read
                 | CommonHostCall::Close
-                | CommonHostCall::Connect => "fdtab".to_owned(),
+                | CommonHostCall::Connect
+                | CommonHostCall::Socket
+                | CommonHostCall::Bind
+                | CommonHostCall::Accept => "fdtab".to_owned(),
 
                 CommonHostCall::Stdout => "stdio".to_owned(),
 
@@ -84,7 +97,10 @@ impl HostCallID {
                 CommonHostCall::SmoltcpAddrInfo
                 | CommonHostCall::SmoltcpConnect
                 | CommonHostCall::SmoltcpSend
-                | CommonHostCall::SmoltcpRecv => "socket".to_owned(),
+                | CommonHostCall::SmoltcpRecv
+                | CommonHostCall::SmoltcpBind
+                | CommonHostCall::SmoltcpAccept
+                | CommonHostCall::SmoltcpClose => "socket".to_owned(),
 
                 CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
 

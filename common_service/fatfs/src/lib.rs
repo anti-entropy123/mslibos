@@ -28,7 +28,7 @@ thread_local! {
                 .read(true)
                 .write(true)
                 .open(image_path.clone())
-                .unwrap_or_else(|_| panic!("open img {:?} failed", image_path)))
+                .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", image_path, e)))
         };
         FileSystem::new(image, fatfs::FsOptions::new()).expect("fatfs::new() failed.")
     };
@@ -100,6 +100,7 @@ fn fatfs_open_test() {
 pub fn fatfs_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
     let file = get_file_mut(fd);
     file.write_all(buf).expect("write file failed");
+    file.flush().expect("flush failed");
 
     Ok(buf.len())
 }

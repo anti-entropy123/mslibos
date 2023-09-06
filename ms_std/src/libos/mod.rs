@@ -10,12 +10,21 @@ use crate::sync::UPSafeCell;
 mod utils;
 pub use utils::libos;
 
+lazy_static! {
+    pub static ref USER_HOST_CALL: UPSafeCell<UserHostCall> =
+        unsafe { UPSafeCell::new(UserHostCall::new()) };
+}
+
+#[derive(Default)]
 pub struct UserHostCall {
     write_addr: Option<usize>,
     open_addr: Option<usize>,
     read_addr: Option<usize>,
     close_addr: Option<usize>,
     connect_addr: Option<usize>,
+    socket_addr: Option<usize>,
+    bind_addr: Option<usize>,
+    accept_addr: Option<usize>,
 
     stdout_addr: Option<usize>,
 
@@ -25,57 +34,22 @@ pub struct UserHostCall {
     fatfs_close_addr: Option<usize>,
 
     smoltcp_addrinfo_addr: Option<usize>,
-    smoltcp_connect: Option<usize>,
-    smoltcp_send: Option<usize>,
-    smoltcp_recv: Option<usize>,
+    smoltcp_connect_addr: Option<usize>,
+    smoltcp_send_addr: Option<usize>,
+    smoltcp_recv_addr: Option<usize>,
+    smoltcp_bind_addr: Option<usize>,
+    smoltcp_accept_addr: Option<usize>,
+    smoltcp_close_addr: Option<usize>,
 
-    alloc_buffer: Option<usize>,
-    access_buffer: Option<usize>,
+    alloc_buffer_addr: Option<usize>,
+    access_buffer_addr: Option<usize>,
 
-    get_time: Option<usize>,
+    get_time_addr: Option<usize>,
 }
 
 impl UserHostCall {
     fn new() -> Self {
-        UserHostCall {
-            write_addr: None,
-            open_addr: None,
-            read_addr: None,
-            close_addr: None,
-            connect_addr: None,
-
-            stdout_addr: None,
-
-            fatfs_open_addr: None,
-            fatfs_write_addr: None,
-            fatfs_read_addr: None,
-            fatfs_close_addr: None,
-
-            smoltcp_addrinfo_addr: None,
-            smoltcp_connect: None,
-            smoltcp_send: None,
-            smoltcp_recv: None,
-
-            alloc_buffer: None,
-            access_buffer: None,
-
-            get_time: None,
-        }
-    }
-}
-
-lazy_static! {
-    pub static ref USER_HOST_CALL: UPSafeCell<UserHostCall> =
-        unsafe { UPSafeCell::new(UserHostCall::new()) };
-}
-
-impl Transmutor for UserHostCall {
-    fn find_host_call() -> FindHostCallFunc {
-        unsafe { core::mem::transmute(isolation_ctx().find_handler) }
-    }
-
-    fn host_panic_handler() -> PanicHandlerFunc {
-        unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
+        UserHostCall::default()
     }
 }
 
@@ -87,6 +61,9 @@ impl UserHostCall {
             CommonHostCall::Read => &mut self.read_addr,
             CommonHostCall::Close => &mut self.close_addr,
             CommonHostCall::Connect => &mut self.connect_addr,
+            CommonHostCall::Socket => &mut self.socket_addr,
+            CommonHostCall::Bind => &mut self.bind_addr,
+            CommonHostCall::Accept => &mut self.accept_addr,
 
             CommonHostCall::Stdout => &mut self.stdout_addr,
 
@@ -96,14 +73,17 @@ impl UserHostCall {
             CommonHostCall::FatfsClose => &mut self.fatfs_close_addr,
 
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
-            CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect,
-            CommonHostCall::SmoltcpSend => &mut self.smoltcp_send,
-            CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv,
+            CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect_addr,
+            CommonHostCall::SmoltcpSend => &mut self.smoltcp_send_addr,
+            CommonHostCall::SmoltcpRecv => &mut self.smoltcp_recv_addr,
+            CommonHostCall::SmoltcpBind => &mut self.smoltcp_bind_addr,
+            CommonHostCall::SmoltcpAccept => &mut self.smoltcp_accept_addr,
+            CommonHostCall::SmoltcpClose => &mut self.smoltcp_close_addr,
 
-            CommonHostCall::BufferAlloc => &mut self.alloc_buffer,
-            CommonHostCall::AccessBuffer => &mut self.access_buffer,
+            CommonHostCall::BufferAlloc => &mut self.alloc_buffer_addr,
+            CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
 
-            CommonHostCall::GetTime => &mut self.get_time,
+            CommonHostCall::GetTime => &mut self.get_time_addr,
         };
 
         if entry_addr.is_none() {
@@ -115,5 +95,15 @@ impl UserHostCall {
         } else {
             entry_addr.unwrap()
         }
+    }
+}
+
+impl Transmutor for UserHostCall {
+    fn find_host_call() -> FindHostCallFunc {
+        unsafe { core::mem::transmute(isolation_ctx().find_handler) }
+    }
+
+    fn host_panic_handler() -> PanicHandlerFunc {
+        unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
 }

@@ -5,7 +5,7 @@ use core::{alloc::Layout, net::SocketAddrV4};
 use alloc::string::String;
 // use smoltcp::{iface::Interface, phy::TunTapInterface};
 
-use crate::{HostCallID, IsolationContext};
+use crate::{err::LibOSResult, HostCallID, IsolationContext};
 
 use bitflags::bitflags;
 
@@ -45,21 +45,24 @@ bitflags! {
        const O_APPEND = 1;
        const O_CREAT = 2;
     }
+
+    #[derive(PartialEq, Clone)]
+    pub struct OpenMode: u32 {
+        const RD = 1;
+        const WR = 2;
+        const RDWR = 3;
+    }
 }
 pub type Fd = u32;
 pub type Size = usize;
 
-#[derive(PartialEq, Clone)]
-pub enum OpenMode {
-    RDONLY,
-    WRONLY,
-    RDWR,
-}
 pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
-pub type WriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
-pub type ReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
+pub type WriteFunc = fn(Fd, &[u8]) -> LibOSResult<Size>;
+pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
 pub type CloseFunc = fn(Fd) -> Result<(), ()>;
 pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
+pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
+pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
 
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;
@@ -71,14 +74,15 @@ pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
 pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
 
 // socket
-pub type Socket = usize;
+pub type SockFd = u32;
 
 pub type SmoltcpAddrInfoFunc = fn(&str) -> Result<core::net::Ipv4Addr, ()>;
-pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<Socket, ()>;
-pub type SmoltcpSendFunc = fn(Socket, &[u8]) -> Result<(), ()>;
-pub type SmoltcpRecvFunc = fn(Socket, &mut [u8]) -> Result<Size, ()>;
-// pub type InitDevFunc = fn(NetdevName);
-// pub type NetdevAllocFunc = fn() -> Result<NetdevName, ()>;
+pub type SmoltcpConnectFunc = fn(SocketAddrV4) -> Result<SockFd, ()>;
+pub type SmoltcpSendFunc = fn(SockFd, &[u8]) -> Result<(), ()>;
+pub type SmoltcpRecvFunc = fn(SockFd, &mut [u8]) -> Result<Size, ()>;
+pub type SmoltcpBindFunc = fn(SocketAddrV4) -> LibOSResult<SockFd>;
+pub type SmoltcpAcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
+pub type SmoltcpCloseFunc = fn(SockFd) -> LibOSResult<()>;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
