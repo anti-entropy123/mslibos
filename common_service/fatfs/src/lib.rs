@@ -28,7 +28,7 @@ thread_local! {
                 .read(true)
                 .write(true)
                 .open(image_path.clone())
-                .unwrap_or_else(|_| panic!("open img {:?} failed", image_path)))
+                .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", image_path, e)))
         };
         FileSystem::new(image, fatfs::FsOptions::new()).expect("fatfs::new() failed.")
     };
