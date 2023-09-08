@@ -55,6 +55,10 @@ impl ServiceLoader {
         for svc in &config.services {
             self.registered.insert(svc.0.clone(), svc.1.clone());
         }
+        self.registered.insert(
+            "libc".to_owned(),
+            PathBuf::from("/lib/x86_64-linux-gnu/libc.so.6"),
+        );
         self
     }
 

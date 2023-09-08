@@ -102,18 +102,26 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let isol = {
-            let binding = get_isol_table();
-            let isol = binding.get(&self.id).expect("isol doesn't exist?");
-            isol.upgrade().expect("isol doesn't exist?")
-        };
+        let thread_builder = thread::Builder::new().name(format!(
+            "isol-{}-{}",
+            self.id,
+            self.app_names.get(0).unwrap()
+        ));
+
+        let isol_id = self.id;
         let app_names = self.app_names.clone();
-
-        let thread_builder =
-            thread::Builder::new().name(format!("isol-{}-{}", self.id, app_names.get(0).unwrap()));
-
         let handler = thread_builder
             .spawn(move || {
+                // In order to avoid move &self to closure, accessing data
+                // by Arc<Isolation>.
+                let isol = {
+                    let binding = get_isol_table();
+                    let isol = binding.get(&isol_id).expect("isol doesn't exist?");
+                    isol.upgrade().expect("isol doesn't exist?")
+                };
+
+                isol.service_or_load(&"libc".to_owned());
+
                 for app in app_names {
                     let app = isol.service_or_load(&app);
                     let result = app.run();
