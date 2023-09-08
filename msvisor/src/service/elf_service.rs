@@ -1,15 +1,29 @@
 //! `elf_service` use POSIX API `dlopen` to create service.
 //! In the future, it will be **discarded**.
 
-use std::{collections::HashSet, path::PathBuf, sync::Arc};
+use std::{
+    borrow::Cow,
+    collections::HashSet,
+    ffi::{CStr, CString},
+    os::{
+        raw::{self, c_void},
+        unix::prelude::OsStrExt,
+    },
+    path::PathBuf,
+    sync::Arc,
+};
 
 use anyhow::anyhow;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
+use log::info;
 use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
+};
+use nix::libc::{
+    dlerror, dlinfo, dlmopen, Lmid_t, LM_ID_NEWLM, RTLD_DI_LMID, RTLD_LAZY, RTLD_LOCAL,
 };
 
 use crate::{
@@ -18,6 +32,8 @@ use crate::{
     metric::{MetricEvent, SvcMetricBucket},
     utils, GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
 };
+
+use super::loader::Namespace;
 
 lazy_static! {
     static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
@@ -49,9 +65,16 @@ pub struct ELFService {
 }
 
 impl ELFService {
-    pub fn new(name: &str, filename: &PathBuf, metric: Arc<SvcMetricBucket>) -> Self {
+    pub fn new(
+        name: &str,
+        filename: &PathBuf,
+        namespace: Option<&Namespace>,
+        metric: Arc<SvcMetricBucket>,
+    ) -> Self {
         metric.mark(MetricEvent::SvcInit);
-        let lib = Arc::from(load_dynlib(filename).expect("failed load dynlib"));
+        let lib = Arc::from(
+            load_dynlib(filename, namespace.map(|ns| ns.as_lmid_t())).expect("failed load dynlib"),
+        );
         logger::debug!("ELFService::new, name={name}");
         Self {
             name: name.to_string(),
@@ -129,6 +152,18 @@ impl ELFService {
         logger::info!("{} complete.", self.name);
         result
     }
+
+    pub fn namespace(&self) -> Namespace {
+        // The reason for using this hack, is same to `fn load_dynlib()`, that must
+        // get `handle: *mut c_void` to call `dlinfo()`.
+        let handle: usize = *unsafe { core::mem::transmute::<&Library, &usize>(self.lib.as_ref()) };
+        let mut result: Namespace = Namespace::default();
+
+        let info = &mut result as *mut Namespace as usize;
+        unsafe { dlinfo(handle as *mut c_void, RTLD_DI_LMID, info as *mut c_void) };
+        info!("service_{} belong to namespace: {}", self.name, result);
+        result
+    }
 }
 
 impl Drop for ELFService {
@@ -149,19 +184,39 @@ impl Drop for ELFService {
 
 #[test]
 fn service_drop_test() {
-    use crate::service::MetricBucket;
+    use crate::{metric::MetricBucket, service::elf_service::ELFService};
     // std::env::set_var("RUST_LOG", "INFO");
     // logger::init();
 
     let bucket = MetricBucket::new();
     let path = PathBuf::new().join("target/debug/libsocket.so");
 
-    let socket = ELFService::new("socket", &path, bucket.new_svc_metric("socket".to_owned()));
+    let socket = ELFService::new(
+        "socket",
+        &path,
+        None,
+        bucket.new_svc_metric("socket".to_owned()),
+    );
 
     drop(socket)
 }
 
-fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
+/// Checks for the last byte and avoids allocating if it is zero.
+///
+/// Non-last null bytes still result in an error.
+pub(crate) fn cstr_cow_from_bytes(slice: &[u8]) -> anyhow::Result<Cow<'_, CStr>> {
+    static ZERO: raw::c_char = 0;
+    Ok(match slice.last() {
+        // Slice out of 0 elements
+        None => unsafe { Cow::Borrowed(CStr::from_ptr(&ZERO)) },
+        // Slice with trailing 0
+        Some(&0) => Cow::Borrowed(CStr::from_bytes_with_nul(slice)?),
+        // Slice with no trailing 0
+        Some(_) => Cow::Owned(CString::new(slice)?),
+    })
+}
+
+fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Library> {
     let filename = if !filename.is_file() {
         utils::REPOS_ROOT_PATH.join(filename)
     } else {
@@ -175,7 +230,29 @@ fn load_dynlib(filename: &PathBuf) -> anyhow::Result<Library> {
         ));
     }
 
-    let lib = unsafe { Library::new(filename) }?;
+    let handle = unsafe {
+        dlmopen(
+            lmid.unwrap_or(LM_ID_NEWLM),
+            cstr_cow_from_bytes(filename.as_os_str().as_bytes())?.as_ptr(),
+            RTLD_LAZY | RTLD_LOCAL,
+        )
+    };
+
+    info!("load_dynlib: dlmopen handle=0x{:x}", handle as usize);
+    if handle.is_null() {
+        let error = unsafe { dlerror() };
+        return if error.is_null() {
+            Err(anyhow!("unknown dlmopen error"))
+        } else {
+            let message = unsafe { CStr::from_ptr(error) }
+                .to_string_lossy()
+                .to_string();
+            Err(anyhow!(message))
+        };
+    }
+
+    // libloading do not supply any method like `from_raw(handle: *mut c_void)`.
+    let lib = unsafe { core::mem::transmute(handle) };
     anyhow::Ok(lib)
 }
 
