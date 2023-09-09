@@ -102,36 +102,15 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let thread_builder = thread::Builder::new().name(format!(
-            "isol-{}-{}",
-            self.id,
-            self.app_names.get(0).unwrap()
-        ));
+        #[cfg(feature = "namespace")]
+        self.service_or_load(&"libc".to_owned());
 
-        let isol_id = self.id;
-        let app_names = self.app_names.clone();
-        let handler = thread_builder
-            .spawn(move || {
-                // In order to avoid move &self to closure, accessing data
-                // by Arc<Isolation>.
-                let isol = {
-                    let binding = get_isol_table();
-                    let isol = binding.get(&isol_id).expect("isol doesn't exist?");
-                    isol.upgrade().expect("isol doesn't exist?")
-                };
-
-                isol.service_or_load(&"libc".to_owned());
-
-                for app in app_names {
-                    let app = isol.service_or_load(&app);
-                    let result = app.run();
-                    result?
-                }
-                Ok(())
-            })
-            .expect("thread spawn failed");
-
-        handler.join().expect("Join isolation app-thread failed")
+        for app in &self.app_names {
+            let app = self.service_or_load(app);
+            let result = app.run();
+            result?
+        }
+        Ok(())
     }
 }
 

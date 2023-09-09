@@ -17,7 +17,7 @@ use anyhow::anyhow;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
-use log::info;
+use log::{debug, info};
 use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
@@ -38,7 +38,10 @@ use super::loader::Namespace;
 lazy_static! {
     static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
         let mut hs = HashSet::new();
-        hs.insert("libc".to_owned());
+        #[cfg(feature = "namespace")]
+        {
+            hs.insert("libc".to_owned());
+        }
         hs.insert("stdio".to_owned());
         hs.insert("time".to_owned());
         hs
@@ -217,20 +220,8 @@ pub(crate) fn cstr_cow_from_bytes(slice: &[u8]) -> anyhow::Result<Cow<'_, CStr>>
     })
 }
 
-fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Library> {
-    let filename = if !filename.is_file() {
-        utils::REPOS_ROOT_PATH.join(filename)
-    } else {
-        filename.to_owned()
-    };
-
-    if !filename.is_file() {
-        return Err(anyhow!(
-            "load dynlib failed. filename is invaild: {}",
-            filename.to_str().unwrap()
-        ));
-    }
-
+#[cfg(feature = "namespace")]
+fn do_dlmopen(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<*mut c_void> {
     let handle = unsafe {
         dlmopen(
             lmid.unwrap_or(LM_ID_NEWLM),
@@ -250,10 +241,36 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
                 .to_string();
             Err(anyhow!(message))
         };
-    }
+    };
+    Ok(handle)
+}
 
-    // libloading do not supply any method like `from_raw(handle: *mut c_void)`.
-    let lib = unsafe { core::mem::transmute(handle) };
+fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Library> {
+    let filename = if !filename.is_file() {
+        utils::REPOS_ROOT_PATH.join(filename)
+    } else {
+        filename.to_owned()
+    };
+
+    if !filename.is_file() {
+        return Err(anyhow!(
+            "load dynlib failed. filename is invaild: {}",
+            filename.to_str().unwrap()
+        ));
+    }
+    let lib = {
+        #[cfg(feature = "namespace")]
+        // libloading do not supply any method like `from_raw(handle: *mut c_void)`.
+        unsafe {
+            core::mem::transmute(do_dlmopen(&filename, lmid)?)
+        }
+
+        #[cfg(not(feature = "namespace"))]
+        {
+            debug!("do not use dlmopen, lmid={:?} is meaningless", lmid);
+            unsafe { Library::new(filename) }?
+        }
+    };
     anyhow::Ok(lib)
 }
 

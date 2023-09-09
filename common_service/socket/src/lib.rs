@@ -134,7 +134,7 @@ pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
     let mut iface = IFACE.lock().unwrap();
 
     let (dns_handle, query) = {
-        let servers = &[Ipv4Address::new(8, 8, 8, 8).into()];
+        let servers = &[Ipv4Address::new(114, 114, 114, 114).into()];
         let dns_socket = dns::Socket::new(servers, vec![]);
 
         let mut sockets = SOCKETS.lock().unwrap();
@@ -170,6 +170,7 @@ pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
 
 #[no_mangle]
 pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<SockFd, ()> {
+    // println!("smol_connect");
     let mut iface = IFACE.lock().unwrap();
     let mut sockets = SOCKETS.lock().unwrap();
 
@@ -198,6 +199,7 @@ pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<SockFd, ()> {
 
 #[no_mangle]
 pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
+    // println!("smol_send, handle={}", handle);
     let mut iface = IFACE.lock().unwrap();
     let mut sockets = SOCKETS.lock().unwrap();
     let mut cursor = 0;
@@ -217,6 +219,7 @@ pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
             // );
             cursor += socket.send_slice(&data[cursor..]).expect("cannot send");
         }
+
         if cursor == data.len() {
             return Ok(());
         }
@@ -227,6 +230,7 @@ pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
 
 #[no_mangle]
 pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
+    // println!("smol_recv");
     let mut iface = IFACE.lock().unwrap();
     let mut sockets = SOCKETS.lock().unwrap();
 
@@ -236,10 +240,10 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
     // should return data if buffer is not empty. otherwise will block until closed TCP.
     loop {
         let timestamp = iface_poll(&mut iface, &mut sockets);
-
         let tcp_socket = sockets.get_mut::<tcp::Socket>(from_sockfd(handle));
 
-        if cursor != 0 || !tcp_socket.may_recv() {
+        // println!("wait for recv, status={}", tcp_socket.state());
+        if cursor != 0 || !tcp_socket.may_recv() || tcp_socket.state() == State::CloseWait {
             break;
         } else if tcp_socket.can_recv() {
             tcp_socket
@@ -254,7 +258,6 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
                 })
                 .expect("recv to slice failed");
         };
-
         try_phy_wait(timestamp, &mut iface, &mut sockets).expect("wait error");
     }
 
@@ -263,6 +266,7 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
 
 #[no_mangle]
 pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
+    // println!("smol_close");
     let mut iface = IFACE.lock().unwrap();
 
     let handle = from_sockfd(handle);
@@ -279,15 +283,15 @@ pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
             //     handle,
             //     tcp_socket.state()
             // );
-            
-            // Should not remove socket from sockets. Because smoltcp will 
-            // update state of tcp connect by sockets. 
+
+            // Should not remove socket from sockets. Because smoltcp will
+            // update state of tcp connect by sockets.
             tcp_socket.close();
             has_close = true;
         }
 
         // println!("{:?}", tcp_socket.state());
-        if tcp_socket.state() == State::TimeWait {
+        if !tcp_socket.is_open() {
             break;
         }
 
