@@ -1,4 +1,9 @@
-use msvisor::isolation::{config::IsolationConfig, Isolation};
+use std::thread::{self, JoinHandle};
+
+use msvisor::{
+    isolation::{config::IsolationConfig, Isolation},
+    logger,
+};
 
 #[test]
 fn run_dylib_test() {
@@ -10,12 +15,16 @@ fn run_dylib_test() {
     assert!(isol1.run().is_ok());
 }
 
-// This test have stack overflow error.
-// #[test]
-// fn run_multi_dylib_test() {
-//     for _ in 0..5 {
-//         thread::spawn(|| run_dylib_test())
-//             .join()
-//             .expect("join thread failed");
-//     }
-// }
+#[test]
+fn run_multi_dylib_test() {
+    logger::init();
+
+    let threads: Vec<JoinHandle<_>> = (0..5)
+        .into_iter()
+        .map(|_| thread::spawn(|| run_dylib_test()))
+        .collect();
+
+    for thread in threads {
+        thread.join().expect("thread join failed");
+    }
+}

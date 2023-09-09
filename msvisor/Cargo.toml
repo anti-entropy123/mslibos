@@ -22,3 +22,8 @@ nix = "0.26.2"                                         # use to call mmap, pthre
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.105"
 clap = { version = "4.3.21", features = ["derive"] }
+
+[features]
+namespace = []
+
+default = ["namespace"]

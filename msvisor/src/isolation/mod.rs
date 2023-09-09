@@ -102,28 +102,15 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), ()> {
-        let isol = {
-            let binding = get_isol_table();
-            let isol = binding.get(&self.id).expect("isol doesn't exist?");
-            isol.upgrade().expect("isol doesn't exist?")
-        };
-        let app_names = self.app_names.clone();
+        #[cfg(feature = "namespace")]
+        self.service_or_load(&"libc".to_owned());
 
-        let thread_builder =
-            thread::Builder::new().name(format!("isol-{}-{}", self.id, app_names.get(0).unwrap()));
-
-        let handler = thread_builder
-            .spawn(move || {
-                for app in app_names {
-                    let app = isol.service_or_load(&app);
-                    let result = app.run();
-                    result?
-                }
-                Ok(())
-            })
-            .expect("thread spawn failed");
-
-        handler.join().expect("Join isolation app-thread failed")
+        for app in &self.app_names {
+            let app = self.service_or_load(app);
+            let result = app.run();
+            result?
+        }
+        Ok(())
     }
 }
 

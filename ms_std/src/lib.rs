@@ -51,6 +51,12 @@ cfg_if::cfg_if! {
 
             #[lang = "eh_personality"]
             extern "C" fn eh_personality() {}
+
+            // If remove this line, will have compile error:
+            // undefined symbol: _Unwind_Resume
+            #[linkage = "weak"]
+            #[no_mangle]
+            pub fn _Unwind_Resume() {}
         }
     }
 }

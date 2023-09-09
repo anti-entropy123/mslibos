@@ -77,8 +77,6 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
             .arg("POSTROUTING")
             .arg("-s")
             .arg(&subnet_mask_str)
-            .arg("-d")
-            .arg(&subnet_mask_str)
             .arg("-j")
             .arg("MASQUERADE");
         comd
@@ -159,6 +157,11 @@ fn test_gen_tap_setup() {
 }
 
 fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
+    // println!(
+    //     "exec_sudo_commands, pid={}, thread_id={:?}",
+    //     std::process::id(),
+    //     std::thread::current().id()
+    // );
     let mut passwd = env::var("SUDO_PASSWD").expect("can't get root permission");
     if !passwd.ends_with('\n') {
         passwd += "\n";
