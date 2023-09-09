@@ -3,16 +3,15 @@
 
 extern crate alloc;
 
-use alloc::{format, string::String};
+use alloc::format;
 use ms_std::{
     agent::{FaaSFuncResult as Result, Zero},
     net::{TcpListener, TcpStream},
-    println,
 };
 
 fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 4096];
-    let n = stream.read(&mut buffer).expect("tcp connect read failed");
+    let _n = stream.read(&mut buffer).expect("tcp connect read failed");
 
     // println!("Request: {:#?}", String::from_utf8_lossy(&buffer[..n]));
 

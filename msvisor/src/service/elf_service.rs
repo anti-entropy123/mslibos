@@ -17,7 +17,7 @@ use anyhow::anyhow;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
-use log::{debug, info};
+use log::info;
 use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
@@ -221,7 +221,7 @@ pub(crate) fn cstr_cow_from_bytes(slice: &[u8]) -> anyhow::Result<Cow<'_, CStr>>
 }
 
 #[cfg(feature = "namespace")]
-fn do_dlmopen(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<*mut c_void> {
+fn do_dlmopen(filename: &std::path::Path, lmid: Option<Lmid_t>) -> anyhow::Result<*mut c_void> {
     let handle = unsafe {
         dlmopen(
             lmid.unwrap_or(LM_ID_NEWLM),

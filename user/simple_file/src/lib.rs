@@ -7,7 +7,6 @@ use ms_std::{
     agent::{FaaSFuncResult as Result, Zero},
     fs::File,
     io::{Read, Write},
-    println,
 };
 
 #[allow(clippy::result_unit_err)]

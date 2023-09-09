@@ -1,12 +1,6 @@
-use std::{
-    fs::File,
-    os::fd::{AsRawFd, FromRawFd},
-    ptr::drop_in_place,
-};
+use std::{fs::File, os::fd::FromRawFd};
 
-use smoltcp::phy::Device;
-
-use crate::{get_tap_raw_fd, setup_tap::exec_tap_cleanup, DEVICE, NETDEV_NAME};
+use crate::{get_tap_raw_fd, setup_tap::exec_tap_cleanup, NETDEV_NAME};
 
 #[no_mangle]
 pub fn drop() {

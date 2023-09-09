@@ -4,7 +4,6 @@ pub mod handler;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, MutexGuard, Weak},
-    thread,
 };
 
 use lazy_static::lazy_static;
