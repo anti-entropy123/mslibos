@@ -4,6 +4,7 @@
 members = ["msvisor", "gen-file", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
 exclude = ["user/", "common_service/"]
 default-members = ["msvisor"]
+resolver = "2"
 
 [workspace.dependencies]
 msvisor = { path = "msvisor" }
