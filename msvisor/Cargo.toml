@@ -21,7 +21,7 @@ xmas-elf = "0.9.0"                                     # use to parse dynlib elf
 nix = "0.26.2"                                         # use to call mmap, pthread_exit.
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.105"
-clap = { version = "4.3.21", features = ["derive"] }
+clap = { version = "4.4.4", features = ["derive"] }
 
 [features]
 namespace = []
