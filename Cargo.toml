@@ -1,7 +1,14 @@
 # cargo-features = ["profile-rustflags"]
 
 [workspace]
-members = ["msvisor", "gen-file", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
+members = [
+    "bins/*",
+    "libmsvisor",
+    "gen-file",
+    "ms_hostcall",
+    "ms_std",
+    "ms_std_proc_macro",
+]
 
 # The reason for excluding "user/" is obvious. This workspace can be regarded as 
 # a toolchain of libos. But "user/" are users' function. 
@@ -11,11 +18,11 @@ members = ["msvisor", "gen-file", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
 # `unwinding`). Of course, if add "user/" to members, will also have problem of 
 # feature gate. 
 exclude = ["user/", "common_service/"]
-default-members = ["msvisor"]
+default-members = ["bins/msvisor"]
 resolver = "2"
 
 [workspace.dependencies]
-msvisor = { path = "msvisor" }
+libmsvisor = { path = "libmsvisor" }
 
 ms_hostcall = { path = "ms_hostcall" }
 ms_std = { path = "ms_std" }

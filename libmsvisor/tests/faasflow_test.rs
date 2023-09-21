@@ -1,4 +1,4 @@
-use msvisor::isolation::{config::IsolationConfig, Isolation};
+use libmsvisor::isolation::{config::IsolationConfig, Isolation};
 
 #[test]
 fn multi_apps_test() {

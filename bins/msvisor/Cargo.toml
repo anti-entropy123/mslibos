@@ -1,5 +1,5 @@
 [package]
-name = "gen-file"
+name = "msvisor"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 libmsvisor = { workspace = true }
+
+log = "0.4.20"
+env_logger = "0.10.0"
+clap = { version = "4.3.21", features = ["derive"] }

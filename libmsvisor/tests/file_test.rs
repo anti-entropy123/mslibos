@@ -1,13 +1,12 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
-use msvisor::isolation::{config::IsolationConfig, Isolation};
+use libmsvisor::{
+    isolation::{config::IsolationConfig, Isolation},
+    logger,
+};
 
 #[test]
 fn run_operate_file_test() {
-    use std::path::PathBuf;
-
-    use msvisor::logger;
-
     logger::init();
 
     if !PathBuf::from(env!("CARGO_MANIFEST_DIR"))

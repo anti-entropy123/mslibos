@@ -1,14 +1,14 @@
-use std::path::PathBuf;
+use std::{env::set_current_dir, path::PathBuf};
 
-use msvisor::isolation::{config::IsolationConfig, Isolation};
+use libmsvisor::{
+    isolation::{config::IsolationConfig, Isolation},
+    logger,
+};
 
 const ROOT_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
 #[test]
 fn run_should_panic_test() {
-    use msvisor::logger;
-    use std::env::set_current_dir;
-    
     logger::init();
 
     set_current_dir::<PathBuf>(PathBuf::from(ROOT_DIR).parent().unwrap().into())

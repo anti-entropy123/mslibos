@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use clap::{arg, Parser};
 
-use msvisor::{
+use libmsvisor::{
     isolation::{config::IsolationConfig, Isolation},
     logger,
 };

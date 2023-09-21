@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use msvisor::isolation::config::IsolationConfig;
+use libmsvisor::isolation::config::IsolationConfig;
 
 fn main() {
     let config1 = IsolationConfig {

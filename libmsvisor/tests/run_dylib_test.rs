@@ -1,6 +1,6 @@
 use std::thread::{self, JoinHandle};
 
-use msvisor::{
+use libmsvisor::{
     isolation::{config::IsolationConfig, Isolation},
     logger,
 };
