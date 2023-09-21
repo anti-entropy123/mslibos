@@ -1,5 +1,6 @@
 mod elf_service;
 mod loader;
+#[cfg(feature = "serviceV2")]
 mod rust_service;
 
 use std::{path::PathBuf, sync::Arc};
@@ -16,6 +17,7 @@ use self::loader::Namespace;
 
 pub enum Service {
     ElfService(elf_service::ELFService),
+    #[cfg(feature = "serviceV2")]
     RustService(rust_service::RustService),
 }
 
@@ -32,30 +34,35 @@ impl Service {
     fn init(&self, isol_id: IsolationID) {
         match self {
             Service::ElfService(svc) => svc.init(isol_id),
+            #[cfg(feature = "serviceV2")]
             Service::RustService(svc) => svc.init(isol_id),
         }
     }
     pub fn run(&self) -> Result<(), ()> {
         match self {
             Service::ElfService(svc) => svc.run(),
+            #[cfg(feature = "serviceV2")]
             Service::RustService(svc) => svc.run(),
         }
     }
     pub fn interface<T>(&self, name: &str) -> Option<Symbol<T>> {
         match self {
             Service::ElfService(svc) => svc.symbol(name),
+            #[cfg(feature = "serviceV2")]
             Service::RustService(svc) => Some(svc.symbol(name)),
         }
     }
     pub fn name(&self) -> ServiceName {
         match self {
             Service::ElfService(svc) => svc.name.to_owned(),
+            #[cfg(feature = "serviceV2")]
             Service::RustService(svc) => svc.name.to_owned(),
         }
     }
     pub fn namespace(&self) -> Namespace {
         match self {
             Service::ElfService(svc) => svc.namespace(),
+            #[cfg(feature = "serviceV2")]
             Service::RustService(_) => todo!(),
         }
     }
