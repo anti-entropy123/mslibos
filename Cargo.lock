@@ -1026,9 +1026,9 @@ checksum = "301abaae475aa91687eb82514b328ab47a211a533026cb25fc3e519b86adfc3c"
 
 [[package]]
 name = "unwinding"
-version = "0.1.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf10020069685fe1046038e07aec0b92b087ed282aa620c9afd9671b7f26ce9d"
+checksum = "4ee215fc0991fb587275819562685254302112d0b7c8d25e635655526c0ecdc6"
 dependencies = [
  "gimli 0.26.2",
  "libc",
