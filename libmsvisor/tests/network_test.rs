@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
-use msvisor::isolation::{config::IsolationConfig, Isolation};
+use libmsvisor::{
+    isolation::{config::IsolationConfig, Isolation},
+    logger,
+};
 
 #[test]
 fn run_send_request_test() {
-    use msvisor::logger;
     logger::init();
     if std::env::var("SUDO_PASSWD").is_err() {
         return;

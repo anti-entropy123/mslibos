@@ -70,6 +70,5 @@ lazy_static! {
 fn common_path_test() {
     use std::fs;
 
-    fs::metadata(TARGET_DEBUG_PATH.join("msvisor")).expect("msvisor not found.");
     fs::metadata(ISOL_CONFIG_PATH.join("base_config.json")).expect("base_config.json not found.");
 }

@@ -2,7 +2,7 @@
 //! will use `dlmopen` or `mmap` to avoid some problems of
 //! `elf_service`.
 
-use std::{fmt::Display, fs::File, io::Read, num::NonZeroUsize, os::unix::prelude::AsRawFd};
+use std::{fmt::Display, fs::File, io::Read, num::NonZeroUsize, os::fd::AsFd, rc::Rc};
 
 use libloading::Symbol;
 use ms_hostcall::types::{IsolationID, ServiceName};
@@ -49,12 +49,15 @@ impl Display for MmapArea {
 }
 
 #[allow(unused)]
-fn mmap_segment(
+fn mmap_segment<F>(
     elf_base: usize,
     ph: &ProgramHeader,
     prot: ProtFlags,
-    fd: i32,
-) -> nix::Result<MmapArea> {
+    fd: F,
+) -> anyhow::Result<MmapArea>
+where
+    F: AsFd,
+{
     let base = elf_base + round_down!(ph.virtual_addr());
     let length = round_up!(ph.virtual_addr() - ph.offset() + ph.mem_size());
     let base = unsafe {
@@ -63,7 +66,7 @@ fn mmap_segment(
             NonZeroUsize::new(length).unwrap(),
             prot,
             MapFlags::MAP_PRIVATE | MapFlags::MAP_DENYWRITE | MapFlags::MAP_FIXED,
-            fd,
+            Some(fd),
             round_down!(ph.offset()) as i64,
         )
     }?;
@@ -74,18 +77,18 @@ fn mmap_segment(
 }
 
 /// This is a function used to test load dynlib by mmap. But in current implementation,
-/// it still have bugs: free(): invalid pointer.
+/// it still have bug: free(): invalid pointer.
 /// I guess this is because some range will be free twice.
 #[allow(unused)]
-pub fn load_pic_dynlib() {
-    let mut elf_file =
-        File::open("/home/yjn/rust_project/mslibos/target/debug/libhello_world.so").unwrap();
+pub fn load_pic_dynlib() -> anyhow::Result<()> {
+    let mut elf_file = File::open(
+        "/home/yjn/rust_project/mslibos/user/hello_world/target/debug/libhello_world.so",
+    )?;
 
     let mut elf_data = Vec::new();
-    elf_file
-        .read_to_end(&mut elf_data)
-        .expect("read elf file failed");
+    elf_file.read_to_end(&mut elf_data)?;
 
+    let elf_file = Rc::new(elf_file);
     let elf = { xmas_elf::ElfFile::new(elf_data.as_mut()).unwrap() };
     assert_eq!(
         elf.header.pt1.magic,
@@ -117,11 +120,11 @@ pub fn load_pic_dynlib() {
                 NonZeroUsize::new(mmap_total_size).unwrap(),
                 ProtFlags::PROT_READ,
                 MapFlags::MAP_PRIVATE | MapFlags::MAP_DENYWRITE,
-                elf_file.as_raw_fd(),
+                Some(Rc::clone(&elf_file)),
                 0,
             )
-        }
-        .expect("mmap elf file failed");
+        }?;
+
         (
             MmapArea {
                 base: base as usize,
@@ -138,28 +141,26 @@ pub fn load_pic_dynlib() {
         mmap_total.base,
         &elf.program_header(text_idx).unwrap(),
         ProtFlags::PROT_READ | ProtFlags::PROT_EXEC,
-        elf_file.as_raw_fd(),
-    )
-    .expect("mmap text segment failed");
+        Rc::clone(&elf_file),
+    )?;
     log::debug!("mmap_text: {}", mmap_text);
 
     let mmap_data = mmap_segment(
         mmap_total.base,
         &elf.program_header(data_idx).unwrap(),
         ProtFlags::PROT_READ,
-        elf_file.as_raw_fd(),
-    )
-    .expect("mmap data segment failed");
+        Rc::clone(&elf_file),
+    )?;
     log::debug!("mmap_data: {}", mmap_data);
 
     let _mmap_bss = mmap_segment(
         mmap_total.base,
         &elf.program_header(bss_idx).unwrap(),
         ProtFlags::PROT_READ | ProtFlags::PROT_WRITE,
-        elf_file.as_raw_fd(),
-    )
-    .expect("mmap bss segment failed");
+        Rc::clone(&elf_file),
+    )?;
     // log::debug!("mmap_bss: {}", mmap_bss)
+    Ok(())
 }
 
 // This is a test case for dlmopen-like service loader.
@@ -167,5 +168,5 @@ pub fn load_pic_dynlib() {
 // fn load_pic_dynlib_test() {
 //     use crate::logger;
 //     logger::init();
-//     load_pic_dynlib()
+//     load_pic_dynlib().unwrap()
 // }
