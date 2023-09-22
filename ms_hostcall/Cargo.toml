@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 # smoltcp.workspace = true
-thiserror = "1.0.47"
+thiserror = "1.0.48"
 derive_more = "0.99.17"
 bitflags = "2.4.0"
 # managed = { version = "0.8", default-features = false, features = ["map"] }
