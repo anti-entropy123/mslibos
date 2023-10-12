@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = [] }
+ms_std = { path = "../../ms_std", default-features = false, features = [] }
 ms_hostcall = { path = "../../ms_hostcall" }
 
 log = "0.4.20"

@@ -9,7 +9,8 @@
 #![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
 
-use agent::{FaaSFuncResult, Zero};
+use agent::{DataBuffer, FaaSFuncResult, Zero};
+use alloc::vec::Vec;
 
 pub mod console;
 
@@ -52,7 +53,7 @@ cfg_if::cfg_if! {
             #[lang = "eh_personality"]
             extern "C" fn eh_personality() {}
 
-            // If remove this line, will have compile error: "undefined 
+            // If remove this line, will have compile error: "undefined
             // symbol: _Unwind_Resume"
             #[allow(non_snake_case)]
             #[linkage = "weak"]

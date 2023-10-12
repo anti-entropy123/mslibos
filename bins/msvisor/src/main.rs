@@ -34,7 +34,7 @@ fn main() {
     // info!("preload?:{}", args.preload);
     let isol1 = Isolation::new(config1.clone());
     if args.preload {
-        isol1.preload(config1)
+        isol1.preload(config1).expect("preload failed.")
     }
 
     if isol1.run().is_err() {

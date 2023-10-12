@@ -22,9 +22,7 @@ use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
 };
-use nix::libc::{
-    dlerror, dlinfo, dlmopen, Lmid_t, LM_ID_NEWLM, RTLD_DI_LMID, RTLD_LAZY, RTLD_LOCAL,
-};
+use nix::libc::{dlerror, Lmid_t, RTLD_DI_LMID};
 
 use crate::{
     isolation::handler::{find_host_call, panic_handler},
@@ -164,7 +162,7 @@ impl ELFService {
         let mut result: Namespace = Namespace::default();
 
         let info = &mut result as *mut Namespace as usize;
-        unsafe { dlinfo(handle as *mut c_void, RTLD_DI_LMID, info as *mut c_void) };
+        unsafe { nix::libc::dlinfo(handle as *mut c_void, RTLD_DI_LMID, info as *mut c_void) };
         info!("service_{} belong to namespace: {}", self.name, result);
         result
     }
@@ -223,10 +221,10 @@ pub(crate) fn cstr_cow_from_bytes(slice: &[u8]) -> anyhow::Result<Cow<'_, CStr>>
 #[cfg(feature = "namespace")]
 fn do_dlmopen(filename: &std::path::Path, lmid: Option<Lmid_t>) -> anyhow::Result<*mut c_void> {
     let handle = unsafe {
-        dlmopen(
-            lmid.unwrap_or(LM_ID_NEWLM),
+        nix::libc::dlmopen(
+            lmid.unwrap_or(nix::libc::LM_ID_NEWLM),
             cstr_cow_from_bytes(filename.as_os_str().as_bytes())?.as_ptr(),
-            RTLD_LAZY | RTLD_LOCAL,
+            nix::libc::RTLD_LAZY | nix::libc::RTLD_LOCAL,
         )
     };
 
@@ -267,7 +265,7 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
 
         #[cfg(not(feature = "namespace"))]
         {
-            debug!("do not use dlmopen, lmid={:?} is meaningless", lmid);
+            log::debug!("do not use dlmopen, lmid={:?} is meaningless", lmid);
             unsafe { Library::new(filename) }?
         }
     };

@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use anyhow::anyhow;
 use ms_hostcall::types::{IsolationID, ServiceName};
 use nix::libc::Lmid_t;
 
@@ -63,11 +64,11 @@ impl ServiceLoader {
         self
     }
 
-    fn load(&self, name: &ServiceName) -> Arc<Service> {
+    fn load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         let lib_path = self
             .registered
             .get(name)
-            .unwrap_or_else(|| panic!("unregistered library: {}", name));
+            .ok_or(anyhow!("unregistry library"))?;
 
         let service = Service::new(
             name,
@@ -78,14 +79,14 @@ impl ServiceLoader {
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id);
-        Arc::from(service)
+        Ok(Arc::from(service))
     }
 
-    pub fn load_app(&self, name: &ServiceName) -> Arc<Service> {
+    pub fn load_app(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.load(name)
     }
 
-    pub fn load_service(&self, name: &ServiceName) -> Arc<Service> {
+    pub fn load_service(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.metric.mark(MetricEvent::LoadService);
         self.load(name)
     }

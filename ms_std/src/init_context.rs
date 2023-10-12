@@ -35,7 +35,7 @@ pub fn isolation_ctx() -> Ref<'static, IsolationContext> {
 #[no_mangle]
 pub extern "C" fn set_handler_addr(ctx: IsolationContext) -> HCResult {
     let mut isol_ctx = isolation_ctx_mut();
-    if isol_ctx.find_handler != 0 {
+    if isol_ctx.find_handler != 0 && isol_ctx.find_handler != ctx.find_handler {
         panic!();
         // return Err(HCError::HasBeenSet);
     };
