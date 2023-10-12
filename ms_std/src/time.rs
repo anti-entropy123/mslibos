@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use crate::libos::libos;
+use crate::{libos::libos, println};
 
 #[derive(Clone, Copy)]
 pub struct SystemTime {
@@ -11,9 +11,9 @@ pub const UNIX_EPOCH: SystemTime = SystemTime { nanos: 0 };
 
 impl SystemTime {
     pub fn now() -> Self {
-        Self {
-            nanos: libos!(get_time()).unwrap(),
-        }
+        let nanos = libos!(get_time()).unwrap();
+        println!("get_time -> {}", nanos);
+        Self { nanos }
     }
 
     pub fn duration_since(&self, earlier: SystemTime) -> Duration {

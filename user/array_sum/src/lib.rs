@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+use alloc::vec::Vec;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result, Zero},
     println,
@@ -12,8 +13,8 @@ use ms_std_proc_macro::Verify;
 #[allow(dead_code)]
 #[derive(Verify, Default)]
 pub struct ArrayData {
-    // start_times: Vec<u128>,
-    // end_times: Vec<u128>,
+    start_times: Vec<u128>,
+    end_times: Vec<u128>,
     n: i32,
 }
 
@@ -23,7 +24,7 @@ pub fn main() -> Result<ArrayData> {
     println!("start main()");
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
 
-    let d: DataBuffer<_> = match DataBuffer::<ArrayData>::from_buffer() {
+    let mut d: DataBuffer<_> = match DataBuffer::<ArrayData>::from_buffer() {
         Some(array_data) => {
             println!("n: {}", array_data.n);
             array_data
@@ -34,10 +35,17 @@ pub fn main() -> Result<ArrayData> {
         }
     };
 
-    // d.start_times.push(start_time);
-    // d.end_times
-    //     .push(SystemTime::now().duration_since(UNIX_EPOCH).as_millis());
-    // d.n += 1;
+    d.start_times.push(start_time);
+    d.end_times
+        .push(SystemTime::now().duration_since(UNIX_EPOCH).as_millis());
+    d.n += 1;
+
+    if d.n == 10 {
+        println!(
+            "start_time: {:?}, end_time: {:?}",
+            d.start_times, d.end_times
+        );
+    };
 
     Ok(d)
 }

@@ -25,7 +25,6 @@ pub fn buffer_alloc(l: Layout, fingerprint: u64) -> Result<usize, ()> {
 
 #[no_mangle]
 pub fn access_buffer() -> Option<(usize, u64)> {
-    let r = *RAW_P.access();
-    *RAW_P.exclusive_access() = None;
-    r
+    // *RAW_P.exclusive_access().take()
+    *RAW_P.exclusive_access()
 }
