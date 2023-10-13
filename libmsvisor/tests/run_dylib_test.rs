@@ -15,6 +15,7 @@ fn run_dylib_test() {
     assert!(isol1.run().is_ok());
 }
 
+#[cfg(feature = "namespace")]
 #[test]
 fn run_multi_dylib_test() {
     logger::init();

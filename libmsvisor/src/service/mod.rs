@@ -3,9 +3,9 @@ mod loader;
 #[cfg(feature = "serviceV2")]
 mod rust_service;
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
-use libloading::Symbol;
+use libloading::{Library, Symbol};
 
 use elf_service::ELFService;
 pub use loader::ServiceLoader;
@@ -22,14 +22,9 @@ pub enum Service {
 }
 
 impl Service {
-    fn new(
-        name: &str,
-        filename: &PathBuf,
-        namespace: Option<&Namespace>,
-        metric: Arc<SvcMetricBucket>,
-    ) -> Self {
+    fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         logger::debug!("Service::new, name={name}");
-        Self::ElfService(ELFService::new(name, filename, namespace, metric))
+        Self::ElfService(ELFService::new(name, lib, metric))
     }
     fn init(&self, isol_id: IsolationID) {
         match self {

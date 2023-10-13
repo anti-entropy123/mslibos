@@ -26,4 +26,4 @@ serde_json = "1.0.105"
 namespace = []
 serviceV2 = ["nix/mman"]
 
-default = []
+default = ["namespace"]

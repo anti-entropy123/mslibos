@@ -1,7 +1,7 @@
 use libmsvisor::isolation::{config::IsolationConfig, Isolation};
 
 #[test]
-fn multi_apps_test() {
+fn faasflow_test() {
     // logger::init();
     // let config1 =
     //     IsolationConfig::from_file("multi_apps.json".into()).expect("Open config file failed.");

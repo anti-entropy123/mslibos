@@ -9,8 +9,7 @@
 #![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
 
-use agent::{DataBuffer, FaaSFuncResult, Zero};
-use alloc::vec::Vec;
+use agent::{FaaSFuncResult, Zero};
 
 pub mod console;
 

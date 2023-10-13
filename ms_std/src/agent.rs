@@ -1,6 +1,6 @@
-use core::{alloc::Layout, borrow::Borrow, mem::ManuallyDrop};
+use core::{alloc::Layout, borrow::Borrow};
 
-use alloc::{rc::Rc, vec::Vec};
+use alloc::rc::Rc;
 use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
