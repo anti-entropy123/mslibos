@@ -1,3 +1,5 @@
+use core::panic;
+
 use ms_hostcall::{
     types::{IsolationID, NetdevName},
     HostCallID,
@@ -36,7 +38,10 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
         svc_name
     );
 
-    let service = isol.service_or_load(&svc_name);
+    let service = isol
+        .service_or_load(&svc_name)
+        .unwrap_or_else(|e| panic!("need find: {}, need load: {}, err: {}", hc_id, svc_name, e));
+
     let symbol = service
         .interface::<fn()>(&hc_id.to_string())
         .unwrap_or_else(|| {
@@ -72,7 +77,7 @@ fn find_host_call_test() {
         };
         log::debug!("services={:#?}", services);
 
-        let isol = Isolation::new(IsolationConfig {
+        let isol = Isolation::new(&IsolationConfig {
             services,
             apps: vec![(
                 "hello1".to_owned(),
@@ -86,7 +91,10 @@ fn find_host_call_test() {
     let hostcall_id = HostCallID::Common(ms_hostcall::CommonHostCall::Write);
     let addr = unsafe { find_host_call(1, hostcall_id) };
 
-    let fs_svc = isol.service_or_load(&"fdtab".to_string());
+    let fs_svc = isol
+        .service_or_load(&"fdtab".to_string())
+        .expect("service not found?");
+
     let symbol = fs_svc
         .interface::<fn()>("write")
         .expect("not found interface 'write'");

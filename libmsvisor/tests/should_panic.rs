@@ -18,6 +18,6 @@ fn run_should_panic_test() {
     let config1 = IsolationConfig::from_file("isol_config/should_panic.json".into())
         .expect("Open config file failed.");
 
-    let isol1 = Isolation::new(config1);
+    let isol1 = Isolation::new(&config1);
     assert!(isol1.run().is_err());
 }

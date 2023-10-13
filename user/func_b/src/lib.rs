@@ -34,9 +34,9 @@ impl Default for MyComplexData {
 #[no_mangle]
 #[allow(clippy::result_unit_err)]
 pub fn main() -> Result<MyComplexData> {
-    // println!("func b");
+    println!("func b");
     let data = DataBuffer::<MyComplexData>::from_buffer();
-    if let Some(buffer) = data {
+    if let Some(mut buffer) = data {
         let dur = buffer.current_time.elapsed();
         let size = size_of::<MyComplexData>();
         println!(

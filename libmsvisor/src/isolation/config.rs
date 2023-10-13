@@ -33,8 +33,45 @@ impl IsolationConfig {
 
         debug!("config file path: {}", p.to_str().unwrap());
         let content = fs::File::open(p)?;
-        let config = serde_json::from_reader(BufReader::new(content))?;
+
+        #[cfg(feature = "namespace")]
+        let mut config: IsolationConfig;
+        #[cfg(not(feature = "namespace"))]
+        let config: IsolationConfig;
+
+        config = serde_json::from_reader(BufReader::new(content))?;
+
+        #[cfg(feature = "namespace")]
+        config.services.insert(
+            0,
+            (
+                "libc".to_owned(),
+                PathBuf::from("/lib/x86_64-linux-gnu/libc.so.6"),
+            ),
+        );
 
         Ok(config)
     }
+
+    pub fn all_modules(&self) -> Vec<&(String, PathBuf)> {
+        self.services.iter().chain(self.apps.iter()).collect()
+    }
+}
+
+#[cfg(feature = "namespace")]
+#[test]
+fn all_modules_test() {
+    let config = IsolationConfig::from_file(utils::ISOL_CONFIG_PATH.join("base_config.json"))
+        .expect("load config failed");
+
+    assert!(
+        config
+            .all_modules()
+            .iter()
+            .map(|x| x.0.clone())
+            .collect::<Vec<String>>()
+            .contains(&"libc".to_owned()),
+        "{:?}",
+        config.all_modules()
+    )
 }

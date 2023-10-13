@@ -23,7 +23,7 @@ fn run_operate_file_test() {
     let config1 =
         IsolationConfig::from_file("simple_file.json".into()).expect("Open config file failed.");
 
-    let isol1 = Isolation::new(config1);
+    let isol1 = Isolation::new(&config1);
     isol1.run().expect("isolation user function error.");
 
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
