@@ -32,9 +32,9 @@ fn main() {
     let config1 = IsolationConfig::from_file(args.file.into()).expect("Open config file failed.");
 
     // info!("preload?:{}", args.preload);
-    let isol1 = Isolation::new(config1.clone());
+    let isol1 = Isolation::new(&config1);
     if args.preload {
-        isol1.preload(config1).expect("preload failed.")
+        isol1.preload(&config1).expect("preload failed.")
     }
 
     if isol1.run().is_err() {

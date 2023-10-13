@@ -13,6 +13,6 @@ fn faasflow_test() {
     let config2 = IsolationConfig::from_file("pass_complex_args.json".into())
         .expect("Open config file failed.");
 
-    let isol2 = Isolation::new(config2);
+    let isol2 = Isolation::new(&config2);
     assert!(isol2.run().is_ok());
 }

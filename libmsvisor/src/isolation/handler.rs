@@ -77,7 +77,7 @@ fn find_host_call_test() {
         };
         log::debug!("services={:#?}", services);
 
-        let isol = Isolation::new(IsolationConfig {
+        let isol = Isolation::new(&IsolationConfig {
             services,
             apps: vec![(
                 "hello1".to_owned(),

@@ -12,7 +12,7 @@ pub const UNIX_EPOCH: SystemTime = SystemTime { nanos: 0 };
 impl SystemTime {
     pub fn now() -> Self {
         let nanos = libos!(get_time()).unwrap();
-        println!("get_time -> {}", nanos);
+        // println!("get_time -> {}", nanos);
         Self { nanos }
     }
 

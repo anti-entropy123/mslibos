@@ -52,13 +52,13 @@ pub struct Isolation {
 }
 
 impl Isolation {
-    pub fn new(config: IsolationConfig) -> Arc<Self> {
+    pub fn new(config: &IsolationConfig) -> Arc<Self> {
         let new_id = gen_new_id();
         logger::info!("start build isolation_{new_id}");
 
         let metric = Arc::from(MetricBucket::new());
 
-        let loader = Arc::from(ServiceLoader::new(new_id, Arc::clone(&metric)).register(&config));
+        let loader = Arc::from(ServiceLoader::new(new_id, Arc::clone(&metric)).register(config));
 
         let isol = Arc::from(Self {
             id: new_id,
@@ -74,13 +74,10 @@ impl Isolation {
         isol
     }
 
-    pub fn preload(&self, mut config: IsolationConfig) -> Result<(), anyhow::Error> {
-        let mut modules = config.services;
-        modules.append(&mut config.apps);
-
-        for service in modules {
-            let svc_name = service.0;
-            self.service_or_load(&svc_name)?;
+    pub fn preload(&self, config: &IsolationConfig) -> Result<(), anyhow::Error> {
+        for service in config.all_modules() {
+            let svc_name = &service.0;
+            self.service_or_load(svc_name)?;
         }
 
         Ok(())

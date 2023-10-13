@@ -11,7 +11,7 @@ fn run_dylib_test() {
     let config1 =
         IsolationConfig::from_file("base_config.json".into()).expect("Open config file failed.");
 
-    let isol1 = Isolation::new(config1);
+    let isol1 = Isolation::new(&config1);
     assert!(isol1.run().is_ok());
 }
 

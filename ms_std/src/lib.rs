@@ -57,7 +57,10 @@ cfg_if::cfg_if! {
             #[allow(non_snake_case)]
             #[linkage = "weak"]
             #[no_mangle]
-            pub fn _Unwind_Resume() {}
+            pub fn _Unwind_Resume() {
+                use crate::println;
+                println!("libos: _unwind_resume")
+            }
         }
     }
 }

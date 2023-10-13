@@ -26,7 +26,7 @@ where
         let p = {
             let l = Layout::new::<Rc<T>>();
             let fingerprint = T::__fingerprint();
-            println!("T::__fingerprint: {}", fingerprint);
+            // println!("T::__fingerprint: {}", fingerprint);
             libos!(buffer_alloc(l, fingerprint)).expect("alloc failed.")
         };
         let raw_ptr = {
@@ -125,7 +125,7 @@ where
 
 impl<T> Drop for DataBuffer<T> {
     fn drop(&mut self) {
-        println!("drop DataBuffer");
+        // println!("drop DataBuffer");
         assert_eq!(Rc::strong_count(&self.inner), 1);
         let c = Rc::into_raw(Rc::clone(&self.inner));
         unsafe {

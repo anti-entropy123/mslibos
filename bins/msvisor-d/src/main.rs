@@ -33,7 +33,7 @@ async fn trige_workflow_handler(
     let config = IsolationConfig::from_file(isol_name.into())?;
 
     // info!("preload?:{}", args.preload);
-    let isol = Isolation::new(config.clone());
+    let isol = Isolation::new(&config);
     if isol.run().is_err() {
         logger::error!("isolation user function error.")
     }

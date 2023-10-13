@@ -1,6 +1,6 @@
 use libmsvisor::isolation::{config::IsolationConfig, Isolation};
 
-#[cfg(not(feature = "namespace"))]
+// #[cfg(not(feature = "namespace"))]
 #[test]
 fn long_chain_test() {
     use libmsvisor::logger;
@@ -10,6 +10,8 @@ fn long_chain_test() {
     let config1 =
         IsolationConfig::from_file("long_chain.json".into()).expect("Open config file failed.");
 
-    let isol1 = Isolation::new(config1);
+    let isol1 = Isolation::new(&config1);
+    isol1.preload(&config1).expect("preload failed");
+
     assert!(isol1.run().is_ok());
 }

@@ -21,7 +21,7 @@ pub struct ArrayData {
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn main() -> Result<ArrayData> {
-    println!("start main()");
+    // println!("start main()");
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
 
     let mut d: DataBuffer<_> = match DataBuffer::<ArrayData>::from_buffer() {
