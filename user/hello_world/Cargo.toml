@@ -10,3 +10,8 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }
+
+[features]
+measure_mem = []
+
+default = ["measure_mem"]

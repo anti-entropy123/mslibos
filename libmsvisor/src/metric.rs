@@ -1,20 +1,14 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+    time::UNIX_EPOCH,
+};
 
-use ms_hostcall::types::ServiceName;
+use ms_hostcall::types::{MetricEvent, ServiceName};
 use serde::Serialize;
 use serde_json::{json, Value};
 
 use crate::now_millis;
-
-pub enum MetricEvent {
-    // IsolationEvent
-    LoadService,
-
-    // SvcEvent
-    SvcInit,
-    SvcRun,
-    SvcEnd,
-}
 
 #[derive(Default, Serialize)]
 struct MetricBucketInner {
@@ -22,6 +16,7 @@ struct MetricBucketInner {
     svc_metrics: Vec<Arc<SvcMetricBucket>>,
 
     load_service_num: u32,
+    mem_metrics: Vec<(u128, usize)>,
 }
 
 impl MetricBucketInner {
@@ -59,9 +54,21 @@ impl MetricBucket {
         let mut inner = self.inner.lock().unwrap();
         match event {
             MetricEvent::LoadService => inner.load_service_num += 1,
+            MetricEvent::Mem => {
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_micros();
+                let vm_rss_kb = get_current_vm_rss_kb();
+
+                inner.mem_metrics.push((timestamp, vm_rss_kb))
+            }
 
             _ => {
-                panic!("error metric event for isolation MetricBucket")
+                panic!(
+                    "error metric event for isolation MetricBucket, event={:?}",
+                    event
+                )
             }
         }
     }
@@ -138,4 +145,37 @@ impl SvcMetricBucket {
         log::debug!("analyze service_{} metrics.", self.svc_name);
         json!({ self.svc_name.clone():  self.inner.lock().unwrap().to_json()})
     }
+}
+
+fn get_current_vm_rss_kb() -> usize {
+    let proc_status = fs::read_to_string("/proc/self/status").expect("get proc status failed.");
+
+    let line = proc_status
+        .lines()
+        .find(|line| line.starts_with("VmRSS:"))
+        .expect("wrong status content");
+
+    // assert!(line.len() == 1, "{}", line);
+
+    let number_vec: Vec<char> = line.chars().filter(|c| c.is_ascii_digit()).collect();
+
+    assert!(!number_vec.is_empty());
+
+    let numbers = String::from_iter(number_vec);
+    assert!(!numbers.is_empty());
+
+    numbers
+        .parse()
+        .unwrap_or_else(|_| panic!("wrong number string, numbers={}", numbers))
+}
+
+#[test]
+fn get_current_vm_rss_test() {
+    let mut data = [0usize; 1024]; // 8 kb
+    for i in 0..data.len() {
+        data[i] = i
+    }
+
+    let vm_rss = get_current_vm_rss_kb();
+    assert!(vm_rss > 8, "{}", vm_rss)
 }

@@ -7,14 +7,10 @@ use std::{
 
 use anyhow::anyhow;
 use libloading::Library;
-use ms_hostcall::types::{IsolationID, ServiceName};
+use ms_hostcall::types::{IsolationID, MetricEvent, ServiceName};
 use nix::libc::Lmid_t;
 
-use crate::{
-    isolation::config::IsolationConfig,
-    metric::{MetricBucket, MetricEvent},
-    utils,
-};
+use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
 use super::Service;
 

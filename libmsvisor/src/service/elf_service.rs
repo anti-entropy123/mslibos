@@ -1,14 +1,20 @@
 //! `elf_service` use POSIX API `dlopen` to create service.
 //! In the future, it will be **discarded**.
 
-use std::{collections::HashSet, ffi::c_void, sync::Arc};
+use std::{
+    alloc::{GlobalAlloc, Layout},
+    collections::HashSet,
+    ffi::c_void,
+    mem::{align_of, size_of, MaybeUninit},
+    sync::Arc,
+};
 
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
 use log::info;
 use ms_hostcall::{
-    types::{DropHandlerFunc, IsolationID, ServiceName},
+    types::{DropHandlerFunc, IsolationID, MetricEvent, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
 };
 use nix::libc::RTLD_DI_LMID;
@@ -16,7 +22,7 @@ use nix::libc::RTLD_DI_LMID;
 use crate::{
     isolation::handler::{find_host_call, panic_handler},
     logger,
-    metric::{MetricEvent, SvcMetricBucket},
+    metric::SvcMetricBucket,
     GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
 };
 
@@ -51,7 +57,7 @@ struct ServiceHeap {
 pub struct ELFService {
     pub name: String,
     lib: Arc<Library>,
-    heap: Arc<ServiceHeap>,
+    heap: Box<MaybeUninit<ServiceHeap>>,
     metric: Arc<SvcMetricBucket>,
 }
 
@@ -59,12 +65,11 @@ impl ELFService {
     pub fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         metric.mark(MetricEvent::SvcInit);
         logger::debug!("ELFService::new, name={name}");
+
         Self {
             name: name.to_string(),
             lib,
-            heap: Arc::new(ServiceHeap {
-                heap: [0; SERVICE_HEAP_SIZE],
-            }),
+            heap: Box::new_uninit(),
             metric,
         }
     }
@@ -74,7 +79,7 @@ impl ELFService {
     }
 
     pub fn init(&self, isol_id: IsolationID) {
-        let heap_start = self.heap.heap.as_ptr() as usize;
+        let heap_start = self.heap.as_ptr() as usize;
         let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
         logger::debug!(
             "init for service_{}, isol_id = {}, find_host_call_addr = 0x{:x}, heap_range = {:x?}",

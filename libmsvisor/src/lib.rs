@@ -2,6 +2,7 @@
 // disable casting usize to *const u8.
 // #![feature(strict_provenance)]
 #![feature(core_panic)]
+#![feature(new_uninit)]
 #![allow(clippy::result_unit_err)]
 
 mod hostcalls;

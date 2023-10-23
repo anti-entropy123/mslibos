@@ -29,6 +29,15 @@ fn get_isol_table() -> MutexGuard<'static, IsolTable> {
     ISOL_TABLE.lock().unwrap()
 }
 
+pub fn get_isol(handle: IsolID) -> Arc<Isolation> {
+    let isol_table = get_isol_table();
+    isol_table
+        .get(&handle)
+        .unwrap()
+        .upgrade()
+        .expect("isolation already stopped?")
+}
+
 #[derive(Default)]
 pub struct IsolationInner {
     modules: HashMap<ServiceName, Arc<Service>>,

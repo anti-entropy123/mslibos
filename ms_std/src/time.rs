@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use crate::{libos::libos, println};
+use crate::libos::libos;
 
 #[derive(Clone, Copy)]
 pub struct SystemTime {

@@ -1,11 +1,11 @@
 use core::panic;
 
 use ms_hostcall::{
-    types::{IsolationID, NetdevName},
-    HostCallID,
+    types::{IsolationID, MetricEvent, MetricFunc, NetdevName},
+    CommonHostCall, HostCallID,
 };
 
-use crate::{isolation::ISOL_TABLE, logger};
+use crate::{isolation::get_isol, logger};
 
 /// # Safety
 /// This is unsafe because it it be a callback function used to lookup the address of
@@ -15,46 +15,53 @@ use crate::{isolation::ISOL_TABLE, logger};
 pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID) -> usize {
     // let id = HostCallID::Common(CommonHostCall::Write);
     // thread::sleep(Duration::from_secs(1));
-
     logger::debug!(
         "find_host_call, isol_id={:x}, call_id={:?}, call_name={}",
         isol_id,
         hc_id,
         hc_id.to_string()
     );
-    let isol = {
-        let isol_table = ISOL_TABLE.lock().unwrap();
-        isol_table
-            .get(&isol_id)
-            .unwrap()
-            .upgrade()
-            .expect("isolation already stopped?")
+    let isol = get_isol(isol_id);
+
+    let addr = match hc_id {
+        HostCallID::Common(CommonHostCall::Metric) => {
+            let f: MetricFunc = metric_handler;
+            f as usize
+        }
+        _ => {
+            let svc_name = hc_id.belong_to();
+            logger::debug!(
+                "hostcall_{} belong to service: {}",
+                hc_id.to_string(),
+                svc_name
+            );
+
+            let service = isol.service_or_load(&svc_name).unwrap_or_else(|e| {
+                panic!("need find: {}, need load: {}, err: {}", hc_id, svc_name, e)
+            });
+
+            let symbol = service
+                .interface::<fn()>(&hc_id.to_string())
+                .unwrap_or_else(|| {
+                    panic!(
+                        "not found interface \"{}\" in service \"{}\"",
+                        hc_id,
+                        hc_id.belong_to()
+                    )
+                });
+            *symbol as usize
+        }
     };
-
-    let svc_name = hc_id.belong_to();
-    logger::debug!(
-        "hostcall_{} belong to service: {}",
-        hc_id.to_string(),
-        svc_name
-    );
-
-    let service = isol
-        .service_or_load(&svc_name)
-        .unwrap_or_else(|e| panic!("need find: {}, need load: {}, err: {}", hc_id, svc_name, e));
-
-    let symbol = service
-        .interface::<fn()>(&hc_id.to_string())
-        .unwrap_or_else(|| {
-            panic!(
-                "not found interface \"{}\" in service \"{}\"",
-                hc_id,
-                hc_id.belong_to()
-            )
-        });
-    let addr = *symbol as usize;
 
     log::debug!("interface '{}' addr = 0x{:x}", hc_id, addr);
     addr
+}
+
+fn metric_handler(isol_id: IsolationID, event: MetricEvent) -> Result<(), ()> {
+    let isol = get_isol(isol_id);
+    isol.metric.mark(event);
+
+    Ok(())
 }
 
 #[test]

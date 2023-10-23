@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+pub use ms_hostcall::types::MetricEvent;
 use ms_hostcall::{
     types::{FindHostCallFunc, PanicHandlerFunc, Transmutor},
     CommonHostCall, HostCallID,
@@ -45,6 +46,8 @@ pub struct UserHostCall {
     access_buffer_addr: Option<usize>,
 
     get_time_addr: Option<usize>,
+
+    metric_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -84,6 +87,7 @@ impl UserHostCall {
             CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
+            CommonHostCall::Metric => &mut self.metric_addr,
         };
 
         if entry_addr.is_none() {
@@ -106,4 +110,12 @@ impl Transmutor for UserHostCall {
     fn host_panic_handler() -> PanicHandlerFunc {
         unsafe { core::mem::transmute(isolation_ctx().panic_handler) }
     }
+}
+
+pub fn metric(event: MetricEvent) {
+    if !matches!(event, MetricEvent::Mem) {
+        panic!("unallowed event")
+    };
+
+    if libos!(metric(isolation_ctx().isol_id, event)).is_err() {}
 }
