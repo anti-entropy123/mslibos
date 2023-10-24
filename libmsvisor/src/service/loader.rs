@@ -125,7 +125,10 @@ fn do_dlmopen(
         )
     };
 
-    info!("load_dynlib: dlmopen handle=0x{:x}", handle as usize);
+    info!(
+        "load_dynlib: dlmopen, handle=0x{:x}, filename={:?}",
+        handle as usize, filename
+    );
     if handle.is_null() {
         let error = unsafe { dlerror() };
         return if error.is_null() {

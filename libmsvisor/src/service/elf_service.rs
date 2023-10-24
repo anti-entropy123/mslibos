@@ -1,13 +1,7 @@
 //! `elf_service` use POSIX API `dlopen` to create service.
 //! In the future, it will be **discarded**.
 
-use std::{
-    alloc::{GlobalAlloc, Layout},
-    collections::HashSet,
-    ffi::c_void,
-    mem::{align_of, size_of, MaybeUninit},
-    sync::Arc,
-};
+use std::{collections::HashSet, ffi::c_void, mem::MaybeUninit, sync::Arc};
 
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
@@ -82,7 +76,7 @@ impl ELFService {
         let heap_start = self.heap.as_ptr() as usize;
         let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
         logger::debug!(
-            "init for service_{}, isol_id = {}, find_host_call_addr = 0x{:x}, heap_range = {:x?}",
+            "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
             self.name,
             isol_id,
             find_host_call as usize,

@@ -29,13 +29,18 @@ fn get_isol_table() -> MutexGuard<'static, IsolTable> {
     ISOL_TABLE.lock().unwrap()
 }
 
-pub fn get_isol(handle: IsolID) -> Arc<Isolation> {
+pub fn get_isol(handle: IsolID) -> anyhow::Result<Arc<Isolation>> {
     let isol_table = get_isol_table();
-    isol_table
+    Ok(isol_table
         .get(&handle)
-        .unwrap()
+        .ok_or_else(|| anyhow!("isol don't exsit. handle={}", handle))?
         .upgrade()
-        .expect("isolation already stopped?")
+        .ok_or_else(|| {
+            anyhow!(
+                "upgrade failed. isolation already stopped? handle={}",
+                handle
+            )
+        })?)
 }
 
 #[derive(Default)]

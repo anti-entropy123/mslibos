@@ -21,7 +21,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
         hc_id,
         hc_id.to_string()
     );
-    let isol = get_isol(isol_id);
+    let isol = get_isol(isol_id).expect("isol don't exist?");
 
     let addr = match hc_id {
         HostCallID::Common(CommonHostCall::Metric) => {
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
 }
 
 fn metric_handler(isol_id: IsolationID, event: MetricEvent) -> Result<(), ()> {
-    let isol = get_isol(isol_id);
+    let isol = get_isol(isol_id).expect("isol don't exist?");
     isol.metric.mark(event);
 
     Ok(())
