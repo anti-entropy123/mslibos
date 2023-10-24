@@ -19,6 +19,6 @@ fn run_send_request_test() {
     isol1.run().expect("isolation user function error.");
 
     log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
-    isol1.metric.analyze();
+    isol1.metric.analyze(&libmsvisor::MetricOpt::None);
     drop(isol1);
 }
