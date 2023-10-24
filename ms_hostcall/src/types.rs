@@ -91,6 +91,23 @@ pub type GetTimeFunc = fn() -> Result<u128, ()>;
 pub type BufferAllocFunc = fn(Layout, u64) -> Result<usize, ()>;
 pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
 
+// metric
+pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;
+
+#[derive(Debug)]
+pub enum MetricEvent {
+    // IsolationEvent
+    LoadService,
+
+    // SvcEvent
+    SvcInit,
+    SvcRun,
+    SvcEnd,
+
+    // MesureEvent
+    Mem,
+}
+
 pub trait Transmutor {
     fn find_host_call() -> FindHostCallFunc;
     fn host_panic_handler() -> PanicHandlerFunc;

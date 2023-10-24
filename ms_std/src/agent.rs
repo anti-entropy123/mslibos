@@ -24,7 +24,7 @@ where
         T: Default,
     {
         let p = {
-            let l = Layout::new::<Rc<T>>();
+            let l: Layout = Layout::new::<Rc<T>>();
             let fingerprint = T::__fingerprint();
             // println!("T::__fingerprint: {}", fingerprint);
             libos!(buffer_alloc(l, fingerprint)).expect("alloc failed.")

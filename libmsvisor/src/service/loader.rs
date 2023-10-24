@@ -7,14 +7,10 @@ use std::{
 
 use anyhow::anyhow;
 use libloading::Library;
-use ms_hostcall::types::{IsolationID, ServiceName};
+use ms_hostcall::types::{IsolationID, MetricEvent, ServiceName};
 use nix::libc::Lmid_t;
 
-use crate::{
-    isolation::config::IsolationConfig,
-    metric::{MetricBucket, MetricEvent},
-    utils,
-};
+use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
 use super::Service;
 
@@ -129,7 +125,10 @@ fn do_dlmopen(
         )
     };
 
-    info!("load_dynlib: dlmopen handle=0x{:x}", handle as usize);
+    info!(
+        "load_dynlib: dlmopen, handle=0x{:x}, filename={:?}",
+        handle as usize, filename
+    );
     if handle.is_null() {
         let error = unsafe { dlerror() };
         return if error.is_null() {

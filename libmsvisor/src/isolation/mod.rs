@@ -10,7 +10,7 @@ use anyhow::{anyhow, Ok};
 use lazy_static::lazy_static;
 
 use log::info;
-use ms_hostcall::types::{IsolationID as IsolID, ServiceName};
+use ms_hostcall::types::{IsolationID as IsolID, MetricEvent::Mem, ServiceName};
 
 use crate::{
     logger,
@@ -29,6 +29,20 @@ fn get_isol_table() -> MutexGuard<'static, IsolTable> {
     ISOL_TABLE.lock().unwrap()
 }
 
+pub fn get_isol(handle: IsolID) -> anyhow::Result<Arc<Isolation>> {
+    let isol_table = get_isol_table();
+    Ok(isol_table
+        .get(&handle)
+        .ok_or_else(|| anyhow!("isol don't exsit. handle={}", handle))?
+        .upgrade()
+        .ok_or_else(|| {
+            anyhow!(
+                "upgrade failed. isolation already stopped? handle={}",
+                handle
+            )
+        })?)
+}
+
 #[derive(Default)]
 pub struct IsolationInner {
     modules: HashMap<ServiceName, Arc<Service>>,
@@ -44,7 +58,7 @@ impl Drop for IsolationInner {
 
 pub struct Isolation {
     id: IsolID,
-    loader: Arc<ServiceLoader>,
+    loader: ServiceLoader,
     pub metric: Arc<MetricBucket>,
     app_names: Vec<ServiceName>,
 
@@ -57,8 +71,9 @@ impl Isolation {
         logger::info!("start build isolation_{new_id}");
 
         let metric = Arc::from(MetricBucket::new());
+        metric.mark(Mem);
 
-        let loader = Arc::from(ServiceLoader::new(new_id, Arc::clone(&metric)).register(config));
+        let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(config);
 
         let isol = Arc::from(Self {
             id: new_id,
@@ -101,6 +116,7 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
+        self.metric.mark(Mem);
         #[cfg(feature = "namespace")]
         self.service_or_load(&"libc".to_owned())?;
 
@@ -109,6 +125,7 @@ impl Isolation {
             let result = app.run();
             result.map_err(|_| anyhow!("app_{} run failed.", app.name()))?
         }
+        self.metric.mark(Mem);
         Ok(())
     }
 }

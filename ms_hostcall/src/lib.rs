@@ -66,6 +66,9 @@ pub enum CommonHostCall {
 
     #[display(fmt = "get_time")]
     GetTime,
+
+    #[display(fmt = "metric")]
+    Metric,
 }
 
 #[derive(Debug, Display)]
@@ -105,6 +108,8 @@ impl HostCallID {
                 CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
+
+                CommonHostCall::Metric => "".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

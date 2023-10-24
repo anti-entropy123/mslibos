@@ -23,6 +23,7 @@ pub macro func_type {
     (buffer_alloc) => (ms_hostcall::types::BufferAllocFunc),
     (access_buffer) => (ms_hostcall::types::AccessBufferFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
+    (metric) => (ms_hostcall::types::MetricFunc),
 }
 
 pub macro hostcall_id {
@@ -48,6 +49,7 @@ pub macro hostcall_id {
     (buffer_alloc) => (ms_hostcall::CommonHostCall::BufferAlloc),
     (access_buffer) => (ms_hostcall::CommonHostCall::AccessBuffer),
     (get_time) => (ms_hostcall::CommonHostCall::GetTime),
+    (metric) => (ms_hostcall::CommonHostCall::Metric),
 }
 
 pub macro libos {

@@ -1,0 +1,38 @@
+{
+    "services": [
+        [
+            "fdtab",
+            "target/debug/libfdtab.so"
+        ],
+        [
+            "stdio",
+            "target/debug/libstdio.so"
+        ],
+        [
+            "buffer",
+            "target/debug/libbuffer.so"
+        ]
+    ],
+    "apps": [
+        [
+            "hello1",
+            "target/debug/libhello_world.so"
+        ],
+        [
+            "hello2",
+            "target/debug/libhello_world.so"
+        ],
+        [
+            "hello3",
+            "target/debug/libhello_world.so"
+        ],
+        [
+            "hello4",
+            "target/debug/libhello_world.so"
+        ],
+        [
+            "hello5",
+            "target/debug/libhello_world.so"
+        ]
+    ]
+}
