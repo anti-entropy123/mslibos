@@ -1,11 +1,32 @@
 use std::{sync::Arc, thread};
 
 use clap::{arg, Parser};
+use derive_more::Display;
 
 use libmsvisor::{
     isolation::{config::IsolationConfig, get_isol, Isolation},
     logger,
 };
+
+#[derive(clap::ValueEnum, Clone, Display, Debug)]
+pub enum MetricOpt {
+    #[display(fmt = "none")]
+    None,
+    #[display(fmt = "all")]
+    All,
+    #[display(fmt = "mem")]
+    Mem,
+}
+
+impl MetricOpt {
+    fn to_analyze(&self) -> libmsvisor::MetricOpt {
+        match self {
+            MetricOpt::None => libmsvisor::MetricOpt::None,
+            MetricOpt::All => libmsvisor::MetricOpt::All,
+            MetricOpt::Mem => libmsvisor::MetricOpt::Mem,
+        }
+    }
+}
 
 /// A memory-safe LibOS runtime for serverless.
 #[derive(Parser, Debug)]
@@ -20,8 +41,8 @@ struct Args {
     preload: bool,
 
     /// show metrics json.
-    #[arg(long, default_value_t = false)]
-    metrics: bool,
+    #[arg(long, default_value_t = MetricOpt::None)]
+    metrics: MetricOpt,
 }
 
 fn main() {
@@ -57,13 +78,15 @@ fn main() {
                 .name(format!("isol_{}", isol_handle))
                 .stack_size(8 * 1024 * 1024);
 
+            let isol_start_with_thread = move || {
+                get_isol(isol_handle as u64)
+                    .expect("isol don't exist?")
+                    .run()
+            };
+
             Some(
                 builder
-                    .spawn(move || {
-                        get_isol(isol_handle as u64)
-                            .expect("isol don't exist?")
-                            .run()
-                    })
+                    .spawn(isol_start_with_thread)
                     .expect("spawn thread failed?"),
             )
         })
@@ -77,8 +100,8 @@ fn main() {
 
         let isol = isols.get(idx).unwrap();
         log::info!("isol{} has strong count={}", idx, Arc::strong_count(isol));
-        if args.metrics {
-            isol.metric.analyze();
+        if !matches!(args.metrics, MetricOpt::None) {
+            isol.metric.analyze(&args.metrics.to_analyze());
         }
     }
 }

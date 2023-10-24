@@ -73,25 +73,37 @@ impl MetricBucket {
         }
     }
 
-    pub fn analyze(&self) {
+    pub fn analyze(&self, opt: &MetricOpt) {
         let inner = self.inner.lock().unwrap();
         let mut result = serde_json::Value::default();
 
-        result["isolation"] = inner.to_json();
-        result["services"] = {
-            let svc_metrics: Vec<Value> = inner
-                .svc_metrics
-                .iter()
-                .map(|metric| metric.to_json())
-                .collect();
-            serde_json::json!(svc_metrics)
-        };
+        match opt {
+            MetricOpt::None => {}
+            MetricOpt::All => {
+                result["isolation"] = inner.to_json();
+                result["services"] = {
+                    let svc_metrics: Vec<Value> = inner
+                        .svc_metrics
+                        .iter()
+                        .map(|metric| metric.to_json())
+                        .collect();
+                    serde_json::json!(svc_metrics)
+                };
+            }
+            MetricOpt::Mem => result["mem_metrics"] = json!(inner.mem_metrics),
+        }
 
         eprintln!(
             "{}",
             serde_json::to_string_pretty(&result).expect("format json failed")
         );
     }
+}
+
+pub enum MetricOpt {
+    None,
+    All,
+    Mem,
 }
 
 #[derive(Default, Serialize)]

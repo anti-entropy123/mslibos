@@ -607,6 +607,7 @@ name = "msvisor"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "derive_more",
  "env_logger",
  "libmsvisor",
  "log",

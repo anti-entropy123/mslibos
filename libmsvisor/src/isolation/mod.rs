@@ -58,7 +58,7 @@ impl Drop for IsolationInner {
 
 pub struct Isolation {
     id: IsolID,
-    loader: Arc<ServiceLoader>,
+    loader: ServiceLoader,
     pub metric: Arc<MetricBucket>,
     app_names: Vec<ServiceName>,
 
@@ -73,7 +73,7 @@ impl Isolation {
         let metric = Arc::from(MetricBucket::new());
         metric.mark(Mem);
 
-        let loader = Arc::from(ServiceLoader::new(new_id, Arc::clone(&metric)).register(config));
+        let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(config);
 
         let isol = Arc::from(Self {
             id: new_id,
@@ -116,6 +116,7 @@ impl Isolation {
     }
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
+        self.metric.mark(Mem);
         #[cfg(feature = "namespace")]
         self.service_or_load(&"libc".to_owned())?;
 

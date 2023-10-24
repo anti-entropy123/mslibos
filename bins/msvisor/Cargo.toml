@@ -11,6 +11,7 @@ libmsvisor = { workspace = true, default-features = false, features = [] }
 log = "0.4.20"
 env_logger = "0.10.0"
 clap = { version = "4.3.21", features = ["derive"] }
+derive_more = "0.99.17"
 
 [features]
 namespace = ["libmsvisor/namespace"]

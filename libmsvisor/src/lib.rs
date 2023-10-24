@@ -14,3 +14,4 @@ pub mod service;
 pub mod utils;
 
 pub use hostcalls::{GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol};
+pub use metric::MetricOpt;
