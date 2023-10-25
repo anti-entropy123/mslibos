@@ -64,6 +64,7 @@ fn main() {
 
     // info!("preload?:{}", args.preload);
     let isols: Vec<_> = configs.iter().map(Isolation::new).collect();
+    let isol_handles = isols.iter().map(|isol| isol.id);
 
     if args.preload {
         for (idx, isol) in isols.iter().enumerate() {
@@ -72,16 +73,15 @@ fn main() {
         }
     }
 
-    let mut handles: Vec<_> = (1..isols.len() + 1)
+    let mut join_handles: Vec<_> = isol_handles
         .map(|isol_handle| {
             let builder = thread::Builder::new()
                 .name(format!("isol_{}", isol_handle))
                 .stack_size(8 * 1024 * 1024);
 
             let isol_start_with_thread = move || {
-                get_isol(isol_handle as u64)
-                    .expect("isol don't exist?")
-                    .run()
+                let isol = get_isol(isol_handle).expect("isol don't exist?");
+                isol.run()
             };
 
             Some(
@@ -92,14 +92,21 @@ fn main() {
         })
         .collect();
 
-    for (idx, handle) in handles.iter_mut().enumerate() {
-        let app_result = handle.take().unwrap().join().expect("join failed");
-        if app_result.is_err() {
-            log::error!("isol{} run failed.", idx)
+    for (isol_idx, join_handle) in join_handles.iter_mut().enumerate() {
+        let join_handle = join_handle.take();
+        let app_result = join_handle.unwrap().join().expect("join failed");
+
+        let isol = isols.get(isol_idx).unwrap();
+        if let Err(e) = app_result {
+            log::error!("isol{} run failed. err={}", isol.id, e)
         }
 
-        let isol = isols.get(idx).unwrap();
-        log::info!("isol{} has strong count={}", idx, Arc::strong_count(isol));
+        log::debug!(
+            "isol{} has strong count={}",
+            isol.id,
+            Arc::strong_count(isol)
+        );
+
         if !matches!(args.metrics, MetricOpt::None) {
             isol.metric.analyze(&args.metrics.to_analyze());
         }

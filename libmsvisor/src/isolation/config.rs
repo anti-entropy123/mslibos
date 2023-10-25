@@ -13,6 +13,8 @@ use crate::utils;
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
     pub apps: Vec<(ServiceName, PathBuf)>,
+    #[serde(default = "Vec::default")]
+    pub groups: Vec<Vec<ServiceName>>,
 }
 
 impl IsolationConfig {
@@ -25,6 +27,11 @@ impl IsolationConfig {
     }
 
     pub fn from_file(p: PathBuf) -> Result<Self, anyhow::Error> {
+        #[cfg(feature = "namespace")]
+        let mut config: IsolationConfig;
+        #[cfg(not(feature = "namespace"))]
+        let config: IsolationConfig;
+
         let p = if !p.is_file() {
             utils::ISOL_CONFIG_PATH.join(p)
         } else {
@@ -33,11 +40,6 @@ impl IsolationConfig {
 
         debug!("config file path: {}", p.to_str().unwrap());
         let content = fs::File::open(p)?;
-
-        #[cfg(feature = "namespace")]
-        let mut config: IsolationConfig;
-        #[cfg(not(feature = "namespace"))]
-        let config: IsolationConfig;
 
         config = serde_json::from_reader(BufReader::new(content))?;
 

@@ -18,5 +18,11 @@
       "hello1",
       "target/debug/libhello_world.so"
     ]
+  ],
+  "groups": [
+    [
+      "hello1",
+      "hello1"
+    ]
   ]
 }

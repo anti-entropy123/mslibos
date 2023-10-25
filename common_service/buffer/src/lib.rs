@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 #[allow(unused)]
 #[allow(clippy::single_component_path_imports)]
 use ms_std;
-use ms_std::{println, sync::UPSafeCell};
+use ms_std::sync::UPSafeCell;
 
 lazy_static! {
     static ref RAW_P: UPSafeCell<Option<(usize, u64)>> = unsafe { UPSafeCell::new(None) };

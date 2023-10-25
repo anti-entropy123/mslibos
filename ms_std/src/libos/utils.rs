@@ -56,7 +56,7 @@ pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
             fn binding() -> func_type!($name) {
-                let mut table = USER_HOST_CALL.exclusive_access();
+                let mut table = USER_HOST_CALL.lock();
                 unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
             }
             let $name = binding();

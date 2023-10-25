@@ -18,6 +18,7 @@ fn main() {
             "hello1".to_owned(),
             PathBuf::from("target/debug/libhello_world.so"),
         )],
+        groups: vec![],
     };
 
     config1
