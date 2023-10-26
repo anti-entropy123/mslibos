@@ -2,7 +2,7 @@ pub mod config;
 pub mod handler;
 
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     sync::{Arc, Mutex, MutexGuard, Weak},
     thread,
 };
@@ -119,13 +119,47 @@ impl Isolation {
     }
 
     fn run_as_sequence(&self) -> Result<(), anyhow::Error> {
+        let args = {
+            let mut args = BTreeMap::new();
+            args.insert("id".to_owned(), 0.to_string());
+            args
+        };
+
         for app in &self.app_names {
             let app = self.service_or_load(app)?;
-            let result = app.run();
+            let result = app.run(&args);
             result.map_err(|_| anyhow!("app_{} run failed.", app.name()))?
         }
 
         Ok(())
+    }
+
+    fn run_group_in_parallel(&self, group: &[ServiceName]) -> Result<(), anyhow::Error> {
+        let apps: Vec<_> = group
+            .iter()
+            .map(|app| self.service_or_load(app))
+            .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+        thread::scope(|scope| {
+            let mut join_handles = Vec::with_capacity(apps.len());
+            for (idx, app) in apps.iter().enumerate() {
+                let app_result = scope.spawn(move || {
+                    let mut args = BTreeMap::new();
+                    args.insert("id".to_owned(), idx.to_string());
+
+                    app.run(&args)
+                        .map_err(|_| anyhow!("app {} run failed.", app.name()))
+                });
+                join_handles.push(Some(app_result));
+            }
+
+            for handle in &mut join_handles {
+                let handle = handle.take().unwrap();
+                handle.join().expect("join failed?")?;
+            }
+
+            Ok(())
+        })
     }
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
@@ -138,27 +172,7 @@ impl Isolation {
             self.run_as_sequence()?
         } else {
             for group in &self.groups {
-                let apps: Vec<_> = group
-                    .iter()
-                    .map(|app| self.service_or_load(app))
-                    .collect::<Result<Vec<_>, anyhow::Error>>()?;
-
-                thread::scope(move |scope| {
-                    let mut join_handles = Vec::with_capacity(apps.len());
-                    for app in apps {
-                        join_handles.push(Some(scope.spawn(move || {
-                            app.run()
-                                .map_err(|_| anyhow!("app {} run failed.", app.name()))
-                        })));
-                    }
-
-                    for handle in &mut join_handles {
-                        let handle = handle.take().unwrap();
-                        handle.join().expect("join failed?")?;
-                    }
-
-                    Ok(())
-                })?;
+                self.run_group_in_parallel(group)?
             }
         };
 

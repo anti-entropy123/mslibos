@@ -10,6 +10,7 @@
 #![allow(incomplete_features)]
 
 use agent::{FaaSFuncResult, Zero};
+use alloc::{collections::BTreeMap, string::String};
 
 pub mod console;
 
@@ -67,16 +68,16 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main() -> FaaSFuncResult<Zero> {
+pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<Zero> {
     panic!("need real main");
 }
 
 #[no_mangle]
-pub fn rust_main() -> Result<(), ()> {
+pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), ()> {
     #[cfg(feature = "unwinding")]
     {
         use unwinding::panic;
-        let result = panic::catch_unwind(main);
+        let result = panic::catch_unwind(|| main(args));
 
         if let Err(ref e) = result {
             println!("error: {:#?}", e);
@@ -85,7 +86,7 @@ pub fn rust_main() -> Result<(), ()> {
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        let r = main();
+        let r = main(args);
         assert!(r.is_ok());
     }
     Ok(())
