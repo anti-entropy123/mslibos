@@ -3,6 +3,7 @@ pub mod handler;
 
 use std::{
     collections::{BTreeMap, HashMap},
+    iter::zip,
     sync::{Arc, Mutex, MutexGuard, Weak},
     thread,
 };
@@ -20,6 +21,8 @@ use crate::{
     utils::gen_new_id,
 };
 use config::IsolationConfig;
+
+use self::config::App;
 
 type IsolTable = HashMap<IsolID, Weak<Isolation>>;
 lazy_static! {
@@ -62,7 +65,7 @@ pub struct Isolation {
     loader: ServiceLoader,
     pub metric: Arc<MetricBucket>,
     app_names: Vec<ServiceName>,
-    groups: Vec<Vec<ServiceName>>,
+    groups: Vec<Vec<App>>,
 
     inner: Mutex<IsolationInner>,
 }
@@ -82,7 +85,17 @@ impl Isolation {
             loader,
             metric,
             app_names: config.apps.iter().map(|app| app.0.clone()).collect(),
-            groups: config.groups.clone(),
+            groups: config
+                .groups
+                .iter()
+                .map(|group| {
+                    group
+                        .iter()
+                        .enumerate()
+                        .map(|(idx, app)| app.to_isolation(idx.to_string()))
+                        .collect()
+                })
+                .collect(),
 
             inner: Mutex::new(IsolationInner::default()),
         });
@@ -134,20 +147,17 @@ impl Isolation {
         Ok(())
     }
 
-    fn run_group_in_parallel(&self, group: &[ServiceName]) -> Result<(), anyhow::Error> {
+    fn run_group_in_parallel(&self, group: &[App]) -> Result<(), anyhow::Error> {
         let apps: Vec<_> = group
             .iter()
-            .map(|app| self.service_or_load(app))
+            .map(|app| self.service_or_load(&app.name))
             .collect::<Result<Vec<_>, anyhow::Error>>()?;
 
         thread::scope(|scope| {
             let mut join_handles = Vec::with_capacity(apps.len());
-            for (idx, app) in apps.iter().enumerate() {
+            for (app, app_config) in zip(apps, group) {
                 let app_result = scope.spawn(move || {
-                    let mut args = BTreeMap::new();
-                    args.insert("id".to_owned(), idx.to_string());
-
-                    app.run(&args)
+                    app.run(&app_config.args)
                         .map_err(|_| anyhow!("app {} run failed.", app.name()))
                 });
                 join_handles.push(Some(app_result));

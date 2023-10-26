@@ -1,4 +1,4 @@
-use std::{fs, io::BufReader, path::PathBuf};
+use std::{collections::BTreeMap, fs, io::BufReader, path::PathBuf};
 
 use anyhow;
 use log::debug;
@@ -10,11 +10,39 @@ use std::io;
 use crate::utils;
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct App {
+    pub name: ServiceName,
+    pub args: BTreeMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum IsolationGroupApp {
+    Name(ServiceName),
+    Detailed(App),
+}
+
+impl IsolationGroupApp {
+    pub fn to_isolation(&self, id: String) -> App {
+        let mut app = match self {
+            IsolationGroupApp::Name(name) => App {
+                name: name.to_owned(),
+                args: BTreeMap::default(),
+            },
+            IsolationGroupApp::Detailed(app) => app.clone(),
+        };
+
+        app.args.insert("id".to_owned(), id);
+        app
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
     pub apps: Vec<(ServiceName, PathBuf)>,
     #[serde(default = "Vec::default")]
-    pub groups: Vec<Vec<ServiceName>>,
+    pub groups: Vec<Vec<IsolationGroupApp>>,
 }
 
 impl IsolationConfig {

@@ -1,6 +1,9 @@
 pub use core::fmt::Write;
 
-use alloc::vec::Vec;
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 
 pub type Error = ();
 pub trait Read {
@@ -21,5 +24,13 @@ pub trait Read {
         }
 
         Ok(size)
+    }
+
+    fn read_to_string(&mut self, buf: &mut String) -> Result<usize, Error> {
+        let mut v_buf = Vec::with_capacity(1000);
+        self.read_to_end(&mut v_buf)?;
+
+        *buf = String::from_utf8_lossy(&v_buf).to_string();
+        Ok(buf.len())
     }
 }
