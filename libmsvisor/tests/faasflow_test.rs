@@ -14,5 +14,8 @@ fn faasflow_test() {
         .expect("Open config file failed.");
 
     let isol2 = Isolation::new(&config2);
+
+    isol2.preload(&config2).expect("preload failed");
+
     assert!(isol2.run().is_ok());
 }

@@ -3,7 +3,7 @@ mod loader;
 #[cfg(feature = "serviceV2")]
 mod rust_service;
 
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 
 use libloading::{Library, Symbol};
 
@@ -33,9 +33,9 @@ impl Service {
             Service::RustService(svc) => svc.init(isol_id),
         }
     }
-    pub fn run(&self) -> Result<(), ()> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), ()> {
         match self {
-            Service::ElfService(svc) => svc.run(),
+            Service::ElfService(svc) => svc.run(args),
             #[cfg(feature = "serviceV2")]
             Service::RustService(svc) => svc.run(),
         }

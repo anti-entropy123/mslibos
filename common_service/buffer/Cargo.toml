@@ -11,3 +11,4 @@ crate-type = ["dylib"]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }
 
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+spin = "0.9.8"

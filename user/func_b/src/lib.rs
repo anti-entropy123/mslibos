@@ -36,7 +36,7 @@ impl Default for MyComplexData {
 pub fn main() -> Result<MyComplexData> {
     println!("func b");
     let data = DataBuffer::<MyComplexData>::from_buffer();
-    if let Some(mut buffer) = data {
+    if let Some(buffer) = data {
         let dur = buffer.current_time.elapsed();
         let size = size_of::<MyComplexData>();
         println!(

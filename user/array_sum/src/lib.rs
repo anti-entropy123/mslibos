@@ -4,7 +4,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use ms_std::{
-    agent::{DataBuffer, FaaSFuncResult as Result, Zero},
+    agent::{DataBuffer, FaaSFuncResult as Result},
     println,
     time::{SystemTime, UNIX_EPOCH},
 };

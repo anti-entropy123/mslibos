@@ -4,27 +4,24 @@
 //! To some service that depent `std`, they would use this crate directly
 //! rather than `ms_std`.
 
-use core::cell::{Ref, RefMut};
-
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
 use lazy_static::lazy_static;
-
-use crate::sync::UPSafeCell;
+use spin::Mutex;
 
 lazy_static! {
     // In fact, isolation_ctx should be readonly, so don't have to
     // use Mutex or UPSafeCell.
-    pub static ref ISOLATION_CTX: UPSafeCell<IsolationContext> = UPSafeCell::default();
+    pub static ref ISOLATION_CTX: Mutex<IsolationContext> = Mutex::default();
 }
 
 /// This is a non-pub function because it should not be init in other file.
-fn isolation_ctx_mut() -> RefMut<'static, IsolationContext> {
-    ISOLATION_CTX.exclusive_access()
+fn isolation_ctx_mut() -> spin::MutexGuard<'static, IsolationContext> {
+    ISOLATION_CTX.lock()
 }
 
-pub fn isolation_ctx() -> Ref<'static, IsolationContext> {
-    let ctx = ISOLATION_CTX.access();
+pub fn isolation_ctx() -> spin::MutexGuard<'static, IsolationContext> {
+    let ctx = ISOLATION_CTX.lock();
     if ctx.find_handler == 0 {
         panic!("uninit")
     }

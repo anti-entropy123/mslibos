@@ -2,7 +2,7 @@
 
 use core::{alloc::Layout, net::SocketAddrV4};
 
-use alloc::string::String;
+use alloc::{collections::BTreeMap, string::String};
 // use smoltcp::{iface::Interface, phy::TunTapInterface};
 
 use crate::{err::LibOSResult, HostCallID, IsolationContext};
@@ -37,7 +37,7 @@ pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 pub type DropHandlerFunc = unsafe fn();
 
 // app main
-pub type RustMainFunc = unsafe fn() -> Result<(), ()>;
+pub type RustMainFunc = unsafe fn(&BTreeMap<String, String>) -> Result<(), ()>;
 
 // fdtab
 bitflags! {
@@ -88,8 +88,8 @@ pub type SmoltcpCloseFunc = fn(SockFd) -> LibOSResult<()>;
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
 
 // buffer_alloc
-pub type BufferAllocFunc = fn(Layout, u64) -> Result<usize, ()>;
-pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
+pub type BufferAllocFunc = fn(String, Layout, u64) -> Result<usize, ()>;
+pub type AccessBufferFunc = fn(String) -> Option<(usize, u64)>;
 
 // metric
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;

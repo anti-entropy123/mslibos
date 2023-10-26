@@ -1,6 +1,6 @@
 use core::{alloc::Layout, borrow::Borrow};
 
-use alloc::rc::Rc;
+use alloc::{rc::Rc, string::String};
 use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
@@ -23,11 +23,18 @@ where
     where
         T: Default,
     {
+        Self::new_with_slot(String::new())
+    }
+
+    pub fn new_with_slot(slot: String) -> Self
+    where
+        T: Default,
+    {
         let p = {
             let l: Layout = Layout::new::<Rc<T>>();
             let fingerprint = T::__fingerprint();
             // println!("T::__fingerprint: {}", fingerprint);
-            libos!(buffer_alloc(l, fingerprint)).expect("alloc failed.")
+            libos!(buffer_alloc(slot, l, fingerprint)).expect("alloc failed.")
         };
         let raw_ptr = {
             let buffer = p as *mut Rc<T>;
@@ -51,7 +58,11 @@ where
     }
 
     pub fn from_buffer() -> Option<Self> {
-        let buffer_meta: Option<(usize, u64)> = libos!(access_buffer());
+        Self::from_buffer_slot(String::new())
+    }
+
+    pub fn from_buffer_slot(slot: String) -> Option<Self> {
+        let buffer_meta: Option<(usize, u64)> = libos!(access_buffer(slot));
 
         buffer_meta.map(|(raw_ptr, fingerprint)| {
             if fingerprint != T::__fingerprint() {

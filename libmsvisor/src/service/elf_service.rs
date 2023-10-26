@@ -1,7 +1,12 @@
 //! `elf_service` use POSIX API `dlopen` to create service.
 //! In the future, it will be **discarded**.
 
-use std::{collections::HashSet, ffi::c_void, mem::MaybeUninit, sync::Arc};
+use std::{
+    collections::{BTreeMap, HashSet},
+    ffi::c_void,
+    mem::MaybeUninit,
+    sync::Arc,
+};
 
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
@@ -119,7 +124,7 @@ impl ELFService {
         unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
-    pub fn run(&self) -> Result<(), ()> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), ()> {
         let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
         log::info!(
             "service_{} rust_main={:x}",
@@ -128,7 +133,7 @@ impl ELFService {
         );
 
         self.metric.mark(MetricEvent::SvcRun);
-        let result = unsafe { rust_main() };
+        let result = unsafe { rust_main(args) };
         self.metric.mark(MetricEvent::SvcEnd);
 
         logger::info!("{} complete.", self.name);

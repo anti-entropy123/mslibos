@@ -23,3 +23,4 @@ unwinding = { version = "0.2.0", features = [
 ], optional = true }
 cfg-if = "1.0.0"
 linked_list_allocator = "0.10.5"
+spin = "0.9.8"

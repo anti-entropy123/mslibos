@@ -1,19 +1,17 @@
 use lazy_static::lazy_static;
+use spin::Mutex;
+
+use crate::init_context::isolation_ctx;
 pub use ms_hostcall::types::MetricEvent;
 use ms_hostcall::{
     types::{FindHostCallFunc, PanicHandlerFunc, Transmutor},
     CommonHostCall, HostCallID,
 };
-
-use crate::init_context::isolation_ctx;
-use crate::sync::UPSafeCell;
-
 mod utils;
 pub use utils::libos;
 
 lazy_static! {
-    pub static ref USER_HOST_CALL: UPSafeCell<UserHostCall> =
-        unsafe { UPSafeCell::new(UserHostCall::new()) };
+    pub static ref USER_HOST_CALL: Mutex<UserHostCall> = Mutex::new(UserHostCall::new());
 }
 
 #[derive(Default)]

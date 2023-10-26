@@ -90,6 +90,7 @@ fn find_host_call_test() {
                 "hello1".to_owned(),
                 utils::TARGET_DEBUG_PATH.join("libhello_world.so"),
             )],
+            groups: Default::default(),
         });
         // isol_table.insert(1, Arc::clone(&isol));
         isol
