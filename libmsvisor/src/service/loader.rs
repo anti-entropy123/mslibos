@@ -61,7 +61,7 @@ impl ServiceLoader {
         let lib_path = self
             .registered
             .get(name)
-            .ok_or(anyhow!("unregistry library"))?;
+            .ok_or(anyhow!("unregistry library, name={}", name))?;
 
         let metric = self.metric.new_svc_metric(name.clone());
 

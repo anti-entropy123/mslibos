@@ -23,10 +23,10 @@ where
     where
         T: Default,
     {
-        Self::new_with_slot(String::new())
+        Self::with_slot(String::new())
     }
 
-    pub fn new_with_slot(slot: String) -> Self
+    pub fn with_slot(slot: String) -> Self
     where
         T: Default,
     {
