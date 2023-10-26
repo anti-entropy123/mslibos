@@ -88,8 +88,8 @@ pub type SmoltcpCloseFunc = fn(SockFd) -> LibOSResult<()>;
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
 
 // buffer_alloc
-pub type BufferAllocFunc = fn(Layout, u64) -> Result<usize, ()>;
-pub type AccessBufferFunc = fn() -> Option<(usize, u64)>;
+pub type BufferAllocFunc = fn(String, Layout, u64) -> Result<usize, ()>;
+pub type AccessBufferFunc = fn(String) -> Option<(usize, u64)>;
 
 // metric
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;

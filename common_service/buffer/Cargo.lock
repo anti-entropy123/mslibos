@@ -20,6 +20,7 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "ms_std",
+ "spin 0.9.8",
 ]
 
 [[package]]
