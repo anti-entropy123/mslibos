@@ -28,33 +28,35 @@
     ]
   ],
   "groups": [
-    [
-      {
-        "name": "mapper",
-        "args": {
-          "reducer_num": "1"
+    {
+      "list": [
+        {
+          "name": "mapper",
+          "args": {}
+        },
+        {
+          "name": "mapper",
+          "args": {}
+        },
+        {
+          "name": "mapper",
+          "args": {}
         }
-      },
-      {
-        "name": "mapper",
-        "args": {
-          "reducer_num": "1"
-        }
-      },
-      {
-        "name": "mapper",
-        "args": {
-          "reducer_num": "1"
-        }
+      ],
+      "args": {
+        "reducer_num": "1"
       }
-    ],
-    [
-      {
-        "name": "reducer",
-        "args": {
-          "mapper_num": "3"
+    },
+    {
+      "list": [
+        {
+          "name": "reducer",
+          "args": {
+            "mapper_num": "3"
+          }
         }
-      }
-    ]
+      ],
+      "args": {}
+    }
   ]
 }

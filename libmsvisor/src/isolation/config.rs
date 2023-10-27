@@ -38,11 +38,35 @@ impl IsolationGroupApp {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct IsolationGroup {
+    list: Vec<IsolationGroupApp>,
+    args: BTreeMap<String, String>,
+}
+
+impl IsolationGroup {
+    pub fn to_isolation(&self) -> Vec<App> {
+        self.list
+            .iter()
+            .enumerate()
+            .map(|(idx, app)| {
+                let mut app = app.to_isolation(idx.to_string());
+                let mut args = self.args.clone();
+
+                args.extend(app.args);
+                app.args = args;
+
+                app
+            })
+            .collect()
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
     pub apps: Vec<(ServiceName, PathBuf)>,
     #[serde(default = "Vec::default")]
-    pub groups: Vec<Vec<IsolationGroupApp>>,
+    pub groups: Vec<IsolationGroup>,
 }
 
 impl IsolationConfig {

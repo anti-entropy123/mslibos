@@ -88,13 +88,7 @@ impl Isolation {
             groups: config
                 .groups
                 .iter()
-                .map(|group| {
-                    group
-                        .iter()
-                        .enumerate()
-                        .map(|(idx, app)| app.to_isolation(idx.to_string()))
-                        .collect()
-                })
+                .map(|group| group.to_isolation())
                 .collect(),
 
             inner: Mutex::new(IsolationInner::default()),
