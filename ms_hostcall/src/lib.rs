@@ -141,7 +141,7 @@ pub struct IsolationContext {
     pub heap_range: (usize, usize),
 }
 
-pub const SERVICE_HEAP_SIZE: usize = 4096 * 16;
+pub const SERVICE_HEAP_SIZE: usize = 4096 * 64;
 
 pub trait Verify {
     fn __fingerprint() -> u64;

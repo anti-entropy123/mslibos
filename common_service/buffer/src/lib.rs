@@ -3,7 +3,7 @@
 use core::alloc::Layout;
 
 extern crate alloc;
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use lazy_static::lazy_static;
 
 #[allow(unused)]
@@ -19,18 +19,20 @@ lazy_static! {
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn buffer_alloc(slot: String, l: Layout, fingerprint: u64) -> Result<usize, ()> {
-    // println!(
-    //     "buffer_alloc: expect size={}, align={}",
-    //     l.size(),
-    //     l.align()
-    // );
+pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> Result<usize, ()> {
+    println!(
+        "buffer_alloc: expect size={}, align={}",
+        l.size(),
+        l.align()
+    );
     let addr = unsafe { alloc::alloc::alloc(l) };
 
     if slot.is_empty() {
         *DEFAULT_RAW_P.lock() = Some((addr as usize, fingerprint));
     } else {
-        RAW_P.lock().insert(slot, (addr as usize, fingerprint));
+        RAW_P
+            .lock()
+            .insert(slot.to_owned(), (addr as usize, fingerprint));
     };
 
     let (used_mem, free_mem) = {
@@ -38,23 +40,23 @@ pub fn buffer_alloc(slot: String, l: Layout, fingerprint: u64) -> Result<usize, 
         (alloctor.used(), alloctor.free())
     };
 
-    // println!(
-    //     "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
-    //     addr as usize,
-    //     used_mem >> 10,
-    //     free_mem >> 10
-    // );
+    println!(
+        "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
+        addr as usize,
+        used_mem >> 10,
+        free_mem >> 10
+    );
 
     Ok(addr as usize)
 }
 
 #[no_mangle]
-pub fn access_buffer(slot: String) -> Option<(usize, u64)> {
+pub fn access_buffer(slot: &str) -> Option<(usize, u64)> {
     // *RAW_P.lock().take()
     if slot.is_empty() {
         DEFAULT_RAW_P.lock().take()
     } else {
-        RAW_P.lock().get(&slot).take().copied()
+        RAW_P.lock().get(slot).take().copied()
     }
 }
 

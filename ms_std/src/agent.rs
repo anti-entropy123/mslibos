@@ -33,7 +33,7 @@ where
             let l: Layout = Layout::new::<T>();
             let fingerprint = T::__fingerprint();
             // println!("T::__fingerprint: {}", fingerprint);
-            libos!(buffer_alloc(slot, l, fingerprint)).expect("alloc failed.") as *mut T
+            libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T
         };
 
         unsafe { core::ptr::write(p, T::default()) };
@@ -57,7 +57,7 @@ where
     }
 
     pub fn from_buffer_slot(slot: String) -> Option<Self> {
-        let buffer_meta: Option<(usize, u64)> = libos!(access_buffer(slot));
+        let buffer_meta: Option<(usize, u64)> = libos!(access_buffer(&slot));
 
         buffer_meta.map(|(raw_ptr, fingerprint)| {
             if fingerprint != T::__fingerprint() {
@@ -130,7 +130,7 @@ impl<T> Drop for DataBuffer<T> {
     fn drop(&mut self) {
         if self.used {
             let ptr = Box::into_raw(unsafe { ManuallyDrop::take(&mut self.inner) });
-            // println!("drop DataBuffer val: 0x{:x}", ptr as usize);
+            println!("drop DataBuffer val: 0x{:x}", ptr as usize);
             libos!(buffer_dealloc(ptr as usize, Layout::new::<T>()));
         }
     }
