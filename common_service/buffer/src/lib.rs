@@ -20,11 +20,11 @@ lazy_static! {
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn buffer_alloc(slot: String, l: Layout, fingerprint: u64) -> Result<usize, ()> {
-    println!(
-        "buffer_alloc: expect size={}, align={}",
-        l.size(),
-        l.align()
-    );
+    // println!(
+    //     "buffer_alloc: expect size={}, align={}",
+    //     l.size(),
+    //     l.align()
+    // );
     let addr = unsafe { alloc::alloc::alloc(l) };
 
     if slot.is_empty() {
@@ -38,12 +38,12 @@ pub fn buffer_alloc(slot: String, l: Layout, fingerprint: u64) -> Result<usize, 
         (alloctor.used(), alloctor.free())
     };
 
-    println!(
-        "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
-        addr as usize,
-        used_mem >> 10,
-        free_mem >> 10
-    );
+    // println!(
+    //     "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
+    //     addr as usize,
+    //     used_mem >> 10,
+    //     free_mem >> 10
+    // );
 
     Ok(addr as usize)
 }
@@ -56,4 +56,9 @@ pub fn access_buffer(slot: String) -> Option<(usize, u64)> {
     } else {
         RAW_P.lock().get(&slot).take().copied()
     }
+}
+
+#[no_mangle]
+pub fn buffer_dealloc(addr: usize, l: Layout) {
+    unsafe { alloc::alloc::dealloc(addr as *mut u8, l) }
 }

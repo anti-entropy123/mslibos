@@ -42,6 +42,7 @@ pub struct UserHostCall {
 
     alloc_buffer_addr: Option<usize>,
     access_buffer_addr: Option<usize>,
+    dealloc_buffer_addr: Option<usize>,
 
     get_time_addr: Option<usize>,
 
@@ -83,6 +84,7 @@ impl UserHostCall {
 
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer_addr,
             CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
+            CommonHostCall::BufferDealloc => &mut self.dealloc_buffer_addr,
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
             CommonHostCall::Metric => &mut self.metric_addr,

@@ -63,6 +63,8 @@ pub enum CommonHostCall {
     BufferAlloc,
     #[display(fmt = "access_buffer")]
     AccessBuffer,
+    #[display(fmt = "buffer_dealloc")]
+    BufferDealloc,
 
     #[display(fmt = "get_time")]
     GetTime,
@@ -105,7 +107,9 @@ impl HostCallID {
                 | CommonHostCall::SmoltcpAccept
                 | CommonHostCall::SmoltcpClose => "socket".to_owned(),
 
-                CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
+                CommonHostCall::BufferAlloc
+                | CommonHostCall::AccessBuffer
+                | CommonHostCall::BufferDealloc => "buffer".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
 

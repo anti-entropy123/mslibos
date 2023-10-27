@@ -128,17 +128,10 @@ where
 
 impl<T> Drop for DataBuffer<T> {
     fn drop(&mut self) {
-        // assert_eq!(Rc::strong_count(&self.inner), 1);
-        // let c = Rc::into_raw(Rc::clone(&self.inner));
-        // unsafe {
-        //     Rc::increment_strong_count(c);
-        // };
-        // let _ = unsafe { Rc::from_raw(c) };
-
-        // assert_eq!(Rc::strong_count(&self.inner), 2);
         if self.used {
-            println!("drop DataBuffer val");
-            unsafe { drop(ManuallyDrop::take(&mut self.inner)) };
+            let ptr = Box::into_raw(unsafe { ManuallyDrop::take(&mut self.inner) });
+            // println!("drop DataBuffer val: 0x{:x}", ptr as usize);
+            libos!(buffer_dealloc(ptr as usize, Layout::new::<T>()));
         }
     }
 }

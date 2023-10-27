@@ -34,7 +34,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
 
     let mut counter: BTreeMap<String, u32> = BTreeMap::new();
     for i in 0..mapper_num {
-        println!("need databuffer slot={}-{}", i, reducer_id);
+        // println!("need databuffer slot={}-{}", i, reducer_id);
         let mapper_result: DataBuffer<Mapper2Reducer> =
             DataBuffer::from_buffer_slot(format!("{}-{}", i, reducer_id))
                 .unwrap_or_else(|| panic!("missing mapper result? mapper_id={}", i.to_string()));
