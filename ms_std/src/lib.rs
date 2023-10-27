@@ -9,7 +9,7 @@
 #![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
 
-use agent::{FaaSFuncResult, Zero};
+use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
 
 pub mod console;
@@ -68,7 +68,7 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<Zero> {
+pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<()> {
     panic!("need real main");
 }
 

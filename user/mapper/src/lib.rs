@@ -3,7 +3,7 @@ use core::hash::{Hash, Hasher};
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
 use ms_std::{
-    agent::{DataBuffer, FaaSFuncResult as Result, Zero},
+    agent::{DataBuffer, FaaSFuncResult as Result},
     fs::File,
     io::Read,
 };
@@ -18,7 +18,7 @@ struct Mapper2Reducer {
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<Zero> {
+pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let my_id = &args["id"];
     let reducer_num: u64 = args
         .get("reducer_num")
@@ -67,5 +67,5 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<Zero> {
             .insert(word.to_owned(), count);
     }
 
-    Ok(Zero::default().into())
+    Ok(().into())
 }

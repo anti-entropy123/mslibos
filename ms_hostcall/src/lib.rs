@@ -142,3 +142,10 @@ pub const SERVICE_HEAP_SIZE: usize = 4096 * 16;
 pub trait Verify {
     fn __fingerprint() -> u64;
 }
+
+impl Verify for () {
+    fn __fingerprint() -> u64 {
+        let v: i64 = -2542357861231615084;
+        unsafe { *(&v as *const _ as usize as *const u64) }
+    }
+}

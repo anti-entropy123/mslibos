@@ -5,8 +5,6 @@ use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
 
-use ms_std_proc_macro::Verify as VerifyMacro;
-
 pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
 
 #[derive(Debug)]
@@ -147,6 +145,3 @@ impl<T> Drop for DataBuffer<T> {
         assert_eq!(Rc::strong_count(&self.inner), 2);
     }
 }
-
-#[derive(VerifyMacro, Default)]
-pub struct Zero {}

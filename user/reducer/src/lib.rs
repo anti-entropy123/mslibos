@@ -6,7 +6,7 @@ use alloc::{
     vec::Vec,
 };
 use ms_std::{
-    agent::{DataBuffer, FaaSFuncResult as Result, Zero},
+    agent::{DataBuffer, FaaSFuncResult as Result},
     println,
 };
 use ms_std_proc_macro::Verify;
@@ -20,7 +20,7 @@ struct Mapper2Reducer {
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<Zero> {
+pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let my_id = &args["id"];
     let reducer_id: usize = my_id.parse().expect("wrong id.");
     let mapper_num: u64 = args
@@ -44,5 +44,5 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<Zero> {
         println!("{}:{}", word, count);
     }
 
-    Ok(Zero::default().into())
+    Ok(().into())
 }
