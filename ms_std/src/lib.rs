@@ -27,7 +27,7 @@ extern crate alloc;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "alloc_def")] {
-        mod heap_alloc;
+        pub mod heap_alloc;
     }
 }
 

@@ -2,7 +2,7 @@ use linked_list_allocator::LockedHeap;
 use ms_hostcall::SERVICE_HEAP_SIZE;
 
 #[global_allocator]
-static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
+pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 /// Currently, all service will get a static heap region. It is work well but
 /// maybe cause wasting memory.

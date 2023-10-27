@@ -2,18 +2,19 @@
 use core::hash::{Hash, Hasher};
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
+pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     fs::File,
     io::Read,
 };
-use ms_std_proc_macro::Verify;
+use ms_std_proc_macro::FaasData;
 
 extern crate alloc;
 
-#[derive(Default, Verify)]
+#[derive(Default, FaasData)]
 struct Mapper2Reducer {
-    shuffle: Vec<BTreeMap<String, u32>>,
+    shuffle: BTreeMap<String, u32>,
 }
 
 #[allow(clippy::result_unit_err)]
@@ -47,10 +48,11 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         }
     }
 
-    let mut data_buffer: DataBuffer<Mapper2Reducer> = DataBuffer::with_slot(my_id.to_owned());
-    data_buffer.shuffle = Vec::with_capacity(reducer_num as usize);
-    for _ in 0..reducer_num {
-        data_buffer.shuffle.push(Default::default())
+    let mut data_buffers: Vec<DataBuffer<Mapper2Reducer>> =
+        Vec::with_capacity(reducer_num as usize);
+
+    for reducer in 0..reducer_num {
+        data_buffers.push(DataBuffer::with_slot(format!("{}-{}", my_id, reducer)));
     }
 
     for (word, count) in counter {
@@ -60,10 +62,10 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
             hasher.finish() % reducer_num
         };
 
-        data_buffer
-            .shuffle
+        data_buffers
             .get_mut(shuffle_idx as usize)
-            .unwrap_or_else(|| panic!("wrong shuffle num? shuffle_idx={}", shuffle_idx))
+            .unwrap()
+            .shuffle
             .insert(word.to_owned(), count);
     }
 

@@ -44,19 +44,31 @@
         }
       ],
       "args": {
-        "reducer_num": "1"
+        "reducer_num": "4"
       }
     },
     {
       "list": [
         {
           "name": "reducer",
-          "args": {
-            "mapper_num": "3"
-          }
+          "args": {}
+        },
+        {
+          "name": "reducer",
+          "args": {}
+        },
+        {
+          "name": "reducer",
+          "args": {}
+        },
+        {
+          "name": "reducer",
+          "args": {}
         }
       ],
-      "args": {}
+      "args": {
+        "mapper_num": "3"
+      }
     }
   ]
 }

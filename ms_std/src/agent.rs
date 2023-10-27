@@ -1,6 +1,6 @@
-use core::{alloc::Layout, borrow::Borrow};
+use core::{alloc::Layout, borrow::Borrow, mem::ManuallyDrop};
 
-use alloc::{rc::Rc, string::String};
+use alloc::{boxed::Box, rc::Rc, string::String};
 use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
@@ -9,8 +9,9 @@ pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
 
 #[derive(Debug)]
 pub struct DataBuffer<T> {
-    inner: Rc<T>,
+    inner: ManuallyDrop<Box<T>>,
     // fingerprint: u64,
+    used: bool,
 }
 
 impl<T> DataBuffer<T>
@@ -29,28 +30,24 @@ where
         T: Default,
     {
         let p = {
-            let l: Layout = Layout::new::<Rc<T>>();
+            let l: Layout = Layout::new::<T>();
             let fingerprint = T::__fingerprint();
             // println!("T::__fingerprint: {}", fingerprint);
-            libos!(buffer_alloc(slot, l, fingerprint)).expect("alloc failed.")
-        };
-        let raw_ptr = {
-            let buffer = p as *mut Rc<T>;
-            unsafe { core::ptr::write(buffer, Rc::default()) }
-            let rc = unsafe { Rc::clone(&(*buffer)) };
-
-            Rc::into_raw(rc)
+            libos!(buffer_alloc(slot, l, fingerprint)).expect("alloc failed.") as *mut T
         };
 
-        let inner = unsafe {
-            // must guarantee strong == 1, otherwise will unable to get mut ref.
-            Rc::decrement_strong_count(raw_ptr);
-            Rc::from_raw(raw_ptr)
-        };
-        assert_eq!(Rc::strong_count(&inner), 1);
+        unsafe { core::ptr::write(p, T::default()) };
+        let inner = unsafe { Box::from_raw(p) };
+        // let inner = unsafe {
+        //     // must guarantee strong == 1, otherwise will unable to get mut ref.
+        //     Rc::decrement_strong_count(raw_ptr);
+        //     Rc::from_raw(raw_ptr)
+        // };
+        // assert_eq!(Rc::strong_count(&inner), 1);
 
         Self {
-            inner,
+            inner: ManuallyDrop::new(inner),
+            used: false,
             // fingerprint: T::__fingerprint(),
         }
     }
@@ -68,23 +65,19 @@ where
                 panic!("");
             };
 
-            let raw_ptr = {
-                let buffer = raw_ptr as *mut Rc<T>;
-                let rc = unsafe { Rc::clone(&(*buffer)) };
+            let inner = unsafe { Box::from_raw(raw_ptr as *mut T) };
 
-                Rc::into_raw(rc)
-            };
-
-            let inner = unsafe {
-                // must guarantee strong == 1, otherwise will unable to get mut ref.
-                Rc::decrement_strong_count(raw_ptr);
-                Rc::from_raw(raw_ptr)
-            };
-            assert_eq!(Rc::strong_count(&inner), 1);
+            // let inner = unsafe {
+            //     // must guarantee strong == 1, otherwise will unable to get mut ref.
+            //     Rc::decrement_strong_count(raw_ptr);
+            //     Rc::from_raw(raw_ptr)
+            // };
+            // assert_eq!(Rc::strong_count(&inner), 1);
 
             Self {
-                inner,
+                inner: ManuallyDrop::new(inner),
                 // fingerprint: T::__fingerprint(),
+                used: true,
             }
         })
     }
@@ -117,7 +110,8 @@ where
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         // assert_eq!(T::__fingerprint(), self.fingerprint);
-        Rc::get_mut(&mut self.inner).unwrap()
+        // Rc::get_mut(&mut self.inner).unwrap()
+        self.inner.as_mut()
     }
 }
 
@@ -134,14 +128,17 @@ where
 
 impl<T> Drop for DataBuffer<T> {
     fn drop(&mut self) {
-        // println!("drop DataBuffer");
-        assert_eq!(Rc::strong_count(&self.inner), 1);
-        let c = Rc::into_raw(Rc::clone(&self.inner));
-        unsafe {
-            Rc::increment_strong_count(c);
-        };
-        let _ = unsafe { Rc::from_raw(c) };
+        // assert_eq!(Rc::strong_count(&self.inner), 1);
+        // let c = Rc::into_raw(Rc::clone(&self.inner));
+        // unsafe {
+        //     Rc::increment_strong_count(c);
+        // };
+        // let _ = unsafe { Rc::from_raw(c) };
 
-        assert_eq!(Rc::strong_count(&self.inner), 2);
+        // assert_eq!(Rc::strong_count(&self.inner), 2);
+        if self.used {
+            println!("drop DataBuffer val");
+            unsafe { drop(ManuallyDrop::take(&mut self.inner)) };
+        }
     }
 }

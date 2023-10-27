@@ -8,7 +8,7 @@ use syn::{
     parse2,
 };
 
-#[proc_macro_derive(Verify)]
+#[proc_macro_derive(FaasData)]
 pub fn derive_verify(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // derive_verify_impl(item.into()).into()
     derive_verify_impl(item.into()).into()
