@@ -20,9 +20,12 @@
     ]
   ],
   "groups": [
-    [
-      "hello1",
-      "hello1"
-    ]
+    {
+      "list": [
+        "hello1",
+        "hello1"
+      ],
+      "args": {}
+    }
   ]
 }

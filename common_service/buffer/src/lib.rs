@@ -20,11 +20,11 @@ lazy_static! {
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> Result<usize, ()> {
-    println!(
-        "buffer_alloc: expect size={}, align={}",
-        l.size(),
-        l.align()
-    );
+    // println!(
+    //     "buffer_alloc: expect size={}, align={}",
+    //     l.size(),
+    //     l.align()
+    // );
     let addr = unsafe { alloc::alloc::alloc(l) };
 
     if slot.is_empty() {
@@ -35,17 +35,17 @@ pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> Result<usize, ()
             .insert(slot.to_owned(), (addr as usize, fingerprint));
     };
 
-    let (used_mem, free_mem) = {
-        let alloctor = ms_std::heap_alloc::HEAP_ALLOCATOR.lock();
-        (alloctor.used(), alloctor.free())
-    };
+    // let (used_mem, free_mem) = {
+    //     let alloctor = ms_std::heap_alloc::HEAP_ALLOCATOR.lock();
+    //     (alloctor.used(), alloctor.free())
+    // };
 
-    println!(
-        "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
-        addr as usize,
-        used_mem >> 10,
-        free_mem >> 10
-    );
+    // println!(
+    //     "alloc addr=0x{:x}, used mem={}KB, free mem={}KB",
+    //     addr as usize,
+    //     used_mem >> 10,
+    //     free_mem >> 10
+    // );
 
     Ok(addr as usize)
 }

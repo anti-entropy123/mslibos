@@ -4,7 +4,6 @@ use alloc::{
     collections::BTreeMap,
     format,
     string::{String, ToString},
-    vec::Vec,
 };
 pub use ms_hostcall::Verify;
 use ms_std::{
@@ -45,9 +44,10 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         }
     }
 
-    for (word, count) in counter {
-        println!("{}:{}", word, count);
-    }
+    // for (word, count) in counter {
+    //     println!("{}:{}", word, count);
+    // }
+    println!("reducer{} has counted {} words", my_id, counter.len());
 
     Ok(().into())
 }

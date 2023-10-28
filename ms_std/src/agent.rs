@@ -1,6 +1,6 @@
 use core::{alloc::Layout, borrow::Borrow, mem::ManuallyDrop};
 
-use alloc::{boxed::Box, rc::Rc, string::String};
+use alloc::{boxed::Box, string::String};
 use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
@@ -10,7 +10,7 @@ pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
 #[derive(Debug)]
 pub struct DataBuffer<T> {
     inner: ManuallyDrop<Box<T>>,
-    // fingerprint: u64,
+
     used: bool,
 }
 
@@ -32,23 +32,16 @@ where
         let p = {
             let l: Layout = Layout::new::<T>();
             let fingerprint = T::__fingerprint();
-            // println!("T::__fingerprint: {}", fingerprint);
+
             libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T
         };
 
         unsafe { core::ptr::write(p, T::default()) };
         let inner = unsafe { Box::from_raw(p) };
-        // let inner = unsafe {
-        //     // must guarantee strong == 1, otherwise will unable to get mut ref.
-        //     Rc::decrement_strong_count(raw_ptr);
-        //     Rc::from_raw(raw_ptr)
-        // };
-        // assert_eq!(Rc::strong_count(&inner), 1);
 
         Self {
             inner: ManuallyDrop::new(inner),
             used: false,
-            // fingerprint: T::__fingerprint(),
         }
     }
 
@@ -67,16 +60,8 @@ where
 
             let inner = unsafe { Box::from_raw(raw_ptr as *mut T) };
 
-            // let inner = unsafe {
-            //     // must guarantee strong == 1, otherwise will unable to get mut ref.
-            //     Rc::decrement_strong_count(raw_ptr);
-            //     Rc::from_raw(raw_ptr)
-            // };
-            // assert_eq!(Rc::strong_count(&inner), 1);
-
             Self {
                 inner: ManuallyDrop::new(inner),
-                // fingerprint: T::__fingerprint(),
                 used: true,
             }
         })
@@ -99,7 +84,6 @@ where
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        // assert_eq!(T::__fingerprint(), self.fingerprint);
         self.inner.borrow()
     }
 }
@@ -109,8 +93,6 @@ where
     T: Verify,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        // assert_eq!(T::__fingerprint(), self.fingerprint);
-        // Rc::get_mut(&mut self.inner).unwrap()
         self.inner.as_mut()
     }
 }
@@ -130,7 +112,7 @@ impl<T> Drop for DataBuffer<T> {
     fn drop(&mut self) {
         if self.used {
             let ptr = Box::into_raw(unsafe { ManuallyDrop::take(&mut self.inner) });
-            println!("drop DataBuffer val: 0x{:x}", ptr as usize);
+            // println!("drop DataBuffer val: 0x{:x}", ptr as usize);
             libos!(buffer_dealloc(ptr as usize, Layout::new::<T>()));
         }
     }

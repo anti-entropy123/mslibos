@@ -4,7 +4,6 @@
 members = [
     "bins/*",
     "libmsvisor",
-    "gen-file",
     "ms_hostcall",
     "ms_std",
     "ms_std_proc_macro",

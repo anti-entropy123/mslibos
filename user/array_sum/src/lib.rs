@@ -8,10 +8,10 @@ use ms_std::{
     println,
     time::{SystemTime, UNIX_EPOCH},
 };
-use ms_std_proc_macro::Verify;
+use ms_std_proc_macro::FaasData;
 
 #[allow(dead_code)]
-#[derive(Verify, Default)]
+#[derive(FaasData, Default)]
 pub struct ArrayData {
     start_times: Vec<u128>,
     end_times: Vec<u128>,

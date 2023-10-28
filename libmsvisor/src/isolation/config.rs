@@ -39,8 +39,8 @@ impl IsolationGroupApp {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct IsolationGroup {
-    list: Vec<IsolationGroupApp>,
-    args: BTreeMap<String, String>,
+    pub list: Vec<IsolationGroupApp>,
+    pub args: BTreeMap<String, String>,
 }
 
 impl IsolationGroup {
