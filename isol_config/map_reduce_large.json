@@ -1,0 +1,62 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "target/debug/libfdtab.so"
+    ],
+    [
+      "stdio",
+      "target/debug/libstdio.so"
+    ],
+    [
+      "buffer",
+      "target/debug/libbuffer.so"
+    ],
+    [
+      "fatfs",
+      "target/debug/libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "mapper",
+      "target/debug/libmapper.so"
+    ],
+    [
+      "reducer",
+      "target/debug/libreducer.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper"
+      ],
+      "args": {
+        "reducer_num": "8"
+      }
+    },
+    {
+      "list": [
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer"
+      ],
+      "args": {
+        "mapper_num": "8"
+      }
+    }
+  ]
+}

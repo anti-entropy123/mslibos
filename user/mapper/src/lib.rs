@@ -28,7 +28,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args["reducer_num"]));
 
     let content = {
-        let mut f = File::open(&format!("part-{}", my_id))?;
+        let mut f = File::open(&format!("fake_data_{}.txt", my_id))?;
         let mut buf = String::new();
         f.read_to_string(&mut buf).expect("read file failed.");
         buf
