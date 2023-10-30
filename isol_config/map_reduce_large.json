@@ -19,6 +19,10 @@
   ],
   "apps": [
     [
+      "file_reader",
+      "target/debug/libfile_reader.so"
+    ],
+    [
       "mapper",
       "target/debug/libmapper.so"
     ],
@@ -29,6 +33,19 @@
   ],
   "fs_image": "fs_images/fatfs_large.img",
   "groups": [
+    {
+      "list": [
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader"
+      ],
+      "args": {}
+    },
     {
       "list": [
         "mapper",

@@ -12,7 +12,11 @@ use anyhow::{anyhow, Ok};
 use lazy_static::lazy_static;
 
 use log::info;
-use ms_hostcall::types::{IsolationID as IsolID, MetricEvent::Mem, ServiceName};
+use ms_hostcall::types::{
+    IsolationID as IsolID,
+    MetricEvent::{IsolBegin, IsolEnd, Mem},
+    ServiceName,
+};
 
 use crate::{
     logger,
@@ -77,6 +81,7 @@ impl Isolation {
         logger::info!("start build isolation_{new_id}");
 
         let metric = Arc::from(MetricBucket::new());
+        metric.mark(IsolBegin);
         metric.mark(Mem);
 
         let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(config);
@@ -183,6 +188,7 @@ impl Isolation {
         };
 
         self.metric.mark(Mem);
+        self.metric.mark(IsolEnd);
         Ok(())
     }
 }

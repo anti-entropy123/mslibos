@@ -1,5 +1,6 @@
 use std::{
     fs,
+    iter::zip,
     sync::{Arc, Mutex},
     time::UNIX_EPOCH,
 };
@@ -15,13 +16,18 @@ struct MetricBucketInner {
     #[serde(skip)]
     svc_metrics: Vec<Arc<SvcMetricBucket>>,
 
+    begin_t: u128,
+    end_t: u128,
     load_service_num: u32,
     mem_metrics: Vec<(u128, usize)>,
 }
 
 impl MetricBucketInner {
     fn to_json(&self) -> Value {
-        serde_json::json!(self)
+        let mut val = serde_json::json!(self);
+        val["total_dur"] = json!(self.end_t - self.begin_t);
+
+        val
     }
 }
 
@@ -62,6 +68,14 @@ impl MetricBucket {
                 let vm_rss_kb = get_current_vm_rss_kb();
 
                 inner.mem_metrics.push((timestamp, vm_rss_kb))
+            }
+            MetricEvent::IsolBegin => {
+                assert_eq!(inner.begin_t, 0);
+                inner.begin_t = now_millis!()
+            }
+            MetricEvent::IsolEnd => {
+                assert_eq!(inner.end_t, 0);
+                inner.end_t = now_millis!()
             }
 
             _ => {
@@ -109,18 +123,20 @@ pub enum MetricOpt {
 #[derive(Default, Serialize)]
 struct SvcMetricBucketInner {
     init_t: u128,
-    run_t: u128,
-    end_t: u128,
+    run_t: Vec<u128>,
+    end_t: Vec<u128>,
 }
 
 impl SvcMetricBucketInner {
     fn to_json(&self) -> Value {
-        let mut val = json!({ "raw": self });
+        let mut val = json!({ "init_t": self.init_t });
 
-        if self.end_t > 0 {
-            val["run_time(ms)"] = json!(self.end_t - self.run_t);
-            val["init_time(ms)"] = json!(self.end_t - self.init_t);
-        };
+        for (idx, (run, end)) in zip(&self.run_t, &self.end_t).enumerate() {
+            if *end > 0 {
+                val[&format!("thread_{}", idx)] =
+                    json!({"run_dur(ms)": end - run, "init_dur(ms)": run - self.init_t})
+            };
+        }
 
         val
     }
@@ -143,9 +159,13 @@ impl SvcMetricBucket {
     pub fn mark(&self, event: MetricEvent) {
         let mut inner = self.inner.lock().unwrap();
         match event {
-            MetricEvent::SvcInit => inner.init_t = now_millis!(),
-            MetricEvent::SvcRun => inner.run_t = now_millis!(),
-            MetricEvent::SvcEnd => inner.end_t = now_millis!(),
+            MetricEvent::SvcInit => {
+                if inner.init_t == 0 {
+                    inner.init_t = now_millis!()
+                }
+            }
+            MetricEvent::SvcRun => inner.run_t.push(now_millis!()),
+            MetricEvent::SvcEnd => inner.end_t.push(now_millis!()),
 
             _ => {
                 panic!("error metric event for Service MetricBucket")

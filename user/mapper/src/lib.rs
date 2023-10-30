@@ -3,14 +3,15 @@ use core::hash::{Hash, Hasher};
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
 pub use ms_hostcall::Verify;
-use ms_std::{
-    agent::{DataBuffer, FaaSFuncResult as Result},
-    fs::File,
-    io::Read,
-};
+use ms_std::agent::{DataBuffer, FaaSFuncResult as Result};
 use ms_std_proc_macro::FaasData;
 
 extern crate alloc;
+
+#[derive(Default, FaasData)]
+struct Reader2Mapper {
+    content: String,
+}
 
 #[derive(Default, FaasData)]
 struct Mapper2Reducer {
@@ -27,16 +28,12 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         .parse()
         .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args["reducer_num"]));
 
-    let content = {
-        let mut f = File::open(&format!("fake_data_{}.txt", my_id))?;
-        let mut buf = String::new();
-        f.read_to_string(&mut buf).expect("read file failed.");
-        buf
-    };
+    let reader: DataBuffer<Reader2Mapper> =
+        DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
 
     let mut counter = BTreeMap::new();
 
-    for line in content.lines() {
+    for line in reader.content.lines() {
         let words = line
             .trim()
             .split(' ')

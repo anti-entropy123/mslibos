@@ -99,7 +99,9 @@ pub type FsImageFunc = fn(IsolationID) -> Option<String>;
 #[derive(Debug)]
 pub enum MetricEvent {
     // IsolationEvent
+    IsolBegin,
     LoadService,
+    IsolEnd,
 
     // SvcEvent
     SvcInit,
