@@ -9,7 +9,7 @@
 #![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
 
-use agent::{FaaSFuncResult, Zero};
+use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
 
 pub mod console;
@@ -27,7 +27,7 @@ extern crate alloc;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "alloc_def")] {
-        mod heap_alloc;
+        pub mod heap_alloc;
     }
 }
 
@@ -68,7 +68,7 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<Zero> {
+pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<()> {
     panic!("need real main");
 }
 

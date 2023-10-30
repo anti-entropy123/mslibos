@@ -16,6 +16,9 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct UserHostCall {
+    metric_addr: Option<usize>,
+    fs_image_addr: Option<usize>,
+
     write_addr: Option<usize>,
     open_addr: Option<usize>,
     read_addr: Option<usize>,
@@ -42,10 +45,9 @@ pub struct UserHostCall {
 
     alloc_buffer_addr: Option<usize>,
     access_buffer_addr: Option<usize>,
+    dealloc_buffer_addr: Option<usize>,
 
     get_time_addr: Option<usize>,
-
-    metric_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -57,6 +59,9 @@ impl UserHostCall {
 impl UserHostCall {
     pub fn get_or_find(&mut self, chc_id: CommonHostCall) -> usize {
         let entry_addr = match chc_id {
+            CommonHostCall::Metric => &mut self.metric_addr,
+            CommonHostCall::FsImage => &mut self.fs_image_addr,
+
             CommonHostCall::Write => &mut self.write_addr,
             CommonHostCall::Open => &mut self.open_addr,
             CommonHostCall::Read => &mut self.read_addr,
@@ -83,9 +88,9 @@ impl UserHostCall {
 
             CommonHostCall::BufferAlloc => &mut self.alloc_buffer_addr,
             CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
+            CommonHostCall::BufferDealloc => &mut self.dealloc_buffer_addr,
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
-            CommonHostCall::Metric => &mut self.metric_addr,
         };
 
         if entry_addr.is_none() {

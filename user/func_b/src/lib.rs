@@ -10,9 +10,9 @@ use ms_std::{
     println,
     time::SystemTime,
 };
-use ms_std_proc_macro::Verify;
+use ms_std_proc_macro::FaasData;
 
-#[derive(Verify)]
+#[derive(FaasData)]
 pub struct MyComplexData {
     pub current_time: SystemTime,
     pub some_int: i64,

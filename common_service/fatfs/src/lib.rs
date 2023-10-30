@@ -10,20 +10,31 @@ use std::{
 use fscommon::BufStream;
 use ms_hostcall::types::{Fd, OpenFlags, Size};
 pub use ms_std;
+use ms_std::libos::libos;
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
 type File<'a> = fatfs::File<'a, fscommon::BufStream<std::fs::File>>;
+
+fn get_fs_image_path() -> PathBuf {
+    let image_path = match libos!(fs_image(ms_std::init_context::isolation_ctx().isol_id)) {
+        Some(s) => s,
+        None => "fs_images/fatfs.img".to_owned(),
+    };
+
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .to_path_buf()
+        .join(image_path)
+}
 
 thread_local! {
     static FS_RAW: FileSystem = {
         let image = {
             let mut config = fs::File::options();
-            let image_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .parent().unwrap()
-                .parent().unwrap()
-                .to_path_buf()
-                .join("fs_images/fatfs.img");
-
+            let image_path = get_fs_image_path();
             BufStream::new(config
                 .read(true)
                 .write(true)

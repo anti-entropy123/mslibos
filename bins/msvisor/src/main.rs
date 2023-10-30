@@ -52,7 +52,11 @@ fn main() {
     let configs: Vec<_> = if !args.files.is_empty() {
         args.files
             .iter()
-            .map(|f| IsolationConfig::from_file(f.into()).expect("Read isol_config file failed"))
+            .map(|f| {
+                IsolationConfig::from_file(f.into()).unwrap_or_else(|e| {
+                    panic!("Read isol_config file failed, file={}, err={}", f, e)
+                })
+            })
             .collect()
     } else {
         log::debug!("missing arg files");

@@ -1,6 +1,8 @@
 use crate::libos::USER_HOST_CALL;
 
 pub macro func_type {
+    (metric) => (ms_hostcall::types::MetricFunc),
+    (fs_image) => (ms_hostcall::types::FsImageFunc),
     (write) => (ms_hostcall::types::WriteFunc),
     (open) => (ms_hostcall::types::OpenFunc),
     (read) => (ms_hostcall::types::ReadFunc),
@@ -22,11 +24,13 @@ pub macro func_type {
     (smol_close) => (ms_hostcall::types::SmoltcpCloseFunc),
     (buffer_alloc) => (ms_hostcall::types::BufferAllocFunc),
     (access_buffer) => (ms_hostcall::types::AccessBufferFunc),
+    (buffer_dealloc) => (ms_hostcall::types::BufferDeallocFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
-    (metric) => (ms_hostcall::types::MetricFunc),
 }
 
 pub macro hostcall_id {
+    (metric) => (ms_hostcall::CommonHostCall::Metric),
+    (fs_image) => (ms_hostcall::CommonHostCall::FsImage),
     (write) => (ms_hostcall::CommonHostCall::Write),
     (open) => (ms_hostcall::CommonHostCall::Open),
     (read) => (ms_hostcall::CommonHostCall::Read),
@@ -48,8 +52,8 @@ pub macro hostcall_id {
     (smol_close) => (ms_hostcall::CommonHostCall::SmoltcpClose),
     (buffer_alloc) => (ms_hostcall::CommonHostCall::BufferAlloc),
     (access_buffer) => (ms_hostcall::CommonHostCall::AccessBuffer),
+    (buffer_dealloc) => (ms_hostcall::CommonHostCall::BufferDealloc),
     (get_time) => (ms_hostcall::CommonHostCall::GetTime),
-    (metric) => (ms_hostcall::CommonHostCall::Metric),
 }
 
 pub macro libos {

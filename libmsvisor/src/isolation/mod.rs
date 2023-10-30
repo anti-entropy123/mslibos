@@ -12,7 +12,11 @@ use anyhow::{anyhow, Ok};
 use lazy_static::lazy_static;
 
 use log::info;
-use ms_hostcall::types::{IsolationID as IsolID, MetricEvent::Mem, ServiceName};
+use ms_hostcall::types::{
+    IsolationID as IsolID,
+    MetricEvent::{IsolBegin, IsolEnd, Mem},
+    ServiceName,
+};
 
 use crate::{
     logger,
@@ -66,6 +70,7 @@ pub struct Isolation {
     pub metric: Arc<MetricBucket>,
     app_names: Vec<ServiceName>,
     groups: Vec<Vec<App>>,
+    fs_image: Option<String>,
 
     inner: Mutex<IsolationInner>,
 }
@@ -76,6 +81,7 @@ impl Isolation {
         logger::info!("start build isolation_{new_id}");
 
         let metric = Arc::from(MetricBucket::new());
+        metric.mark(IsolBegin);
         metric.mark(Mem);
 
         let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(config);
@@ -88,14 +94,9 @@ impl Isolation {
             groups: config
                 .groups
                 .iter()
-                .map(|group| {
-                    group
-                        .iter()
-                        .enumerate()
-                        .map(|(idx, app)| app.to_isolation(idx.to_string()))
-                        .collect()
-                })
+                .map(|group| group.to_isolation())
                 .collect(),
+            fs_image: config.fs_image.clone(),
 
             inner: Mutex::new(IsolationInner::default()),
         });
@@ -187,6 +188,7 @@ impl Isolation {
         };
 
         self.metric.mark(Mem);
+        self.metric.mark(IsolEnd);
         Ok(())
     }
 }

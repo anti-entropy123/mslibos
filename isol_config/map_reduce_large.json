@@ -31,9 +31,15 @@
       "target/debug/libreducer.so"
     ]
   ],
+  "fs_image": "fs_images/fatfs_large.img",
   "groups": [
     {
       "list": [
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
+        "file_reader",
         "file_reader",
         "file_reader",
         "file_reader"
@@ -44,10 +50,15 @@
       "list": [
         "mapper",
         "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
+        "mapper",
         "mapper"
       ],
       "args": {
-        "reducer_num": "4"
+        "reducer_num": "8"
       }
     },
     {
@@ -55,10 +66,14 @@
         "reducer",
         "reducer",
         "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
         "reducer"
       ],
       "args": {
-        "mapper_num": "3"
+        "mapper_num": "8"
       }
     }
   ]

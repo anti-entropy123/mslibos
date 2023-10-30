@@ -4,14 +4,14 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 use ms_std::{
-    agent::{FaaSFuncResult as Result, Zero},
+    agent::FaaSFuncResult as Result,
     fs::File,
     io::{Read, Write},
 };
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn main() -> Result<Zero> {
+pub fn main() -> Result<()> {
     let path = "lines.txt";
 
     let data = "Rust LibOS Cool.";
@@ -28,5 +28,5 @@ pub fn main() -> Result<Zero> {
 
     assert_eq!(String::from_utf8_lossy(&buf), data);
 
-    Ok(Zero::default().into())
+    Ok(().into())
 }

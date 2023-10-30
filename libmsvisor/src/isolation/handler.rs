@@ -1,7 +1,7 @@
 use core::panic;
 
 use ms_hostcall::{
-    types::{IsolationID, MetricEvent, MetricFunc, NetdevName},
+    types::{FsImageFunc, IsolationID, MetricEvent, MetricFunc, NetdevName},
     CommonHostCall, HostCallID,
 };
 
@@ -24,10 +24,8 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
     let isol = get_isol(isol_id).expect("isol don't exist?");
 
     let addr = match hc_id {
-        HostCallID::Common(CommonHostCall::Metric) => {
-            let f: MetricFunc = metric_handler;
-            f as usize
-        }
+        HostCallID::Common(CommonHostCall::Metric) => metric_handler as MetricFunc as usize,
+        HostCallID::Common(CommonHostCall::FsImage) => fs_image_handler as FsImageFunc as usize,
         _ => {
             let svc_name = hc_id.belong_to();
             logger::debug!(
@@ -64,6 +62,13 @@ fn metric_handler(isol_id: IsolationID, event: MetricEvent) -> Result<(), ()> {
     Ok(())
 }
 
+fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
+    get_isol(isol_id)
+        .expect("isol don't exist?")
+        .fs_image
+        .clone()
+}
+
 #[test]
 fn find_host_call_test() {
     // logger::init();
@@ -91,6 +96,7 @@ fn find_host_call_test() {
                 utils::TARGET_DEBUG_PATH.join("libhello_world.so"),
             )],
             groups: Default::default(),
+            fs_image: None,
         });
         // isol_table.insert(1, Arc::clone(&isol));
         isol

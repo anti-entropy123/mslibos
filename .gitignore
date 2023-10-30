@@ -8,3 +8,4 @@ target
 _members.txt
 
 **/*.img
+**/fake*txt

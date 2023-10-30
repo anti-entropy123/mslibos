@@ -15,6 +15,11 @@ use derive_more::Display;
 #[derive(Debug, Display)]
 #[repr(C)]
 pub enum CommonHostCall {
+    #[display(fmt = "metric")]
+    Metric,
+    #[display(fmt = "fs_image")]
+    FsImage,
+
     #[display(fmt = "write")]
     Write,
     #[display(fmt = "read")]
@@ -63,12 +68,11 @@ pub enum CommonHostCall {
     BufferAlloc,
     #[display(fmt = "access_buffer")]
     AccessBuffer,
+    #[display(fmt = "buffer_dealloc")]
+    BufferDealloc,
 
     #[display(fmt = "get_time")]
     GetTime,
-
-    #[display(fmt = "metric")]
-    Metric,
 }
 
 #[derive(Debug, Display)]
@@ -81,6 +85,8 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
+                CommonHostCall::Metric | CommonHostCall::FsImage => "".to_owned(),
+
                 CommonHostCall::Write
                 | CommonHostCall::Open
                 | CommonHostCall::Read
@@ -105,11 +111,11 @@ impl HostCallID {
                 | CommonHostCall::SmoltcpAccept
                 | CommonHostCall::SmoltcpClose => "socket".to_owned(),
 
-                CommonHostCall::BufferAlloc | CommonHostCall::AccessBuffer => "buffer".to_owned(),
+                CommonHostCall::BufferAlloc
+                | CommonHostCall::AccessBuffer
+                | CommonHostCall::BufferDealloc => "buffer".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
-
-                CommonHostCall::Metric => "".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -128,7 +134,7 @@ fn format_hostcall_id() {
     )
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Default)]
 #[repr(C)]
 pub struct IsolationContext {
     pub isol_id: IsolationID,
@@ -137,8 +143,15 @@ pub struct IsolationContext {
     pub heap_range: (usize, usize),
 }
 
-pub const SERVICE_HEAP_SIZE: usize = 4096 * 16;
+pub const SERVICE_HEAP_SIZE: usize = 4 * 1024 * 1024 * 1024;
 
 pub trait Verify {
     fn __fingerprint() -> u64;
+}
+
+impl Verify for () {
+    fn __fingerprint() -> u64 {
+        let v: i64 = -2542357861231615084;
+        unsafe { *(&v as *const _ as usize as *const u64) }
+    }
 }

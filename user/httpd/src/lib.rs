@@ -5,7 +5,7 @@ extern crate alloc;
 
 use alloc::format;
 use ms_std::{
-    agent::{FaaSFuncResult as Result, Zero},
+    agent::FaaSFuncResult as Result,
     net::{TcpListener, TcpStream},
 };
 
@@ -27,7 +27,7 @@ fn handle_connection(mut stream: TcpStream) {
 }
 
 #[no_mangle]
-pub fn main() -> Result<Zero> {
+pub fn main() -> Result<()> {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
     for stream in listener.incoming() {
@@ -35,5 +35,5 @@ pub fn main() -> Result<Zero> {
         handle_connection(stream);
     }
 
-    Ok(Zero::default().into())
+    Ok(().into())
 }

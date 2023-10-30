@@ -1,8 +1,16 @@
 use std::path::PathBuf;
 
-use libmsvisor::isolation::config::IsolationConfig;
+use libmsvisor::isolation::config::{App, IsolationConfig, IsolationGroup, IsolationGroupApp};
 
 fn main() {
+    let group = IsolationGroup {
+        list: vec![IsolationGroupApp::Detailed(App {
+            name: "hello1".to_owned(),
+            args: Default::default(),
+        })],
+        args: Default::default(),
+    };
+
     let config1 = IsolationConfig {
         services: vec![
             (
@@ -18,7 +26,8 @@ fn main() {
             "hello1".to_owned(),
             PathBuf::from("target/debug/libhello_world.so"),
         )],
-        groups: vec![],
+        groups: vec![group],
+        fs_image: Some("fs_images/fatfs.img".to_owned()),
     };
 
     config1
