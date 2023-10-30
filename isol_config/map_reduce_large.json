@@ -27,6 +27,7 @@
       "target/debug/libreducer.so"
     ]
   ],
+  "fs_image": "fs_images/fatfs_large.img",
   "groups": [
     {
       "list": [

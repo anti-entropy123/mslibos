@@ -65,6 +65,7 @@ impl IsolationGroup {
 pub struct IsolationConfig {
     pub services: Vec<(ServiceName, PathBuf)>,
     pub apps: Vec<(ServiceName, PathBuf)>,
+    pub fs_image: Option<String>,
     #[serde(default = "Vec::default")]
     pub groups: Vec<IsolationGroup>,
 }

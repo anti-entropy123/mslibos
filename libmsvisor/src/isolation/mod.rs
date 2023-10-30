@@ -66,6 +66,7 @@ pub struct Isolation {
     pub metric: Arc<MetricBucket>,
     app_names: Vec<ServiceName>,
     groups: Vec<Vec<App>>,
+    fs_image: Option<String>,
 
     inner: Mutex<IsolationInner>,
 }
@@ -90,6 +91,7 @@ impl Isolation {
                 .iter()
                 .map(|group| group.to_isolation())
                 .collect(),
+            fs_image: config.fs_image.clone(),
 
             inner: Mutex::new(IsolationInner::default()),
         });

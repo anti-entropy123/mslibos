@@ -15,6 +15,11 @@ use derive_more::Display;
 #[derive(Debug, Display)]
 #[repr(C)]
 pub enum CommonHostCall {
+    #[display(fmt = "metric")]
+    Metric,
+    #[display(fmt = "fs_image")]
+    FsImage,
+
     #[display(fmt = "write")]
     Write,
     #[display(fmt = "read")]
@@ -68,9 +73,6 @@ pub enum CommonHostCall {
 
     #[display(fmt = "get_time")]
     GetTime,
-
-    #[display(fmt = "metric")]
-    Metric,
 }
 
 #[derive(Debug, Display)]
@@ -83,6 +85,8 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
+                CommonHostCall::Metric | CommonHostCall::FsImage => "".to_owned(),
+
                 CommonHostCall::Write
                 | CommonHostCall::Open
                 | CommonHostCall::Read
@@ -112,8 +116,6 @@ impl HostCallID {
                 | CommonHostCall::BufferDealloc => "buffer".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
-
-                CommonHostCall::Metric => "".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }
@@ -132,7 +134,7 @@ fn format_hostcall_id() {
     )
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Default)]
 #[repr(C)]
 pub struct IsolationContext {
     pub isol_id: IsolationID,

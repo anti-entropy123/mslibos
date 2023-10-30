@@ -27,6 +27,7 @@ fn main() {
             PathBuf::from("target/debug/libhello_world.so"),
         )],
         groups: vec![group],
+        fs_image: Some("fs_images/fatfs.img".to_owned()),
     };
 
     config1

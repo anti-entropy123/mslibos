@@ -30,13 +30,13 @@ pub fn isolation_ctx() -> spin::MutexGuard<'static, IsolationContext> {
 
 #[allow(improper_ctypes_definitions)]
 #[no_mangle]
-pub extern "C" fn set_handler_addr(ctx: IsolationContext) -> HCResult {
+pub extern "C" fn set_handler_addr(ctx: &IsolationContext) -> HCResult {
     let mut isol_ctx = isolation_ctx_mut();
     if isol_ctx.find_handler != 0 && isol_ctx.find_handler != ctx.find_handler {
         panic!();
         // return Err(HCError::HasBeenSet);
     };
-    *isol_ctx = ctx;
+    *isol_ctx = ctx.clone();
 
     #[cfg(feature = "alloc_def")]
     {

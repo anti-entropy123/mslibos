@@ -106,7 +106,7 @@ impl ELFService {
             .symbol("set_handler_addr")
             .expect("missing set_handler_addr?");
         logger::info!("start set_handler...");
-        unsafe { set_handler(isol_ctx) }.expect("service init failed.");
+        unsafe { set_handler(&isol_ctx) }.expect("service init failed.");
         logger::info!("set_handler complete.");
 
         let get_handler: GetHandlerFuncSybmol = self
@@ -155,13 +155,6 @@ impl ELFService {
 
 impl Drop for ELFService {
     fn drop(&mut self) {
-        // match self.symbol::<DropHandlerFunc>("drop") {
-        //     Some(drop_fn) => unsafe {
-        //         logger::info!("service {} will invoke drop symbol.", self.name);
-        //         drop_fn()
-        //     },
-        //     None => {}
-        // };
         if let Some(drop_fn) = self.symbol::<DropHandlerFunc>("drop") {
             logger::info!("service {} will invoke drop symbol.", self.name);
             unsafe { drop_fn() }

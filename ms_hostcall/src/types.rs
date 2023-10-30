@@ -29,7 +29,7 @@ pub enum HostCallError {
 pub type FindHostCallFunc = unsafe extern "C" fn(IsolationID, HostCallID) -> usize;
 
 // service init
-pub type SetHandlerFunc = unsafe extern "C" fn(IsolationContext) -> HostCallResult;
+pub type SetHandlerFunc = unsafe extern "C" fn(&IsolationContext) -> HostCallResult;
 pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
 pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 
@@ -92,8 +92,9 @@ pub type BufferAllocFunc = fn(&str, Layout, u64) -> Result<usize, ()>;
 pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
 pub type BufferDeallocFunc = fn(usize, Layout);
 
-// metric
+// isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;
+pub type FsImageFunc = fn(IsolationID) -> Option<String>;
 
 #[derive(Debug)]
 pub enum MetricEvent {
