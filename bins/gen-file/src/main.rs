@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use libmsvisor::isolation::config::{App, IsolationConfig, IsolationGroup, IsolationGroupApp};
+use libmsvisor::isolation::config::{
+    App, IsolationConfig, IsolationGroup, IsolationGroupApp, LoadableUnit,
+};
 
 fn main() {
     let group = IsolationGroup {
@@ -13,16 +15,16 @@ fn main() {
 
     let config1 = IsolationConfig {
         services: vec![
-            (
+            LoadableUnit(
                 "fdtab".to_owned(),
                 PathBuf::from("target/debug/libfdtab.so"),
             ),
-            (
+            LoadableUnit(
                 "stdio".to_owned(),
                 PathBuf::from("target/debug/libstdio.so"),
             ),
         ],
-        apps: vec![(
+        apps: vec![LoadableUnit(
             "hello1".to_owned(),
             PathBuf::from("target/debug/libhello_world.so"),
         )],

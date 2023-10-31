@@ -73,7 +73,7 @@ fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
 fn find_host_call_test() {
     // logger::init();
     use crate::{
-        isolation::{Isolation, IsolationConfig},
+        isolation::{config::LoadableUnit, Isolation, IsolationConfig},
         utils,
     };
 
@@ -81,7 +81,7 @@ fn find_host_call_test() {
         // let mut isol_table = ISOL_TABLE.lock().unwrap();
         let services = {
             let mut s = Vec::new();
-            s.push((
+            s.push(LoadableUnit(
                 "fdtab".to_owned(),
                 utils::TARGET_DEBUG_PATH.join("libfdtab.so"),
             ));
@@ -91,7 +91,7 @@ fn find_host_call_test() {
 
         let isol = Isolation::new(&IsolationConfig {
             services,
-            apps: vec![(
+            apps: vec![LoadableUnit(
                 "hello1".to_owned(),
                 utils::TARGET_DEBUG_PATH.join("libhello_world.so"),
             )],

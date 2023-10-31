@@ -2,17 +2,17 @@
   "services": [
     [
       "fdtab",
-      "target/debug/libfdtab.so"
+      "libfdtab.so"
     ],
     [
       "stdio",
-      "target/debug/libstdio.so"
+      "libstdio.so"
     ]
   ],
   "apps": [
     [
       "hello1",
-      "target/debug/libshould_panic.so"
+      "libshould_panic.so"
     ]
   ]
 }

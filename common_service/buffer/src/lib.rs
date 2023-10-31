@@ -3,17 +3,17 @@
 use core::alloc::Layout;
 
 extern crate alloc;
-use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
+use alloc::{borrow::ToOwned, string::String};
+use hashbrown::HashMap;
 use lazy_static::lazy_static;
 
 #[allow(unused)]
 #[allow(clippy::single_component_path_imports)]
 use ms_std;
-use ms_std::println;
 use spin::Mutex;
 
 lazy_static! {
-    static ref RAW_P: Mutex<BTreeMap<String, (usize, u64)>> = Mutex::new(Default::default());
+    static ref RAW_P: Mutex<HashMap<String, (usize, u64)>> = Mutex::new(HashMap::new());
     static ref DEFAULT_RAW_P: Mutex<Option<(usize, u64)>> = Mutex::new(None);
 }
 

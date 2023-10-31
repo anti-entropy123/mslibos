@@ -12,7 +12,7 @@ lazy_static! {
         .to_path_buf();
 }
 
-fn user_manifest_dirs() -> Vec<PathBuf> {
+fn libos_manifest_dirs() -> Vec<PathBuf> {
     let all_dir_entry = {
         // let mut app_dir: Vec<_> = fs::read_dir(WORKSPACE_ROOT_DIR.join("user"))
         //     .unwrap()
@@ -39,16 +39,36 @@ fn user_manifest_dirs() -> Vec<PathBuf> {
     result
 }
 
-fn main() {
-    let target_dirs = user_manifest_dirs();
+fn get_build_mode() -> &'static str {
+    if cfg!(debug_assertions) {
+        "debug"
+    } else {
+        "release"
+    }
+}
 
-    for lib_dir in target_dirs {
+fn main() {
+    let libos_dirs = libos_manifest_dirs();
+    let target_path = WORKSPACE_ROOT_DIR.join("target").join(get_build_mode());
+    if !target_path.exists() {
+        assert!(Command::new("mkdir")
+            .arg("-p")
+            .arg(&target_path)
+            .status()
+            .unwrap()
+            .success());
+    }
+
+    for lib_dir in libos_dirs {
         let mut cargo_commd = Command::new("cargo");
         cargo_commd.args([
             "build",
             "--manifest-path",
             &lib_dir.join("Cargo.toml").to_string_lossy(),
         ]);
+        if !cfg!(debug_assertions) {
+            cargo_commd.arg("--release");
+        }
         assert!(
             cargo_commd.status().unwrap().success(),
             "build {:?} failed.",
@@ -57,11 +77,13 @@ fn main() {
 
         let mut cp_commd = Command::new("cp");
         cp_commd.args([
-            lib_dir.join(format!(
-                "target/debug/lib{}.so",
+            // user/{mod_name}/target/{debug or release}/lib{mod_name}.so
+            &lib_dir.join("target").join(get_build_mode()).join(format!(
+                "lib{}.so",
                 lib_dir.file_name().unwrap().to_string_lossy()
             )),
-            WORKSPACE_ROOT_DIR.join("target/debug/"),
+            // target/{debug or release}
+            &target_path,
         ]);
         assert!(
             cp_commd.status().unwrap().success(),

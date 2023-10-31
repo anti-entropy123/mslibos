@@ -48,8 +48,8 @@ impl MetricBucket {
         }
     }
 
-    pub fn new_svc_metric(&self, name: ServiceName) -> Arc<SvcMetricBucket> {
-        let svc_metric = Arc::new(SvcMetricBucket::new(name));
+    pub fn new_svc_metric(&self, name: ServiceName, path: String) -> Arc<SvcMetricBucket> {
+        let svc_metric = Arc::new(SvcMetricBucket::new(name, path));
         let mut inner = self.inner.lock().unwrap();
         inner.svc_metrics.push(Arc::clone(&svc_metric));
 
@@ -144,15 +144,17 @@ impl SvcMetricBucketInner {
 
 pub struct SvcMetricBucket {
     svc_name: ServiceName,
+    svc_path: String,
 
     inner: Mutex<SvcMetricBucketInner>,
 }
 
 impl SvcMetricBucket {
-    fn new(name: ServiceName) -> Self {
+    fn new(name: ServiceName, path: String) -> Self {
         SvcMetricBucket {
             inner: Default::default(),
             svc_name: name,
+            svc_path: path,
         }
     }
 
@@ -175,7 +177,9 @@ impl SvcMetricBucket {
 
     pub fn to_json(&self) -> Value {
         log::debug!("analyze service_{} metrics.", self.svc_name);
-        json!({ self.svc_name.clone():  self.inner.lock().unwrap().to_json()})
+        let mut val = json!(self.inner.lock().unwrap().to_json());
+        val["path"] = json!(&self.svc_path);
+        json!({ &self.svc_name:  val})
     }
 }
 

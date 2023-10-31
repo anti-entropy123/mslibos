@@ -2,61 +2,61 @@
     "services": [
         [
             "buffer",
-            "target/debug/libbuffer.so"
+            "libbuffer.so"
         ],
         [
             "time",
-            "target/debug/libtime.so"
+            "libtime.so"
         ],
         [
             "fdtab",
-            "target/debug/libfdtab.so"
+            "libfdtab.so"
         ],
         [
             "stdio",
-            "target/debug/libstdio.so"
+            "libstdio.so"
         ]
     ],
     "apps": [
         [
             "array_sum1",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum2",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum3",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum4",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum5",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum6",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum7",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum8",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum9",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ],
         [
             "array_sum10",
-            "target/debug/libarray_sum.so"
+            "libarray_sum.so"
         ]
     ]
 }

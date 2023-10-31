@@ -2,29 +2,29 @@
   "services": [
     [
       "fdtab",
-      "target/debug/libfdtab.so"
+      "libfdtab.so"
     ],
     [
       "stdio",
-      "target/debug/libstdio.so"
+      "libstdio.so"
     ],
     [
       "buffer",
-      "target/debug/libbuffer.so"
+      "libbuffer.so"
     ],
     [
       "time",
-      "target/debug/libtime.so"
+      "libtime.so"
     ]
   ],
   "apps": [
     [
       "func_a",
-      "target/debug/libfunc_a.so"
+      "libfunc_a.so"
     ],
     [
       "func_b",
-      "target/debug/libfunc_b.so"
+      "libfunc_b.so"
     ]
   ]
 }

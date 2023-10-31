@@ -2,27 +2,26 @@
   "services": [
     [
       "fdtab",
-      "target/debug/libfdtab.so"
+      "libfdtab.so"
     ],
     [
       "stdio",
-      "target/debug/libstdio.so"
+      "libstdio.so"
     ],
     [
       "buffer",
-      "target/debug/libbuffer.so"
+      "libbuffer.so"
     ]
   ],
   "apps": [
     [
       "hello1",
-      "target/debug/libhello_world.so"
+      "libhello_world.so"
     ]
   ],
   "groups": [
     {
       "list": [
-        "hello1",
         "hello1"
       ],
       "args": {}
