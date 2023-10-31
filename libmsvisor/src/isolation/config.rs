@@ -62,9 +62,15 @@ impl IsolationGroup {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct LoadableUnit(
+    pub ServiceName,
+    #[serde(default = "Default::default")] pub PathBuf,
+);
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct IsolationConfig {
-    pub services: Vec<(ServiceName, PathBuf)>,
-    pub apps: Vec<(ServiceName, PathBuf)>,
+    pub services: Vec<LoadableUnit>,
+    pub apps: Vec<LoadableUnit>,
     pub fs_image: Option<String>,
     #[serde(default = "Vec::default")]
     pub groups: Vec<IsolationGroup>,
@@ -80,11 +86,6 @@ impl IsolationConfig {
     }
 
     pub fn from_file(p: PathBuf) -> Result<Self, anyhow::Error> {
-        #[cfg(feature = "namespace")]
-        let mut config: IsolationConfig;
-        #[cfg(not(feature = "namespace"))]
-        let config: IsolationConfig;
-
         let p = if !p.is_file() {
             utils::ISOL_CONFIG_PATH.join(p)
         } else {
@@ -94,12 +95,24 @@ impl IsolationConfig {
         debug!("config file path: {}", p.to_str().unwrap());
         let content = fs::File::open(p)?;
 
-        config = serde_json::from_reader(BufReader::new(content))?;
+        let mut config: IsolationConfig = serde_json::from_reader(BufReader::new(content))?;
+        for LoadableUnit(name, path) in config.services.iter_mut().chain(config.apps.iter_mut()) {
+            *path = format!(
+                "target/{}/lib{}.so",
+                if cfg!(debug_assertions) {
+                    "debug"
+                } else {
+                    "release"
+                },
+                name
+            )
+            .into()
+        }
 
         #[cfg(feature = "namespace")]
         config.services.insert(
             0,
-            (
+            LoadableUnit(
                 "libc".to_owned(),
                 PathBuf::from("/lib/x86_64-linux-gnu/libc.so.6"),
             ),
@@ -108,7 +121,7 @@ impl IsolationConfig {
         Ok(config)
     }
 
-    pub fn all_modules(&self) -> Vec<&(String, PathBuf)> {
+    pub fn all_modules(&self) -> Vec<&LoadableUnit> {
         self.services.iter().chain(self.apps.iter()).collect()
     }
 }

@@ -63,12 +63,24 @@ impl ServiceLoader {
             .get(name)
             .ok_or(anyhow!("unregistry library, name={}", name))?;
 
-        let metric = self.metric.new_svc_metric(name.clone());
+        let metric = self
+            .metric
+            .new_svc_metric(name.clone(), lib_path.to_string_lossy().to_string());
 
         // Service init contains Loading elf library.
         metric.mark(MetricEvent::SvcInit);
         let lib = Arc::from(load_dynlib(
             lib_path,
+            // &format!(
+            //     "target/{}/lib{}.so",
+            //     if cfg!(debug_assertions) {
+            //         "debug"
+            //     } else {
+            //         "release"
+            //     },
+            //     name
+            // )
+            // .into(),
             self.namespace.get().map(|ns| ns.as_lmid_t()),
         )?);
 
@@ -183,7 +195,11 @@ fn service_drop_test() {
 
     let lib = Arc::from(load_dynlib(&path, None).unwrap());
 
-    let socket = ELFService::new("socket", lib, bucket.new_svc_metric("socket".to_owned()));
+    let socket = ELFService::new(
+        "socket",
+        lib,
+        bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),
+    );
 
     drop(socket)
 }
