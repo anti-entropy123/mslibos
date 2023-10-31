@@ -1,7 +1,8 @@
 #![no_std]
-use core::hash::{Hash, Hasher};
+use core::hash::{BuildHasher, Hash, Hasher};
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
+use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::agent::{DataBuffer, FaaSFuncResult as Result};
 use ms_std_proc_macro::FaasData;
@@ -13,9 +14,17 @@ struct Reader2Mapper {
     content: String,
 }
 
-#[derive(Default, FaasData)]
+#[derive(FaasData)]
 struct Mapper2Reducer {
-    shuffle: BTreeMap<String, u32>,
+    shuffle: HashMap<String, u32>,
+}
+
+impl Default for Mapper2Reducer {
+    fn default() -> Self {
+        Self {
+            shuffle: HashMap::new(),
+        }
+    }
 }
 
 #[allow(clippy::result_unit_err)]
@@ -31,7 +40,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let reader: DataBuffer<Reader2Mapper> =
         DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
 
-    let mut counter = BTreeMap::new();
+    let mut counter = HashMap::new();
 
     for line in reader.content.lines() {
         let words = line
@@ -54,7 +63,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
 
     for (word, count) in counter {
         let shuffle_idx = {
-            let mut hasher = ahash::AHasher::default();
+            let mut hasher = hashbrown::hash_map::DefaultHashBuilder::default().build_hasher();
             word.hash(&mut hasher);
             hasher.finish() % reducer_num
         };

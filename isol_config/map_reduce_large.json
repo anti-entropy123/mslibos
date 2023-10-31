@@ -39,9 +39,6 @@
         "file_reader",
         "file_reader",
         "file_reader",
-        "file_reader",
-        "file_reader",
-        "file_reader",
         "file_reader"
       ],
       "args": {}
@@ -52,13 +49,10 @@
         "mapper",
         "mapper",
         "mapper",
-        "mapper",
-        "mapper",
-        "mapper",
         "mapper"
       ],
       "args": {
-        "reducer_num": "8"
+        "reducer_num": "5"
       }
     },
     {
@@ -67,13 +61,10 @@
         "reducer",
         "reducer",
         "reducer",
-        "reducer",
-        "reducer",
-        "reducer",
         "reducer"
       ],
       "args": {
-        "mapper_num": "8"
+        "mapper_num": "5"
       }
     }
   ]

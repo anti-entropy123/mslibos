@@ -5,6 +5,7 @@ use alloc::{
     format,
     string::{String, ToString},
 };
+use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
@@ -16,7 +17,7 @@ extern crate alloc;
 
 #[derive(Default, FaasData)]
 struct Mapper2Reducer {
-    shuffle: BTreeMap<String, u32>,
+    shuffle: HashMap<String, u32>,
 }
 
 #[allow(clippy::result_unit_err)]
@@ -31,7 +32,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         .parse()
         .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args["mapper_num"]));
 
-    let mut counter: BTreeMap<String, u32> = BTreeMap::new();
+    let mut counter: HashMap<String, u32> = HashMap::new();
     for i in 0..mapper_num {
         // println!("need databuffer slot={}-{}", i, reducer_id);
         let mapper_result: DataBuffer<Mapper2Reducer> =
