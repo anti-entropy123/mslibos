@@ -2,33 +2,33 @@
   "services": [
     [
       "fdtab",
-      "target/debug/libfdtab.so"
+      "libfdtab.so"
     ],
     [
       "stdio",
-      "target/debug/libstdio.so"
+      "libstdio.so"
     ],
     [
       "buffer",
-      "target/debug/libbuffer.so"
+      "libbuffer.so"
     ],
     [
       "fatfs",
-      "target/debug/libfatfs.so"
+      "libfatfs.so"
     ]
   ],
   "apps": [
     [
       "file_reader",
-      "target/debug/libfile_reader.so"
+      "libfile_reader.so"
     ],
     [
       "mapper",
-      "target/debug/libmapper.so"
+      "libmapper.so"
     ],
     [
       "reducer",
-      "target/debug/libreducer.so"
+      "libreducer.so"
     ]
   ],
   "fs_image": "fs_images/fatfs_large.img",

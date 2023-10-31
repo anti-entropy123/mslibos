@@ -61,7 +61,7 @@ impl IsolationGroup {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoadableUnit(
     pub ServiceName,
     #[serde(default = "Default::default")] pub PathBuf,
@@ -96,17 +96,14 @@ impl IsolationConfig {
         let content = fs::File::open(p)?;
 
         let mut config: IsolationConfig = serde_json::from_reader(BufReader::new(content))?;
-        for LoadableUnit(name, path) in config.services.iter_mut().chain(config.apps.iter_mut()) {
-            *path = format!(
-                "target/{}/lib{}.so",
-                if cfg!(debug_assertions) {
+        for LoadableUnit(_, path) in config.services.iter_mut().chain(config.apps.iter_mut()) {
+            *path = PathBuf::from("target")
+                .join(if cfg!(debug_assertions) {
                     "debug"
                 } else {
                     "release"
-                },
-                name
-            )
-            .into()
+                })
+                .join(&path)
         }
 
         #[cfg(feature = "namespace")]

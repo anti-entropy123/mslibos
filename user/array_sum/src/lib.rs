@@ -11,7 +11,7 @@ use ms_std::{
 use ms_std_proc_macro::FaasData;
 
 #[allow(dead_code)]
-#[derive(FaasData, Default)]
+#[derive(FaasData, Default, Clone)]
 pub struct ArrayData {
     start_times: Vec<u128>,
     end_times: Vec<u128>,
@@ -24,14 +24,14 @@ pub fn main() -> Result<ArrayData> {
     // println!("start main()");
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
 
-    let mut d: DataBuffer<_> = match DataBuffer::<ArrayData>::from_buffer() {
+    let mut d: ArrayData = match DataBuffer::<ArrayData>::from_buffer() {
         Some(array_data) => {
             println!("n: {}", array_data.n);
-            array_data
+            array_data.clone()
         }
         None => {
             println!("the first function.");
-            DataBuffer::default()
+            Default::default()
         }
     };
 
@@ -47,5 +47,7 @@ pub fn main() -> Result<ArrayData> {
         );
     };
 
-    Ok(d)
+    let mut buffer = DataBuffer::default();
+    *buffer = d;
+    Ok(buffer)
 }
