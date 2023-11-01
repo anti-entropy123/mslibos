@@ -1,0 +1,7 @@
+[package]
+name = "handler"
+version = "0.1.0"
+authors = ["Piotr Roslaniec <p.roslaniec@gmail.com>"]
+edition = "2018"
+
+[dependencies]

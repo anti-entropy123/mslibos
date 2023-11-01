@@ -1,0 +1,8 @@
+language: rust
+fprocess: main
+welcome_message: |
+  Welcome to the rust template.
+
+  This template requires BuildKit in order to cache registry packages.
+
+  DOCKER_BUILDKIT=1 faas-cli build
