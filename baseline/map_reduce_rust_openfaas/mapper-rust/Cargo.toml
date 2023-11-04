@@ -5,3 +5,6 @@ authors = ["Piotr Roslaniec <p.roslaniec@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+hashbrown = "0.14.2"
+minio = "0.1.0"
+tokio = "1.33.0"

@@ -6,5 +6,5 @@ functions:
   mapper-rust:
     lang: rust
     handler: ./mapper-rust
-    image: mapper-rust:latest
+    image: antientropy/mapper-rust:latest
 
