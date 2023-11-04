@@ -5,6 +5,8 @@ authors = ["Piotr Roslaniec <p.roslaniec@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-hashbrown = "0.14.2"
-minio = "0.1.0"
+hashbrown = "0.13.2"
+rust-s3 = { version = "0.33.0", default-features = false, features = [
+    "tokio-rustls-tls",
+] }
 tokio = "1.33.0"

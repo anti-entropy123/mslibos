@@ -1,32 +1,35 @@
 use std::time::SystemTime;
 
-use minio::s3::{args::GetObjectArgs, client::Client, creds::StaticProvider};
+use s3::{creds::Credentials, Bucket, Region};
 
 type Error = Box<dyn std::error::Error>;
 
-const PHRASE: &str = "Hello, World!";
 const MINIO_BASE_URL: &str = "minio-service.yasb-mapreduce-db.svc.cluster.local:9000";
+const BUCKET_NAME: &str = "data-500m";
+const OBJ_NAME: &str = "part-0";
 
 pub fn handle(_body: Vec<u8>) -> Result<Vec<u8>, Error> {
     let read_start = SystemTime::now();
 
-    let minio_provider = StaticProvider::new("admin123", "admin123", None);
-    let minio_client = Client::new(
-        MINIO_BASE_URL.parse()?,
-        Some(Box::new(minio_provider)),
-        None,
-        None,
-    )?;
-
     let content = {
-        let obj_name = format!("part-{}", 0);
-        let get_object_arg = GetObjectArgs::new("data-500m", &obj_name)?;
-        let input_data = minio_client.get_object(&get_object_arg);
-        let runtime = tokio::runtime::Builder::new_current_thread().build()?;
-        let input_data = runtime.block_on(input_data)?;
-        runtime.block_on(input_data.text())?
+        let region = Region::Custom {
+            region: "none".to_owned(),
+            endpoint: format!("http://{}", MINIO_BASE_URL),
+        };
+        let credentials = Credentials::new(Some("amdin123"), Some("amdin123"), None, None, None)?;
+
+        let bucket =
+            Bucket::new(BUCKET_NAME, region.clone(), credentials.clone())?.with_path_style();
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+
+        let response_data = runtime.block_on(bucket.get_object(OBJ_NAME))?;
+
+        response_data.as_str()?.to_owned()
     };
-    let read_finish = SystemTime::now();
+    let read_finish: SystemTime = SystemTime::now();
 
     println!(
         "read cost: {} ms",
@@ -53,7 +56,7 @@ pub fn handle(_body: Vec<u8>) -> Result<Vec<u8>, Error> {
         comp_finish.duration_since(read_finish).unwrap().as_millis()
     );
 
-    println!("reducer has counted {} words", counter.len());
-
-    Ok(PHRASE.as_bytes().to_vec())
+    Ok(format!("reducer has counted {} words", counter.len())
+        .as_bytes()
+        .to_vec())
 }
