@@ -3,8 +3,8 @@ FROM ghcr.io/openfaas/of-watchdog:0.9.11 as watchdog
 WORKDIR /home/rust
 
 # Copy all the sources
-COPY function ./function
-COPY main ./main
+# COPY function ./function
+# COPY main ./main
 
 ENV CARGO_TARGET_DIR=/home/rust/target
 WORKDIR /home/rust/main

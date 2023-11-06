@@ -81,11 +81,7 @@ fn get_object(bucket_name: &str, object_name: &String) -> Result<String, Error> 
 
     let bucket = Bucket::new(bucket_name, region.clone(), credentials.clone())?.with_path_style();
 
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()?;
-
-    let response_data = runtime.block_on(bucket.get_object(object_name))?;
+    let response_data = bucket.get_object(object_name)?;
 
     Ok(response_data.as_str()?.to_owned())
 }

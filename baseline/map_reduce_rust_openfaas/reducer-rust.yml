@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:32331
+functions:
+  reducer-rust:
+    lang: rust
+    handler: ./reducer-rust
+    image: antientropy/reducer-rust:latest
+
