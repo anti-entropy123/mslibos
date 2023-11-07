@@ -1,9 +1,11 @@
+#!python3
+
 from minio import Minio
 
-minioClient = Minio("10.244.4.131:9000", access_key="admin123",
+minioClient = Minio("node-7:9331", access_key="admin123",
                     secret_key="admin123", secure=False)
 
 for i in range(5):
-    local_path = "/mnt/minio/data-500m/part_%d" % (i+1)
+    local_path = "/home/yjn/Downloads/fake_data_%d.txt" % (i)
     minioClient.fput_object(
         "data-500m", object_name="part-%d" % i, file_path=local_path)
