@@ -19,15 +19,17 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
 
     let read_start = SystemTime::now();
 
-    let raw_datas: Result<Vec<String>, Error> = (0..*input_num)
-        .map(|i| {
+    let mut raw_datas: Vec<String> = Vec::with_capacity(*input_num as usize);
+    for i in 0..*input_num {
+        raw_datas.push(
             get_object_from_redis(&format!(
                 "rust-{}:{}:{}:{}",
                 input_name, APP, i, reduce_part
             ))
-        })
-        .collect();
-    let raw_datas = raw_datas?;
+            .map_err(|e| format!("get_object_from_redis: {}", e))?,
+        )
+    }
+
     let read_end = SystemTime::now();
 
     let mut counter: hashbrown::HashMap<String, u32> = hashbrown::HashMap::new();
@@ -51,14 +53,14 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
     let output = output_entries.join("\n");
     let comp_end = SystemTime::now();
 
-    put_object_to_minio(&format!("part-{}", reduce_part), &output)?;
+    put_object_to_minio(&format!("part-{}", reduce_part), &output)
+        .map_err(|e| format!("put_object_to_minio: {}", e))?;
     let store_end = SystemTime::now();
 
     let resp = json!({
         "read_time": read_end.duration_since(read_start).unwrap().as_millis(),
         "comp_time": comp_end.duration_since(read_end).unwrap().as_millis(),
         "store_time": store_end.duration_since(comp_end).unwrap().as_millis(),
-
     });
     Ok(resp.to_string().into_bytes())
 }
@@ -72,19 +74,19 @@ fn put_object_to_minio(object_name: &String, val: &String) -> Result<(), Error> 
 
     let bucket_name = &format!("rust-{}-output", APP);
     let bucket = {
-        let b = Bucket::new(bucket_name, region.clone(), credentials.clone())?.with_path_style();
-        if b.exists()? {
-            b
-        } else {
-            Bucket::create_with_path_style(bucket_name, region, credentials, Default::default())?
-                .bucket
-        }
+        // let b = Bucket::new(bucket_name, region.clone(), credentials.clone())?.with_path_style();
+
+        // if b.exists()? {
+        //     b
+        // } else {
+        Bucket::create_with_path_style(bucket_name, region, credentials, Default::default())?.bucket
+        // }
     };
 
-    let old_header = bucket.head_object(object_name);
-    if old_header.is_ok() {
-        bucket.delete_object(object_name)?;
-    }
+    // let old_header = bucket.head_object(object_name);
+    // if old_header.is_ok() {
+    //     bucket.delete_object(object_name)?;
+    // }
 
     bucket.put_object(object_name, val.as_bytes())?;
 

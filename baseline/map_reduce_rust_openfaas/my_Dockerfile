@@ -30,6 +30,7 @@ WORKDIR /home/app
 ENV fprocess="main"
 ENV mode="http"
 ENV upstream_url="http://127.0.0.1:3000"
+ENV RUST_BACKTRACE=1
 
 HEALTHCHECK --interval=3s CMD [ -e /tmp/.lock ] || exit 1
 
