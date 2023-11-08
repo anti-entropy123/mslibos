@@ -20,6 +20,10 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
     let input_name = &event["input_name"].as_str().unwrap();
     let input_part = &event["input_part"].as_u64().unwrap();
     let reduce_num = &event["reduce_num"].as_u64().unwrap();
+    let debug = event
+        .get("debug")
+        .map(|entry| entry.as_bool().unwrap_or(false))
+        .unwrap_or(false);
 
     let read_start = SystemTime::now();
 
@@ -32,6 +36,10 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
     );
 
     let mut counter = hashbrown::HashMap::new();
+
+    if debug {
+        println!("{}", &content[0..100])
+    }
 
     for line in content.lines() {
         let words = line
@@ -55,6 +63,9 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
 
     for i in 0..*reduce_num {
         if let Some(val) = shuffle.get(&i) {
+            if debug {
+                println!("shuffle[{}]={}", i, val)
+            }
             put_object(
                 &format!("rust-{}:{}:{}:{}", input_name, APP, input_part, i),
                 val,
@@ -69,6 +80,7 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
         "store_time": store_end.duration_since(com_end).unwrap().as_millis(),
         "count_num": counter.len(),
     });
+
     Ok(resp.to_string().into_bytes())
 }
 
@@ -77,9 +89,9 @@ fn get_object(bucket_name: &str, object_name: &String) -> Result<String, Error> 
         region: "none".to_owned(),
         endpoint: format!("http://{}", MINIO_BASE_URL),
     };
-    let credentials = Credentials::new(Some("amdin123"), Some("amdin123"), None, None, None)?;
+    let credentials = Credentials::new(Some("admin123"), Some("admin123"), None, None, None)?;
 
-    let bucket = Bucket::new(bucket_name, region.clone(), credentials.clone())?.with_path_style();
+    let bucket = Bucket::new(bucket_name, region, credentials.clone())?.with_path_style();
 
     let response_data = bucket.get_object(object_name)?;
 

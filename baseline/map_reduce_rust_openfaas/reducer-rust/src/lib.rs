@@ -70,7 +70,7 @@ fn put_object_to_minio(object_name: &String, val: &String) -> Result<(), Error> 
         region: "none".to_owned(),
         endpoint: format!("http://{}", MINIO_BASE_URL),
     };
-    let credentials = Credentials::new(Some("amdin123"), Some("amdin123"), None, None, None)?;
+    let credentials = Credentials::new(Some("admin123"), Some("admin123"), None, None, None)?;
 
     let bucket_name = &format!("rust-{}-output", APP);
     let bucket = {
