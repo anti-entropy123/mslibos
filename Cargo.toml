@@ -10,7 +10,7 @@ members = ["bins/*", "libmsvisor", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
 # In current implementation, ms_std has conflict features (e.g. `panic_def` and 
 # `unwinding`). Of course, if add "user/" to members, will also have problem of 
 # feature gate. 
-exclude = ["user/", "common_service/"]
+exclude = ["user/", "common_service/", "baseline/"]
 default-members = ["bins/msvisor"]
 resolver = "2"
 
