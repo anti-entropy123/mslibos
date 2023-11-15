@@ -6,7 +6,7 @@ extern crate alloc;
 use alloc::format;
 use ms_std::{
     agent::FaaSFuncResult as Result,
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream}, println,
 };
 
 fn handle_connection(mut stream: TcpStream) {
@@ -30,10 +30,11 @@ fn handle_connection(mut stream: TcpStream) {
 pub fn main() -> Result<()> {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
-    for stream in listener.incoming() {
+    if let Some(stream) = listener.incoming().next() {
         // println!("Connection established!");
         handle_connection(stream);
     }
 
+    println!("httpd finish.");
     Ok(().into())
 }

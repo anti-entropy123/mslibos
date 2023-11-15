@@ -9,10 +9,6 @@
       "libstdio.so"
     ],
     [
-      "mm",
-      "libmm.so"
-    ],
-    [
       "socket",
       "libsocket.so"
     ]

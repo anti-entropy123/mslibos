@@ -6,7 +6,7 @@ use core::{
 use alloc::{format, string::String, vec::Vec};
 use ms_hostcall::{err::LibOSErr, types::Fd};
 
-use crate::{io::Write, libos::libos};
+use crate::{io::Write, libos::libos, println};
 
 pub struct TcpStream {
     raw_fd: Fd,
@@ -30,6 +30,7 @@ impl TcpStream {
         if libos!(write(self.raw_fd, data)).is_err() {
             return Err(());
         };
+        println!("TcpStream write {} bytes.", data.len());
         Ok(())
     }
 
@@ -81,6 +82,12 @@ impl TcpListener {
 
     pub fn incoming(&self) -> Incoming {
         Incoming { listener: self }
+    }
+}
+
+impl Drop for TcpListener {
+    fn drop(&mut self) {
+        libos!(close(self.raw_fd)).unwrap()
     }
 }
 

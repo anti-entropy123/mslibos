@@ -70,6 +70,8 @@ pub enum CommonHostCall {
     AccessBuffer,
     #[display(fmt = "buffer_dealloc")]
     BufferDealloc,
+    #[display(fmt = "mmap")]
+    Mmap,
 
     #[display(fmt = "get_time")]
     GetTime,
@@ -113,7 +115,8 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc
                 | CommonHostCall::AccessBuffer
-                | CommonHostCall::BufferDealloc => "mm".to_owned(),
+                | CommonHostCall::BufferDealloc
+                | CommonHostCall::Mmap => "mm".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },
