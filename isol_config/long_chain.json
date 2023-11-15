@@ -1,8 +1,8 @@
 {
     "services": [
         [
-            "buffer",
-            "libbuffer.so"
+            "mm",
+            "libmm.so"
         ],
         [
             "time",

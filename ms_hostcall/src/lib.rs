@@ -113,7 +113,7 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc
                 | CommonHostCall::AccessBuffer
-                | CommonHostCall::BufferDealloc => "buffer".to_owned(),
+                | CommonHostCall::BufferDealloc => "mm".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },
