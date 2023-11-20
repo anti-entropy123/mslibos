@@ -18,6 +18,7 @@ lazy_static! {
 pub struct UserHostCall {
     metric_addr: Option<usize>,
     fs_image_addr: Option<usize>,
+    spawn_thread: Option<usize>,
 
     write_addr: Option<usize>,
     open_addr: Option<usize>,
@@ -48,6 +49,9 @@ pub struct UserHostCall {
     dealloc_buffer_addr: Option<usize>,
     mmap_addr: Option<usize>,
 
+    pf_handler_addr: Option<usize>,
+    register_file_backend_addr: Option<usize>,
+
     get_time_addr: Option<usize>,
 }
 
@@ -62,6 +66,7 @@ impl UserHostCall {
         let entry_addr = match chc_id {
             CommonHostCall::Metric => &mut self.metric_addr,
             CommonHostCall::FsImage => &mut self.fs_image_addr,
+            CommonHostCall::SpawnFaultThread => &mut self.spawn_thread,
 
             CommonHostCall::Write => &mut self.write_addr,
             CommonHostCall::Open => &mut self.open_addr,
@@ -91,6 +96,9 @@ impl UserHostCall {
             CommonHostCall::AccessBuffer => &mut self.access_buffer_addr,
             CommonHostCall::BufferDealloc => &mut self.dealloc_buffer_addr,
             CommonHostCall::Mmap => &mut self.mmap_addr,
+
+            CommonHostCall::RegisterFileBackend => &mut self.register_file_backend_addr,
+            CommonHostCall::FilePageFaultHandler => &mut self.pf_handler_addr,
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
         };

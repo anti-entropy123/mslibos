@@ -3,6 +3,7 @@ use derive_more::Display;
 #[derive(Debug, Display)]
 pub enum LibOSErr {
     Unknown,
+    BadArgs,
 
     BadFileDescriptor,
     NoReadPerm,
@@ -11,6 +12,8 @@ pub enum LibOSErr {
     TcpListenErr,
     PhyWaitErr,
     WrongSockState,
+
+    UFFDErr,
 }
 
 pub type LibOSResult<T> = Result<T, LibOSErr>;

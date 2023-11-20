@@ -1,0 +1,16 @@
+[package]
+name = "mmap_file_backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+lazy_static = "1.4.0"
+ms_hostcall = { path = "../../ms_hostcall" }
+
+nix = { version = "0.27.1", features = ["poll"] }
+userfaultfd = { version = "0.7.0", features = ["linux5_7"] }

@@ -19,6 +19,8 @@ pub enum CommonHostCall {
     Metric,
     #[display(fmt = "fs_image")]
     FsImage,
+    #[display(fmt = "spwan_fault_thread")]
+    SpawnFaultThread,
 
     #[display(fmt = "write")]
     Write,
@@ -73,6 +75,11 @@ pub enum CommonHostCall {
     #[display(fmt = "mmap")]
     Mmap,
 
+    #[display(fmt = "register_file_backend")]
+    RegisterFileBackend,
+    #[display(fmt = "file_page_fault_handler")]
+    FilePageFaultHandler,
+
     #[display(fmt = "get_time")]
     GetTime,
 }
@@ -87,7 +94,9 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
-                CommonHostCall::Metric | CommonHostCall::FsImage => "".to_owned(),
+                CommonHostCall::Metric
+                | CommonHostCall::FsImage
+                | CommonHostCall::SpawnFaultThread => "".to_owned(),
 
                 CommonHostCall::Write
                 | CommonHostCall::Open
@@ -117,6 +126,10 @@ impl HostCallID {
                 | CommonHostCall::AccessBuffer
                 | CommonHostCall::BufferDealloc
                 | CommonHostCall::Mmap => "mm".to_owned(),
+
+                CommonHostCall::RegisterFileBackend | CommonHostCall::FilePageFaultHandler => {
+                    "mmap_file_backend".to_owned()
+                }
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },

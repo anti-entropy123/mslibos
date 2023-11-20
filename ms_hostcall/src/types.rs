@@ -1,5 +1,6 @@
 #![allow(improper_ctypes_definitions)]
 
+use core::ffi::c_void;
 use core::{alloc::Layout, net::SocketAddrV4};
 
 use alloc::{collections::BTreeMap, string::String};
@@ -92,9 +93,24 @@ pub type BufferAllocFunc = fn(&str, Layout, u64) -> Result<usize, ()>;
 pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
 pub type BufferDeallocFunc = fn(usize, Layout);
 
+bitflags! {
+    #[derive(PartialEq, Eq)]
+    pub struct ProtFlags: u32 {
+        const READ = 1;
+        const WRITE = 2;
+        const EXEC = 3;
+    }
+}
+pub type MmapFunc = fn(usize, Fd) -> LibOSResult<usize>;
+
+// mmap_file_backend
+pub type RegisterFileBackendFunc = fn(&mut [c_void], Fd) -> LibOSResult<()>;
+pub type FilePageFaultHandlerFunc = fn() -> LibOSResult<()>;
+
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;
 pub type FsImageFunc = fn(IsolationID) -> Option<String>;
+pub type SpawnFaultThreadFunc = fn(IsolationID) -> Result<(), String>;
 
 #[derive(Debug)]
 pub enum MetricEvent {
