@@ -19,6 +19,7 @@ pub mod fs;
 pub mod init_context;
 pub mod io;
 pub mod libos;
+pub mod mm;
 pub mod net;
 pub mod sync;
 pub mod time;
@@ -79,9 +80,16 @@ pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), ()> {
         use unwinding::panic;
         let result = panic::catch_unwind(|| main(args));
 
-        if let Err(ref e) = result {
-            println!("error: {:#?}", e);
-            return Err(());
+        match result {
+            Ok(func_res) => {
+                if let Err(e) = func_res {
+                    println!("function exec error: {:#?}", e);
+                }
+            }
+            Err(e) => {
+                println!("catch_unwind error: {:#?}", e);
+                return Err(());
+            }
         }
     }
     #[cfg(not(feature = "unwinding"))]

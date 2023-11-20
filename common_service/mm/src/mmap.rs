@@ -7,10 +7,13 @@ use ms_hostcall::{
     err::{LibOSErr, LibOSResult},
     types::{Fd, ProtFlags},
 };
-use ms_std::libos::libos;
+use ms_std::{libos::libos, println};
 
 #[no_mangle]
-pub fn mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> {
+pub fn libos_mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> {
+    if length % 0x1000 > 0 {
+        return Err(LibOSErr::BadArgs);
+    }
     let layout = Layout::from_size_align(length, 0x1000).map_err(|_| LibOSErr::BadArgs)?;
 
     let mmap_addr = unsafe {
@@ -35,7 +38,8 @@ pub fn mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> {
     let mm_region = unsafe { core::slice::from_raw_parts_mut(mmap_addr as *mut c_void, length) };
     libos!(register_file_backend(mm_region, fd)).expect("register_file_backend failed.");
 
-    Ok(0)
+    println!("finish mmap, mmap_addr={}", mmap_addr);
+    Ok(mmap_addr)
 }
 
 pub fn trans_protflag(flags: ProtFlags) -> i32 {

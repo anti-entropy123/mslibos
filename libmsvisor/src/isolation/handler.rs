@@ -1,6 +1,7 @@
 use core::panic;
 use std::mem::transmute;
 
+use log::info;
 use ms_hostcall::{
     types::{FsImageFunc, IsolationID, MetricEvent, MetricFunc, NetdevName},
     CommonHostCall, HostCallID,
@@ -72,6 +73,8 @@ fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
 }
 
 fn spwan_fault_thread_handler(isol_id: IsolationID) -> Result<(), String> {
+    info!("enter spwan_fault_thread_handler, isol_id={}", isol_id);
+    
     let isol = get_isol(isol_id).expect("isol don't exist?");
     let mmap_file_backend = isol
         .service_or_load(&"mmap_file_backend".to_owned())

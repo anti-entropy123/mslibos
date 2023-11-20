@@ -5,6 +5,7 @@ use nix::poll::{poll, PollFd, PollFlags};
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
 use ms_hostcall::{err::LibOSResult, types::Fd};
+pub use ms_std;
 
 #[repr(C, align(4096))]
 struct Page([u8; PAGE_SIZE]);
@@ -84,7 +85,10 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
         .non_blocking(true)
         .user_mode_only(true)
         .create()
-        .expect("uffd creation");
+        // If have error: `OpenDevUserfaultfd(Os { code: 13, kind: PermissionDenied, message: "Permission denied" })`
+        // ,use this command:
+        //    `setfacl -m u:${USER}:rw /dev/userfaultfd`
+        .expect("uffd creation failed");
 
     uffd.register(mm_region.as_mut_ptr(), mm_region.len())
         .expect("register failed");

@@ -72,7 +72,7 @@ pub enum CommonHostCall {
     AccessBuffer,
     #[display(fmt = "buffer_dealloc")]
     BufferDealloc,
-    #[display(fmt = "mmap")]
+    #[display(fmt = "libos_mmap")]
     Mmap,
 
     #[display(fmt = "register_file_backend")]

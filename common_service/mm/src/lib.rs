@@ -1,4 +1,4 @@
 #![no_std]
 
-mod faas_buffer;
-mod mmap;
+pub mod faas_buffer;
+pub mod mmap;

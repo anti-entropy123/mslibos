@@ -1,0 +1,15 @@
+[package]
+name = "mmap_file"
+version = "0.1.0"
+edition = "2021"
+build = "../../build_user.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
+ms_hostcall = {path = "../../ms_hostcall"}
+
+[features]

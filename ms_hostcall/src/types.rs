@@ -101,7 +101,7 @@ bitflags! {
         const EXEC = 3;
     }
 }
-pub type MmapFunc = fn(usize, Fd) -> LibOSResult<usize>;
+pub type MmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
 
 // mmap_file_backend
 pub type RegisterFileBackendFunc = fn(&mut [c_void], Fd) -> LibOSResult<()>;
