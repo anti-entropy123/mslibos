@@ -19,7 +19,7 @@ pub enum CommonHostCall {
     Metric,
     #[display(fmt = "fs_image")]
     FsImage,
-    #[display(fmt = "spwan_fault_thread")]
+    #[display(fmt = "spawn_fault_thread")]
     SpawnFaultThread,
 
     #[display(fmt = "write")]

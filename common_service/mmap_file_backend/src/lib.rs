@@ -1,6 +1,7 @@
 use std::{mem::MaybeUninit, os::raw::c_void, sync::Mutex};
 
 use lazy_static::lazy_static;
+use ms_std::{libos::libos, println};
 use nix::poll::{poll, PollFd, PollFlags};
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
@@ -98,6 +99,12 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
         start_addr: mm_region.as_ptr() as usize,
         src_fd: file_fd,
     });
+
+    libos!(spawn_fault_handler(
+        ms_std::init_context::isolation_ctx().isol_id
+    ))
+    .expect("spawn_fault_handler failed.");
+    println!("spawn_fault_handler successfully.");
 
     Ok(())
 }

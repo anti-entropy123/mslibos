@@ -3,7 +3,7 @@ use crate::libos::USER_HOST_CALL;
 pub macro func_type {
     (metric) => (ms_hostcall::types::MetricFunc),
     (fs_image) => (ms_hostcall::types::FsImageFunc),
-    (spawn_thread) => (ms_hostcall::types::SpwanThreadFunc),
+    (spawn_fault_handler) => (ms_hostcall::types::SpawnFaultThreadFunc),
     (write) => (ms_hostcall::types::WriteFunc),
     (open) => (ms_hostcall::types::OpenFunc),
     (read) => (ms_hostcall::types::ReadFunc),
@@ -34,7 +34,7 @@ pub macro func_type {
 pub macro hostcall_id {
     (metric) => (ms_hostcall::CommonHostCall::Metric),
     (fs_image) => (ms_hostcall::CommonHostCall::FsImage),
-    (spawn_thread) => (ms_hostcall::CommonHostCall::SpwanThread),
+    (spawn_fault_handler) => (ms_hostcall::CommonHostCall::SpawnFaultThread),
     (write) => (ms_hostcall::CommonHostCall::Write),
     (open) => (ms_hostcall::CommonHostCall::Open),
     (read) => (ms_hostcall::CommonHostCall::Read),
