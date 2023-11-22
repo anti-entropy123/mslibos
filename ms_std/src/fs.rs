@@ -1,4 +1,4 @@
-use ms_hostcall::types::{Fd, OpenFlags, OpenMode};
+use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Stat};
 
 use crate::{
     io::{Read, Write},
@@ -36,6 +36,10 @@ impl File {
 
     pub fn from_raw_fd(fd: Fd) -> Self {
         Self { raw_fd: fd }
+    }
+
+    pub fn metadata(&self) -> Result<Stat, ()> {
+        libos!(stat(self.raw_fd))
     }
 }
 

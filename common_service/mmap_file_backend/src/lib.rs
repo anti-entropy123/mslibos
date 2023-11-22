@@ -64,7 +64,7 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
             let offset = addr as usize - region.start_addr;
             let aligned_offset = offset & (!PAGE_SIZE + 1);
 
-            // src_file.seek(aligned_offset as u32);
+            src_file.seek(aligned_offset as u32);
             let page: &mut [u8] =
                 unsafe { from_raw_parts_mut(page.as_mut_ptr() as usize as *mut u8, 0x1000) };
 

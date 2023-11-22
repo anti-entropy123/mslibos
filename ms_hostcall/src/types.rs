@@ -62,6 +62,10 @@ pub type WriteFunc = fn(Fd, &[u8]) -> LibOSResult<Size>;
 pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
 pub type CloseFunc = fn(Fd) -> Result<(), ()>;
 pub type LseekFunc = fn(Fd, u32) -> LibOSResult<()>;
+pub struct Stat {
+    pub st_size: Size,
+}
+pub type StatFunc = fn(Fd) -> Result<Stat, ()>;
 pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
 pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
 pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
@@ -75,6 +79,7 @@ pub type FatfsWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
 pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
 pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
 pub type FatfsSeekFunc = fn(Fd, u32) -> Result<(), ()>;
+pub type FatfsStatFunc = fn(Fd) -> Result<Stat, ()>;
 
 // socket
 pub type SockFd = u32;

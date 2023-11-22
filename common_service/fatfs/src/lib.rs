@@ -1,3 +1,4 @@
+#![feature(seek_stream_len)]
 #![allow(clippy::result_unit_err)]
 
 use std::{
@@ -11,8 +12,8 @@ use std::{
 use fscommon::BufStream;
 use lazy_static::lazy_static;
 
-use ms_hostcall::types::{Fd, OpenFlags, Size};
-use ms_std::libos::libos;
+use ms_hostcall::types::{Fd, OpenFlags, Size, Stat};
+use ms_std::{libos::libos, println};
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
 type File<'a> = fatfs::File<'a, fscommon::BufStream<std::fs::File>>;
@@ -54,14 +55,22 @@ struct FatfsFileList {
 }
 
 impl FatfsFileList {
-    fn get_file_mut(&self, fd: Fd) -> &'static mut File<'static> {
+    fn get_file_raw_ptr(&self, fd: Fd) -> usize {
         let mut ft = self.table.lock().expect("require lock failed.");
         if let Some(Some(file_addr)) = ft.get_mut(fd as usize) {
             // println!("get_file_mut: file addr=0x{:x}", file_addr);
-            unsafe { &mut *(*file_addr as *mut File) }
+            *file_addr
         } else {
             panic!("fatfs_fd={} don't exist", fd);
         }
+    }
+
+    fn get_file(&self, fd: Fd) -> &'static File<'static> {
+        unsafe { &*(self.get_file_raw_ptr(fd) as *const File) }
+    }
+
+    fn get_file_mut(&self, fd: Fd) -> &'static mut File<'static> {
+        unsafe { &mut *(self.get_file_raw_ptr(fd) as *mut File) }
     }
 
     fn add_file(&self, file: &File) -> FatfsHandle {
@@ -110,11 +119,19 @@ pub fn fatfs_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
 
 #[no_mangle]
 pub fn fatfs_seek(fd: Fd, pos: u32) -> Result<(), ()> {
+    // println!("fatfs: try seek to {}", pos);
     let f = FTABLE.get_file_mut(fd);
-    f.seek(std::io::SeekFrom::End(pos as i64))
+    f.seek(std::io::SeekFrom::Start(pos as u64))
         .expect("seek failed");
 
     Ok(())
+}
+
+#[no_mangle]
+pub fn fatfs_stat(fd: Fd) -> Result<Stat, ()> {
+    let f = FTABLE.get_file_mut(fd);
+    let st_size = f.stream_len().expect("fatfs: get stream len failed.") as Size;
+    Ok(Stat { st_size })
 }
 
 #[no_mangle]
