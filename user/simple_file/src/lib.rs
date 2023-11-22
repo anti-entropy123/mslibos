@@ -7,6 +7,7 @@ use ms_std::{
     agent::FaaSFuncResult as Result,
     fs::File,
     io::{Read, Write},
+    println,
 };
 
 #[allow(clippy::result_unit_err)]
@@ -20,13 +21,14 @@ pub fn main() -> Result<()> {
     // drop(output);
 
     let mut input = File::open(path)?;
-    let mut buf = Vec::new();
-    input.read_to_end(&mut buf).expect("read failed");
+    let mut file_content = Vec::new();
+    input.read_to_end(&mut file_content).expect("read failed");
 
-    // println!("file: {}", String::from_utf8_lossy(&buf));
+    let file_content = String::from_utf8_lossy(&file_content);
+    println!("file_content: {}", file_content);
     // println!("expect: {}", data);
 
-    assert_eq!(String::from_utf8_lossy(&buf), data);
+    assert_eq!(file_content, data);
 
     Ok(().into())
 }

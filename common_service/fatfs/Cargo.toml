@@ -12,3 +12,4 @@ ms_std = { path = "../../ms_std", features = [] }
 ms_hostcall = { path = "../../ms_hostcall" }
 fatfs = "0.3.6"
 fscommon = "0.1.1"
+lazy_static = "1.4.0"

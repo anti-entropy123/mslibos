@@ -182,6 +182,29 @@ pub fn write(fd: Fd, buf: &[u8]) -> LibOSResult<Size> {
 }
 
 #[no_mangle]
+pub fn lseek(fd: Fd, pos: u32) -> LibOSResult<()> {
+    if let 0..=2 = fd {
+        return Err(LibOSErr::BadFileDescriptor);
+    }
+    FD_TABLE.with_file(fd, |file| {
+        let file = if let Some(file) = file {
+            file
+        } else {
+            return Err(LibOSErr::BadFileDescriptor);
+        };
+
+        match file.src {
+            DataSource::FatFS(raw_fd) => {
+                libos!(fatfs_seek(raw_fd, pos)).expect("fatfs seek failed.")
+            }
+            DataSource::Net(_) => panic!("The file type does not match"),
+        };
+
+        Ok(())
+    })
+}
+
+#[no_mangle]
 pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> Result<Fd, ()> {
     let file = {
         let raw_fd = libos!(fatfs_open(path, flags)).expect("fatfs open file failed");

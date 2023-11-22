@@ -1,7 +1,12 @@
-use std::{mem::MaybeUninit, os::raw::c_void, sync::Mutex};
+use std::{
+    mem::{ManuallyDrop, MaybeUninit},
+    os::raw::c_void,
+    slice::from_raw_parts_mut,
+    sync::Mutex,
+};
 
 use lazy_static::lazy_static;
-use ms_std::{libos::libos, println};
+use ms_std::{fs::File, io::Read, libos::libos, println};
 use nix::poll::{poll, PollFd, PollFlags};
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
@@ -17,6 +22,7 @@ lazy_static! {
     static ref REGISTERD_REGIONS: Mutex<Vec<RegisterdMemRegion>> = Default::default();
 }
 
+#[derive(Debug)]
 struct RegisterdMemRegion {
     uffd: Uffd,
     start_addr: usize,
@@ -25,7 +31,7 @@ struct RegisterdMemRegion {
 
 #[no_mangle]
 pub fn file_page_fault_handler() -> LibOSResult<()> {
-    let mut page = Box::new(MaybeUninit::<Page>::uninit());
+    let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
 
     loop {
         let regions = REGISTERD_REGIONS.lock().unwrap();
@@ -39,7 +45,8 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
         let nready = poll(pollfds.as_mut_slice(), -1).expect("poll");
         // let revents = pollfd.revents().unwrap();
 
-        let uffd = uffds.get(0).unwrap();
+        let region = regions.get(0).unwrap();
+        let uffd = &region.uffd;
         let event = uffd
             .read_event()
             .expect("read uffd_msg")
@@ -47,17 +54,25 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
 
         if let Event::Pagefault { addr, .. } = event {
             // Display info about the page-fault event
-
-            println!("UFFD_EVENT_PAGEFAULT event: {:?}", event);
-
+            println!(
+                "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
+                event, region
+            );
             // Copy the page pointed to by 'page' into the faulting region. Vary the contents that are
             // copied in, so that it is more obvious that each fault is handled separately.
+            let mut src_file = ManuallyDrop::new(File::from_raw_fd(region.src_fd));
+            let offset = addr as usize - region.start_addr;
+            let aligned_offset = offset & (!PAGE_SIZE + 1);
 
-            for c in unsafe {
-                std::slice::from_raw_parts_mut::<u8>(page.as_mut_ptr() as usize as *mut u8, 0x1000)
-            } {
-                *c = b'A';
-            }
+            // src_file.seek(aligned_offset as u32);
+            let page: &mut [u8] =
+                unsafe { from_raw_parts_mut(page.as_mut_ptr() as usize as *mut u8, 0x1000) };
+
+            let read_size = src_file.read(page).expect("read file failed.");
+            println!(
+                "src_file aligned_offset={}, read {} bytes",
+                aligned_offset, read_size
+            );
 
             let dst = (addr as usize & !(PAGE_SIZE - 1)) as *mut c_void;
             let copy = unsafe {
@@ -81,14 +96,14 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
 
 #[no_mangle]
 pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResult<()> {
+    // If have error: `OpenDevUserfaultfd(Os { code: 13, kind: PermissionDenied, message: "Permission denied" })`
+    // ,use this command:
+    //    `setfacl -m u:${USER}:rw /dev/userfaultfd`
     let uffd = UffdBuilder::new()
         .close_on_exec(true)
         .non_blocking(true)
         .user_mode_only(true)
         .create()
-        // If have error: `OpenDevUserfaultfd(Os { code: 13, kind: PermissionDenied, message: "Permission denied" })`
-        // ,use this command:
-        //    `setfacl -m u:${USER}:rw /dev/userfaultfd`
         .expect("uffd creation failed");
 
     uffd.register(mm_region.as_mut_ptr(), mm_region.len())

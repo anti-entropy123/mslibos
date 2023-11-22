@@ -30,6 +30,8 @@ pub enum CommonHostCall {
     Open,
     #[display(fmt = "close")]
     Close,
+    #[display(fmt = "lseek")]
+    Lseek,
     #[display(fmt = "connect")]
     Connect,
     #[display(fmt = "socket")]
@@ -50,6 +52,8 @@ pub enum CommonHostCall {
     FatfsRead,
     #[display(fmt = "fatfs_close")]
     FatfsClose,
+    #[display(fmt = "fatfs_seek")]
+    FatfsSeek,
 
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
@@ -102,6 +106,7 @@ impl HostCallID {
                 | CommonHostCall::Open
                 | CommonHostCall::Read
                 | CommonHostCall::Close
+                | CommonHostCall::Lseek
                 | CommonHostCall::Connect
                 | CommonHostCall::Socket
                 | CommonHostCall::Bind
@@ -112,7 +117,8 @@ impl HostCallID {
                 CommonHostCall::FatfsOpen
                 | CommonHostCall::FatfsWrite
                 | CommonHostCall::FatfsRead
-                | CommonHostCall::FatfsClose => "fatfs".to_owned(),
+                | CommonHostCall::FatfsClose
+                | CommonHostCall::FatfsSeek => "fatfs".to_owned(),
 
                 CommonHostCall::SmoltcpAddrInfo
                 | CommonHostCall::SmoltcpConnect

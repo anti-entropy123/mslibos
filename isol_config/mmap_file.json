@@ -15,6 +15,10 @@
     [
       "mmap_file_backend",
       "libmmap_file_backend.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
     ]
   ],
   "apps": [

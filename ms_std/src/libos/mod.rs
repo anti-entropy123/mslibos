@@ -24,6 +24,7 @@ pub struct UserHostCall {
     open_addr: Option<usize>,
     read_addr: Option<usize>,
     close_addr: Option<usize>,
+    lseek_addr: Option<usize>,
     connect_addr: Option<usize>,
     socket_addr: Option<usize>,
     bind_addr: Option<usize>,
@@ -35,6 +36,7 @@ pub struct UserHostCall {
     fatfs_write_addr: Option<usize>,
     fatfs_read_addr: Option<usize>,
     fatfs_close_addr: Option<usize>,
+    fatfs_seek_addr: Option<usize>,
 
     smoltcp_addrinfo_addr: Option<usize>,
     smoltcp_connect_addr: Option<usize>,
@@ -72,6 +74,7 @@ impl UserHostCall {
             CommonHostCall::Open => &mut self.open_addr,
             CommonHostCall::Read => &mut self.read_addr,
             CommonHostCall::Close => &mut self.close_addr,
+            CommonHostCall::Lseek => &mut self.lseek_addr,
             CommonHostCall::Connect => &mut self.connect_addr,
             CommonHostCall::Socket => &mut self.socket_addr,
             CommonHostCall::Bind => &mut self.bind_addr,
@@ -83,6 +86,7 @@ impl UserHostCall {
             CommonHostCall::FatfsWrite => &mut self.fatfs_write_addr,
             CommonHostCall::FatfsRead => &mut self.fatfs_read_addr,
             CommonHostCall::FatfsClose => &mut self.fatfs_close_addr,
+            CommonHostCall::FatfsSeek => &mut self.fatfs_seek_addr,
 
             CommonHostCall::SmoltcpAddrInfo => &mut self.smoltcp_addrinfo_addr,
             CommonHostCall::SmoltcpConnect => &mut self.smoltcp_connect_addr,

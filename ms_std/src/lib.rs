@@ -26,11 +26,8 @@ pub mod time;
 
 extern crate alloc;
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "alloc_def")] {
-        pub mod heap_alloc;
-    }
-}
+#[cfg(feature = "alloc_def")]
+pub mod heap_alloc;
 
 cfg_if::cfg_if! {
     if #[cfg(all(feature = "unwinding", feature = "panic_def"))] {

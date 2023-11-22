@@ -25,6 +25,18 @@ impl File {
 
         Ok(File { raw_fd })
     }
+
+    pub fn seek(&mut self, pos: u32) {
+        libos!(lseek(self.raw_fd, pos)).expect("seek failed.")
+    }
+
+    pub fn as_raw_fd(&self) -> Fd {
+        self.raw_fd
+    }
+
+    pub fn from_raw_fd(fd: Fd) -> Self {
+        Self { raw_fd: fd }
+    }
 }
 
 impl Write for File {

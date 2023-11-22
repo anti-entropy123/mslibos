@@ -61,6 +61,7 @@ pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
 pub type WriteFunc = fn(Fd, &[u8]) -> LibOSResult<Size>;
 pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
 pub type CloseFunc = fn(Fd) -> Result<(), ()>;
+pub type LseekFunc = fn(Fd, u32) -> LibOSResult<()>;
 pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
 pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
 pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
@@ -73,6 +74,7 @@ pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<Fd, ()>;
 pub type FatfsWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
 pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
 pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
+pub type FatfsSeekFunc = fn(Fd, u32) -> Result<(), ()>;
 
 // socket
 pub type SockFd = u32;
@@ -101,7 +103,7 @@ bitflags! {
         const EXEC = 3;
     }
 }
-pub type MmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
+pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
 
 // mmap_file_backend
 pub type RegisterFileBackendFunc = fn(&mut [c_void], Fd) -> LibOSResult<()>;

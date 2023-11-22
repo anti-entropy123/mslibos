@@ -108,6 +108,7 @@ version = "0.1.0"
 dependencies = [
  "fatfs 0.3.6",
  "fscommon",
+ "lazy_static",
  "ms_hostcall",
  "ms_std",
 ]

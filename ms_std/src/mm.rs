@@ -1,8 +1,8 @@
-use core::slice;
+use core::{mem::ManuallyDrop, slice};
 
 use ms_hostcall::types::ProtFlags;
 
-use crate::libos::libos;
+use crate::{fs::File, libos::libos};
 
 pub struct Mmap {
     ptr: usize,
@@ -10,9 +10,11 @@ pub struct Mmap {
 }
 
 impl Mmap {
-    pub fn mmap_file() -> Result<Self, ()> {
+    pub fn mmap_file(file: File) -> Result<Self, ()> {
+        let file = ManuallyDrop::new(file);
         let length = 0x1000;
-        let ptr = libos!(mmap(length, ProtFlags::READ, 1)).expect("libos mmap failed");
+        let ptr =
+            libos!(mmap(length, ProtFlags::READ, file.as_raw_fd())).expect("libos mmap failed");
 
         Ok(Mmap { ptr, length })
     }
