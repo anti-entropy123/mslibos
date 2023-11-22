@@ -22,7 +22,5 @@ fn run_operate_file_test() {
 
 #[test]
 fn run_mmap_file_test() {
-    run_single_isol("mmap_file.json".to_owned(), || {
-        logger::init();
-    });
+    run_single_isol("mmap_file.json".to_owned(), || {});
 }

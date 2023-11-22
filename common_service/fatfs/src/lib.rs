@@ -51,13 +51,12 @@ thread_local! {
 
 #[derive(Default)]
 struct FatfsFileList {
-    table: Mutex<Vec<Option<usize>>>,
+    table: Vec<Option<usize>>,
 }
 
 impl FatfsFileList {
     fn get_file_raw_ptr(&self, fd: Fd) -> usize {
-        let mut ft = self.table.lock().expect("require lock failed.");
-        if let Some(Some(file_addr)) = ft.get_mut(fd as usize) {
+        if let Some(Some(file_addr)) = self.table.get(fd as usize) {
             // println!("get_file_mut: file addr=0x{:x}", file_addr);
             *file_addr
         } else {
@@ -69,19 +68,17 @@ impl FatfsFileList {
         unsafe { &*(self.get_file_raw_ptr(fd) as *const File) }
     }
 
-    fn get_file_mut(&self, fd: Fd) -> &'static mut File<'static> {
+    fn get_file_mut(&mut self, fd: Fd) -> &'static mut File<'static> {
         unsafe { &mut *(self.get_file_raw_ptr(fd) as *mut File) }
     }
 
-    fn add_file(&self, file: &File) -> FatfsHandle {
-        let mut table = self.table.lock().expect("require lock failed.");
-        table.push(Some(file as *const _ as usize));
-        table.len() - 1
+    fn add_file(&mut self, file: &File) -> FatfsHandle {
+        self.table.push(Some(file as *const _ as usize));
+        self.table.len() - 1
     }
 
-    fn remove_file(&self, handle: FatfsHandle) -> Result<(), ()> {
-        let mut table = self.table.lock().expect("require lock failed.");
-        let file = table.get_mut(handle);
+    fn remove_file(&mut self, handle: FatfsHandle) -> Result<(), ()> {
+        let file = self.table.get_mut(handle);
         if let Some(file) = file {
             match file.take() {
                 Some(file_addr) => {
@@ -103,7 +100,7 @@ lazy_static! {
         FS_RAW.with(|fs| fs as *const _ as usize)
     };
 
-    static ref FTABLE: FatfsFileList = Default::default();
+    static ref FTABLE: Mutex<FatfsFileList> = Default::default();
 }
 
 fn get_fs_ref() -> &'static FileSystem {
@@ -112,7 +109,8 @@ fn get_fs_ref() -> &'static FileSystem {
 
 #[no_mangle]
 pub fn fatfs_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
-    let file = FTABLE.get_file_mut(fd);
+    let mut table = FTABLE.lock().expect("require lock failed.");
+    let file = table.get_file_mut(fd);
 
     Ok(file.read(buf).expect("fatfs_read failed."))
 }
@@ -120,7 +118,8 @@ pub fn fatfs_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
 #[no_mangle]
 pub fn fatfs_seek(fd: Fd, pos: u32) -> Result<(), ()> {
     // println!("fatfs: try seek to {}", pos);
-    let f = FTABLE.get_file_mut(fd);
+    let mut table = FTABLE.lock().expect("require lock failed.");
+    let f = table.get_file_mut(fd);
     f.seek(std::io::SeekFrom::Start(pos as u64))
         .expect("seek failed");
 
@@ -129,13 +128,15 @@ pub fn fatfs_seek(fd: Fd, pos: u32) -> Result<(), ()> {
 
 #[no_mangle]
 pub fn fatfs_stat(fd: Fd) -> Result<Stat, ()> {
-    let f = FTABLE.get_file_mut(fd);
+    let mut table = FTABLE.lock().expect("require lock failed.");
+    let f = table.get_file_mut(fd);
     let st_size = f.stream_len().expect("fatfs: get stream len failed.") as Size;
     Ok(Stat { st_size })
 }
 
 #[no_mangle]
 pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<Fd, ()> {
+    let mut table = FTABLE.lock().expect("require lock failed.");
     let root_dir = get_fs_ref().root_dir();
 
     let file = if flags.contains(OpenFlags::O_CREAT) {
@@ -146,7 +147,7 @@ pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<Fd, ()> {
 
     let fd = {
         let file = ManuallyDrop::new(Box::new(file));
-        FTABLE.add_file(file.as_ref())
+        table.add_file(file.as_ref())
     };
 
     Ok(fd as u32)
@@ -154,8 +155,9 @@ pub fn fatfs_open(p: &str, flags: OpenFlags) -> Result<Fd, ()> {
 
 #[test]
 fn fatfs_open_test() {
+    let mut table = FTABLE.lock().expect("require lock failed.");
     let fd = fatfs_open("new_file.txt", OpenFlags::O_CREAT).expect("open file failed") as usize;
-    let f = FTABLE.get_file_mut(fd as u32);
+    let f = table.get_file_mut(fd as u32);
 
     let mut buf = String::new();
     f.read_to_string(&mut buf).expect("read failed");
@@ -164,7 +166,9 @@ fn fatfs_open_test() {
 
 #[no_mangle]
 pub fn fatfs_write(fd: Fd, buf: &[u8]) -> Result<Size, ()> {
-    let file = FTABLE.get_file_mut(fd);
+    let mut table = FTABLE.lock().expect("require lock failed.");
+
+    let file = table.get_file_mut(fd);
     file.write_all(buf).expect("write file failed");
     file.flush().expect("flush failed");
 
@@ -183,5 +187,7 @@ fn fatfs_write_test() {
 
 #[no_mangle]
 pub fn fatfs_close(fd: Fd) -> Result<(), ()> {
-    FTABLE.remove_file(fd as usize)
+    let mut table = FTABLE.lock().expect("require lock failed.");
+
+    table.remove_file(fd as usize)
 }
