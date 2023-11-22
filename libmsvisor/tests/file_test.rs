@@ -22,5 +22,9 @@ fn run_operate_file_test() {
 
 #[test]
 fn run_mmap_file_test() {
+    if std::env::var("SUDO_PASSWD").is_err() {
+        return;
+    }
+
     run_single_isol("mmap_file.json".to_owned(), || {});
 }
