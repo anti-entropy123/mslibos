@@ -7,10 +7,6 @@
     [
       "stdio",
       "libstdio.so"
-    ],
-    [
-      "buffer",
-      "libbuffer.so"
     ]
   ],
   "apps": [

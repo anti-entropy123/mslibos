@@ -1,4 +1,4 @@
-use ms_hostcall::types::{Fd, OpenFlags, OpenMode};
+use ms_hostcall::types::{Fd, OpenFlags, OpenMode, Stat};
 
 use crate::{
     io::{Read, Write},
@@ -24,6 +24,22 @@ impl File {
         let raw_fd = libos!(open(p, flags, mode)).expect("open file failed.");
 
         Ok(File { raw_fd })
+    }
+
+    pub fn seek(&mut self, pos: u32) {
+        libos!(lseek(self.raw_fd, pos)).expect("seek failed.")
+    }
+
+    pub fn as_raw_fd(&self) -> Fd {
+        self.raw_fd
+    }
+
+    pub fn from_raw_fd(fd: Fd) -> Self {
+        Self { raw_fd: fd }
+    }
+
+    pub fn metadata(&self) -> Result<Stat, ()> {
+        libos!(stat(self.raw_fd))
     }
 }
 

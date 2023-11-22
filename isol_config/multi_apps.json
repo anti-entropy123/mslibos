@@ -13,8 +13,8 @@
       "libsocket.so"
     ],
     [
-      "buffer",
-      "libbuffer.so"
+      "mm",
+      "libmm.so"
     ]
   ],
   "apps": [

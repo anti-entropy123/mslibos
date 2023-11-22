@@ -31,9 +31,12 @@ where
     {
         let p = {
             let l: Layout = Layout::new::<T>();
-            let fingerprint = T::__fingerprint();
-
-            libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T
+            if l.size() == 0 {
+                core::ptr::null_mut::<T>()
+            } else {
+                let fingerprint = T::__fingerprint();
+                libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T
+            }
         };
 
         unsafe { core::ptr::write(p, T::default()) };

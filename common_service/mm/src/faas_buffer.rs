@@ -1,5 +1,3 @@
-#![no_std]
-
 use core::alloc::Layout;
 
 extern crate alloc;

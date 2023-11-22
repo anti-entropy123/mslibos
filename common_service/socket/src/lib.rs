@@ -42,8 +42,6 @@ thread_local! {
 
         Mutex::from(TunTapInterface::new(&netdev_name.as_ref().unwrap().name, Medium::Ethernet).unwrap())
     };
-
-    static TAP_RAW_FD: i32 = DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
 }
 
 lazy_static! {
@@ -56,7 +54,7 @@ lazy_static! {
     /// Here use Option<> because the `socket` module may never be used so in
     /// this case shouldn't ask for a NetdevName.
     pub static ref NETDEV_NAME: Mutex<Option<NetdevName>> = Mutex::default();
-
+    static ref TAP_RAW_FD: i32 =  DEVICE.with(|device| device.lock().unwrap().as_raw_fd());
     static ref SOCKETS: Mutex<SocketSet<'static>> = Mutex::new(SocketSet::new(vec![]));
 
     static ref IFACE: Mutex<Interface> = {
@@ -95,7 +93,7 @@ lazy_static! {
 }
 
 fn get_tap_raw_fd() -> i32 {
-    TAP_RAW_FD.with(|fd| *fd)
+    *TAP_RAW_FD
 }
 
 fn from_sockfd(handle: SockFd) -> SocketHandle {

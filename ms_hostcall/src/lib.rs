@@ -19,6 +19,8 @@ pub enum CommonHostCall {
     Metric,
     #[display(fmt = "fs_image")]
     FsImage,
+    #[display(fmt = "spawn_fault_thread")]
+    SpawnFaultThread,
 
     #[display(fmt = "write")]
     Write,
@@ -28,6 +30,10 @@ pub enum CommonHostCall {
     Open,
     #[display(fmt = "close")]
     Close,
+    #[display(fmt = "lseek")]
+    Lseek,
+    #[display(fmt = "stat")]
+    Stat,
     #[display(fmt = "connect")]
     Connect,
     #[display(fmt = "socket")]
@@ -48,6 +54,10 @@ pub enum CommonHostCall {
     FatfsRead,
     #[display(fmt = "fatfs_close")]
     FatfsClose,
+    #[display(fmt = "fatfs_seek")]
+    FatfsSeek,
+    #[display(fmt = "fatfs_stat")]
+    FatfsStat,
 
     #[display(fmt = "addrinfo")]
     SmoltcpAddrInfo,
@@ -70,6 +80,13 @@ pub enum CommonHostCall {
     AccessBuffer,
     #[display(fmt = "buffer_dealloc")]
     BufferDealloc,
+    #[display(fmt = "libos_mmap")]
+    Mmap,
+
+    #[display(fmt = "register_file_backend")]
+    RegisterFileBackend,
+    #[display(fmt = "file_page_fault_handler")]
+    FilePageFaultHandler,
 
     #[display(fmt = "get_time")]
     GetTime,
@@ -85,12 +102,16 @@ impl HostCallID {
     pub fn belong_to(&self) -> ServiceName {
         match self {
             Self::Common(common) => match common {
-                CommonHostCall::Metric | CommonHostCall::FsImage => "".to_owned(),
+                CommonHostCall::Metric
+                | CommonHostCall::FsImage
+                | CommonHostCall::SpawnFaultThread => "".to_owned(),
 
                 CommonHostCall::Write
                 | CommonHostCall::Open
                 | CommonHostCall::Read
                 | CommonHostCall::Close
+                | CommonHostCall::Lseek
+                | CommonHostCall::Stat
                 | CommonHostCall::Connect
                 | CommonHostCall::Socket
                 | CommonHostCall::Bind
@@ -101,7 +122,9 @@ impl HostCallID {
                 CommonHostCall::FatfsOpen
                 | CommonHostCall::FatfsWrite
                 | CommonHostCall::FatfsRead
-                | CommonHostCall::FatfsClose => "fatfs".to_owned(),
+                | CommonHostCall::FatfsClose
+                | CommonHostCall::FatfsSeek
+                | CommonHostCall::FatfsStat => "fatfs".to_owned(),
 
                 CommonHostCall::SmoltcpAddrInfo
                 | CommonHostCall::SmoltcpConnect
@@ -113,7 +136,12 @@ impl HostCallID {
 
                 CommonHostCall::BufferAlloc
                 | CommonHostCall::AccessBuffer
-                | CommonHostCall::BufferDealloc => "buffer".to_owned(),
+                | CommonHostCall::BufferDealloc
+                | CommonHostCall::Mmap => "mm".to_owned(),
+
+                CommonHostCall::RegisterFileBackend | CommonHostCall::FilePageFaultHandler => {
+                    "mmap_file_backend".to_owned()
+                }
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },

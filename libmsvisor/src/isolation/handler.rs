@@ -1,5 +1,7 @@
 use core::panic;
+use std::mem::transmute;
 
+use log::info;
 use ms_hostcall::{
     types::{FsImageFunc, IsolationID, MetricEvent, MetricFunc, NetdevName},
     CommonHostCall, HostCallID,
@@ -26,6 +28,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
     let addr = match hc_id {
         HostCallID::Common(CommonHostCall::Metric) => metric_handler as MetricFunc as usize,
         HostCallID::Common(CommonHostCall::FsImage) => fs_image_handler as FsImageFunc as usize,
+        HostCallID::Common(CommonHostCall::SpawnFaultThread) => spwan_fault_thread_handler as usize,
         _ => {
             let svc_name = hc_id.belong_to();
             logger::debug!(
@@ -67,6 +70,39 @@ fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
         .expect("isol don't exist?")
         .fs_image
         .clone()
+}
+
+fn spwan_fault_thread_handler(isol_id: IsolationID) -> Result<(), String> {
+    info!("enter spwan_fault_thread_handler, isol_id={}", isol_id);
+
+    let isol = get_isol(isol_id).expect("isol don't exist?");
+    let mmap_file_backend = isol
+        .service_or_load(&"mmap_file_backend".to_owned())
+        .map_err(|_| "missing common_service: mmap_file_backend?")?;
+
+    let fault_handler: Option<libloading::Symbol<'_, fn()>> =
+        mmap_file_backend.interface(&CommonHostCall::FilePageFaultHandler.to_string());
+    let fault_handler_addr = if let Some(fault_handler) = fault_handler {
+        *fault_handler as usize
+    } else {
+        Err(format!(
+            "missing inferface: {}",
+            CommonHostCall::FilePageFaultHandler
+        ))?
+    };
+
+    let thread_builder =
+        std::thread::Builder::new().name(format!("isol-{}-fault-handler", isol.id));
+
+    // TODO: Save thread handler to send exit signal.
+    let _thread_handler = thread_builder
+        .spawn(move || {
+            let fault_handler: fn() = unsafe { transmute(fault_handler_addr) };
+            fault_handler()
+        })
+        .expect("spawn thread failed.");
+
+    Ok(())
 }
 
 #[test]

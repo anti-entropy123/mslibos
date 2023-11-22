@@ -13,7 +13,7 @@ use spin::Mutex;
 
 use ms_hostcall::{
     err::{LibOSErr, LibOSResult},
-    types::{Fd, OpenFlags, OpenMode, Size, SockFd},
+    types::{Fd, OpenFlags, OpenMode, Size, SockFd, Stat},
 };
 use ms_std::{self, libos::libos, println};
 
@@ -179,6 +179,52 @@ pub fn write(fd: Fd, buf: &[u8]) -> LibOSResult<Size> {
             }
         }
     })
+}
+
+#[no_mangle]
+pub fn lseek(fd: Fd, pos: u32) -> LibOSResult<()> {
+    if let 0..=2 = fd {
+        return Err(LibOSErr::BadFileDescriptor);
+    }
+    FD_TABLE.with_file(fd, |file| {
+        let file = if let Some(file) = file {
+            file
+        } else {
+            return Err(LibOSErr::BadFileDescriptor);
+        };
+
+        match file.src {
+            DataSource::FatFS(raw_fd) => {
+                libos!(fatfs_seek(raw_fd, pos)).expect("fatfs seek failed.")
+            }
+            DataSource::Net(_) => panic!("The file type does not match"),
+        };
+
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub fn stat(fd: Fd) -> Result<Stat, ()> {
+    if let 0..=2 = fd {
+        todo!()
+    }
+    Ok(FD_TABLE
+        .with_file(fd, |file| {
+            let file = if let Some(file) = file {
+                file
+            } else {
+                return Err(LibOSErr::BadFileDescriptor);
+            };
+
+            match file.src {
+                DataSource::FatFS(raw_fd) => {
+                    Ok(libos!(fatfs_stat(raw_fd)).expect("fatfs seek failed."))
+                }
+                DataSource::Net(_) => unimplemented!(),
+            }
+        })
+        .expect("fdtab: file don't exist"))
 }
 
 #[no_mangle]

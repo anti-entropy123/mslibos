@@ -92,7 +92,7 @@ impl MetricBucket {
         let mut result = serde_json::Value::default();
 
         match opt {
-            MetricOpt::None => {}
+            MetricOpt::None => return,
             MetricOpt::All => {
                 result["isolation"] = inner.to_json();
                 result["services"] = {

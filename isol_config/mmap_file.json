@@ -1,0 +1,38 @@
+{
+  "services": [
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mmap_file_backend",
+      "libmmap_file_backend.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "test_mmap_file",
+      "libmmap_file.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "test_mmap_file"
+      ],
+      "args": {}
+    }
+  ]
+}

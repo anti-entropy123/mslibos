@@ -127,9 +127,10 @@ impl ELFService {
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), ()> {
         let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
         log::info!(
-            "service_{} rust_main={:x}",
+            "service_{} rust_main={:x} thread_name={}",
             self.name,
-            (*rust_main) as usize
+            (*rust_main) as usize,
+            std::thread::current().name().unwrap()
         );
 
         self.metric.mark(MetricEvent::SvcRun);

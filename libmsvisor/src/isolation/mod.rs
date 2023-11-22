@@ -156,11 +156,13 @@ impl Isolation {
 
         thread::scope(|scope| {
             let mut join_handles = Vec::with_capacity(apps.len());
+
             for (app, app_config) in zip(apps, group) {
-                let app_result = scope.spawn(move || {
+                let builder = thread::Builder::new().name(app.name());
+                let app_result = builder.spawn_scoped(scope, move || {
                     app.run(&app_config.args)
                         .map_err(|_| anyhow!("app {} run failed.", app.name()))
-                });
+                })?;
                 join_handles.push(Some(app_result));
             }
 
