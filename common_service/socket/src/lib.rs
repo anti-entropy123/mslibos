@@ -288,7 +288,7 @@ pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
             has_close = true;
         }
 
-        println!("{:?}", tcp_socket.state());
+        // println!("{:?}", tcp_socket.state());
         if !tcp_socket.is_open() {
             break;
         }

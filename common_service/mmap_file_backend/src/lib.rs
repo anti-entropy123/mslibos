@@ -42,7 +42,7 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
             .map(|uffd| PollFd::new(uffd, PollFlags::POLLIN))
             .collect();
 
-        let nready = poll(pollfds.as_mut_slice(), -1).expect("poll");
+        let _nready = poll(pollfds.as_mut_slice(), -1).expect("poll");
         // let revents = pollfd.revents().unwrap();
 
         let region = regions.get(0).unwrap();
@@ -53,11 +53,10 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
             .expect("uffd_msg ready");
 
         if let Event::Pagefault { addr, .. } = event {
-            // Display info about the page-fault event
-            println!(
-                "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
-                event, region
-            );
+            // println!(
+            //     "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
+            //     event, region
+            // );
             // Copy the page pointed to by 'page' into the faulting region. Vary the contents that are
             // copied in, so that it is more obvious that each fault is handled separately.
             let mut src_file = ManuallyDrop::new(File::from_raw_fd(region.src_fd));
@@ -69,10 +68,10 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
                 unsafe { from_raw_parts_mut(page.as_mut_ptr() as usize as *mut u8, 0x1000) };
 
             let read_size = src_file.read(page).expect("read file failed.");
-            println!(
-                "src_file aligned_offset={}, read {} bytes",
-                aligned_offset, read_size
-            );
+            // println!(
+            //     "src_file aligned_offset={}, read {} bytes",
+            //     aligned_offset, read_size
+            // );
 
             let dst = (addr as usize & !(PAGE_SIZE - 1)) as *mut c_void;
             let copy = unsafe {
@@ -85,13 +84,11 @@ pub fn file_page_fault_handler() -> LibOSResult<()> {
                 .expect("uffd copy")
             };
 
-            println!("(uffdio_copy.copy returned {})", copy);
+            // println!("(uffdio_copy.copy returned {})", copy);
         } else {
             panic!("Unexpected event on userfaultfd");
         }
     }
-
-    Ok(())
 }
 
 #[no_mangle]
@@ -119,7 +116,7 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
         ms_std::init_context::isolation_ctx().isol_id
     ))
     .expect("spawn_fault_handler failed.");
-    println!("spawn_fault_handler successfully.");
+    // println!("spawn_fault_handler successfully.");
 
     Ok(())
 }

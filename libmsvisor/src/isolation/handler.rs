@@ -74,7 +74,7 @@ fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
 
 fn spwan_fault_thread_handler(isol_id: IsolationID) -> Result<(), String> {
     info!("enter spwan_fault_thread_handler, isol_id={}", isol_id);
-    
+
     let isol = get_isol(isol_id).expect("isol don't exist?");
     let mmap_file_backend = isol
         .service_or_load(&"mmap_file_backend".to_owned())
@@ -93,7 +93,9 @@ fn spwan_fault_thread_handler(isol_id: IsolationID) -> Result<(), String> {
 
     let thread_builder =
         std::thread::Builder::new().name(format!("isol-{}-fault-handler", isol.id));
-    let thread_handler = thread_builder
+
+    // TODO: Save thread handler to send exit signal.
+    let _thread_handler = thread_builder
         .spawn(move || {
             let fault_handler: fn() = unsafe { transmute(fault_handler_addr) };
             fault_handler()

@@ -38,7 +38,7 @@ pub fn libos_mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> 
     let mm_region = unsafe { core::slice::from_raw_parts_mut(mmap_addr as *mut c_void, length) };
     libos!(register_file_backend(mm_region, fd)).expect("register_file_backend failed.");
 
-    println!("finish mmap, mmap_addr={}", mmap_addr);
+    // println!("finish mmap, mmap_addr={}", mmap_addr);
     Ok(mmap_addr)
 }
 

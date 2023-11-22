@@ -1,14 +1,9 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
-use libmsvisor::{
-    isolation::{config::IsolationConfig, Isolation},
-    logger,
-};
+use libmsvisor::{logger, run_single_isol};
 
 #[test]
 fn run_operate_file_test() {
-    logger::init();
-
     if !PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
@@ -20,13 +15,14 @@ fn run_operate_file_test() {
         return;
     }
 
-    let config1 =
-        IsolationConfig::from_file("simple_file.json".into()).expect("Open config file failed.");
+    run_single_isol("simple_file.json".to_owned(), || {
+        logger::init();
+    });
+}
 
-    let isol1 = Isolation::new(&config1);
-    isol1.run().expect("isolation user function error.");
-
-    log::info!("isol1 has strong count={}", Arc::strong_count(&isol1));
-    isol1.metric.analyze(&libmsvisor::MetricOpt::None);
-    drop(isol1);
+#[test]
+fn run_mmap_file_test() {
+    run_single_isol("mmap_file.json".to_owned(), || {
+        logger::init();
+    });
 }

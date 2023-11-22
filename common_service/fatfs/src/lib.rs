@@ -13,7 +13,7 @@ use fscommon::BufStream;
 use lazy_static::lazy_static;
 
 use ms_hostcall::types::{Fd, OpenFlags, Size, Stat};
-use ms_std::{libos::libos, println};
+use ms_std::libos::libos;
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
 type File<'a> = fatfs::File<'a, fscommon::BufStream<std::fs::File>>;
@@ -65,7 +65,7 @@ impl FatfsFileList {
         }
     }
 
-    fn get_file(&self, fd: Fd) -> &'static File<'static> {
+    fn _get_file(&self, fd: Fd) -> &'static File<'static> {
         unsafe { &*(self.get_file_raw_ptr(fd) as *const File) }
     }
 

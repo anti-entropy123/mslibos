@@ -30,7 +30,7 @@ impl TcpStream {
         if libos!(write(self.raw_fd, data)).is_err() {
             return Err(());
         };
-        println!("TcpStream write {} bytes.", data.len());
+        // println!("TcpStream write {} bytes.", data.len());
         Ok(())
     }
 
