@@ -6,7 +6,7 @@ use core::{
 use alloc::{format, string::String, vec::Vec};
 use ms_hostcall::{err::LibOSErr, types::Fd};
 
-use crate::{io::Write, libos::libos, println};
+use crate::{io::Write, libos::libos};
 
 pub struct TcpStream {
     raw_fd: Fd,

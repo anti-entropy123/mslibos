@@ -31,7 +31,9 @@ pub macro func_type {
     (access_buffer) => (ms_hostcall::types::AccessBufferFunc),
     (buffer_dealloc) => (ms_hostcall::types::BufferDeallocFunc),
     (mmap) => (ms_hostcall::types::MemmapFunc),
+    (munmap) => (ms_hostcall::types::MemunmapFunc),
     (register_file_backend) => (ms_hostcall::types::RegisterFileBackendFunc),
+    (unregister_file_backend) => (ms_hostcall::types::UnregisterFileBackendFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
 }
 
@@ -66,7 +68,9 @@ pub macro hostcall_id {
     (access_buffer) => (ms_hostcall::CommonHostCall::AccessBuffer),
     (buffer_dealloc) => (ms_hostcall::CommonHostCall::BufferDealloc),
     (mmap) => (ms_hostcall::CommonHostCall::Mmap),
+    (munmap) => (ms_hostcall::CommonHostCall::Munmap),
     (register_file_backend) => (ms_hostcall::CommonHostCall::RegisterFileBackend),
+    (unregister_file_backend) => (ms_hostcall::CommonHostCall::UnregisterFileBackend),
     (get_time) => (ms_hostcall::CommonHostCall::GetTime),
 }
 

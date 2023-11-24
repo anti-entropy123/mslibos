@@ -82,9 +82,13 @@ pub enum CommonHostCall {
     BufferDealloc,
     #[display(fmt = "libos_mmap")]
     Mmap,
+    #[display(fmt = "libos_munmap")]
+    Munmap,
 
     #[display(fmt = "register_file_backend")]
     RegisterFileBackend,
+    #[display(fmt = "unregister_file_backend")]
+    UnregisterFileBackend,
     #[display(fmt = "file_page_fault_handler")]
     FilePageFaultHandler,
 
@@ -137,11 +141,12 @@ impl HostCallID {
                 CommonHostCall::BufferAlloc
                 | CommonHostCall::AccessBuffer
                 | CommonHostCall::BufferDealloc
-                | CommonHostCall::Mmap => "mm".to_owned(),
+                | CommonHostCall::Mmap
+                | CommonHostCall::Munmap => "mm".to_owned(),
 
-                CommonHostCall::RegisterFileBackend | CommonHostCall::FilePageFaultHandler => {
-                    "mmap_file_backend".to_owned()
-                }
+                CommonHostCall::RegisterFileBackend
+                | CommonHostCall::FilePageFaultHandler
+                | CommonHostCall::UnregisterFileBackend => "mmap_file_backend".to_owned(),
 
                 CommonHostCall::GetTime => "time".to_owned(),
             },

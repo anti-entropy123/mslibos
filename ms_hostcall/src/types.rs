@@ -95,11 +95,10 @@ pub type SmoltcpCloseFunc = fn(SockFd) -> LibOSResult<()>;
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
 
-// buffer_alloc
+// mm
 pub type BufferAllocFunc = fn(&str, Layout, u64) -> Result<usize, ()>;
 pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
 pub type BufferDeallocFunc = fn(usize, Layout);
-
 bitflags! {
     #[derive(PartialEq, Eq)]
     pub struct ProtFlags: u32 {
@@ -109,10 +108,12 @@ bitflags! {
     }
 }
 pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
+pub type MemunmapFunc = fn(&mut [u8]) -> LibOSResult<()>;
 
 // mmap_file_backend
 pub type RegisterFileBackendFunc = fn(&mut [c_void], Fd) -> LibOSResult<()>;
-pub type FilePageFaultHandlerFunc = fn() -> LibOSResult<()>;
+pub type UnregisterFileBackendFunc = fn(usize) -> LibOSResult<()>;
+pub type FilePageFaultHandlerFunc = fn();
 
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;
