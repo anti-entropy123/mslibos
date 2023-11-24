@@ -112,7 +112,20 @@ pub fn fatfs_read(fd: Fd, buf: &mut [u8]) -> Result<Size, ()> {
     let mut table = FTABLE.lock().expect("require lock failed.");
     let file = table.get_file_mut(fd);
 
-    Ok(file.read(buf).expect("fatfs_read failed."))
+    let mut read_size = 0;
+    let mut buf = buf;
+    while !buf.is_empty() {
+        match file.read(buf) {
+            Ok(0) => break,
+            Ok(size) => {
+                read_size += size;
+                buf = &mut buf[size..]
+            }
+            Err(e) => panic!("fatfs read failed: {}", e),
+        }
+    }
+
+    Ok(read_size)
 }
 
 #[no_mangle]

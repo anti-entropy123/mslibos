@@ -11,7 +11,6 @@ use lazy_static::lazy_static;
 use ms_std::{fs::File, io::Read, libos::libos, println};
 use nix::{
     fcntl::{fcntl, FcntlArg, OFlag},
-    libc::O_NONBLOCK,
     poll::{poll, PollFd, PollFlags},
 };
 use userfaultfd::{Event, Uffd, UffdBuilder};
@@ -63,6 +62,7 @@ impl Drop for NotifyPipe {
 }
 
 lazy_static! {
+    static ref REGISTER: Mutex<()> = Default::default();
     static ref REGISTERD_REGIONS: Mutex<Vec<RegisterdMemRegion>> = Default::default();
     static ref NOTIFY_PIPE: RwLock<Option<NotifyPipe>> = Default::default();
 }
@@ -93,7 +93,7 @@ fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
         let aligned_offset = offset & (!PAGE_SIZE + 1);
         src_file.seek(aligned_offset as u32);
 
-        let page: &mut [u8] = unsafe { from_raw_parts_mut(page, 0x1000) };
+        let page = unsafe { from_raw_parts_mut(page, PAGE_SIZE) };
 
         let read_size = src_file.read(page).expect("read file failed.");
         println!(
@@ -118,23 +118,22 @@ fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
     }
 }
 
-fn init_notify_pipe() -> RawFd {
+fn init_notify_pipe() {
     let mut notify_pipe = NOTIFY_PIPE.write().unwrap();
     if notify_pipe.is_some() {
         panic!("notify_pipe has exist")
     }
     let pipe = NotifyPipe::new();
-    let notify_fd = pipe.recevier;
     *notify_pipe = Some(pipe);
-    notify_fd
 }
 
 #[no_mangle]
 pub fn file_page_fault_handler() {
-    let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
-
-    let notify_fd = unsafe { BorrowedFd::borrow_raw(init_notify_pipe()) };
+    let notify_fd =
+        unsafe { BorrowedFd::borrow_raw(NOTIFY_PIPE.read().unwrap().as_ref().unwrap().recevier) };
     let notify_pollfd = PollFd::new(&notify_fd, PollFlags::POLLIN);
+
+    let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
 
     loop {
         let regions = REGISTERD_REGIONS.lock().unwrap();
@@ -180,6 +179,7 @@ pub fn file_page_fault_handler() {
 
 #[no_mangle]
 pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResult<()> {
+    let _lock = REGISTER.lock().unwrap();
     // If have error: `OpenDevUserfaultfd(Os { code: 13, kind: PermissionDenied, message: "Permission denied" })`
     // ,use this command:
     //    `setfacl -m u:${USER}:rw /dev/userfaultfd`
@@ -193,16 +193,28 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
     uffd.register(mm_region.as_mut_ptr(), mm_region.len())
         .expect("register failed");
 
-    REGISTERD_REGIONS.lock().unwrap().push(RegisterdMemRegion {
+    let mut regions = match REGISTERD_REGIONS.try_lock() {
+        Ok(regions) => regions,
+        Err(_) => {
+            let notify_pipe = NOTIFY_PIPE.read().unwrap();
+            notify_pipe.as_ref().expect("notify has not init?").notify();
+            REGISTERD_REGIONS.lock().unwrap()
+        }
+    };
+    regions.push(RegisterdMemRegion {
         uffd,
         start_addr: mm_region.as_ptr() as usize,
         src_fd: file_fd,
     });
 
-    libos!(spawn_fault_handler(
-        ms_std::init_context::isolation_ctx().isol_id
-    ))
-    .expect("spawn_fault_handler failed.");
+    if NOTIFY_PIPE.read().unwrap().is_none() {
+        init_notify_pipe();
+
+        libos!(spawn_fault_handler(
+            ms_std::init_context::isolation_ctx().isol_id
+        ))
+        .expect("spawn_fault_handler failed.");
+    }
     // println!("spawn_fault_handler successfully.");
 
     Ok(())
@@ -210,6 +222,7 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
 
 #[no_mangle]
 pub fn unregister_file_backend(addr: usize) -> LibOSResult<()> {
+    let _lock = REGISTER.lock().unwrap();
     let pipe = NOTIFY_PIPE.read().unwrap();
     let pipe = pipe.as_ref().expect("notify pipe not exist?");
     pipe.notify();

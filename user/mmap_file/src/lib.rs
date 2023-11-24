@@ -7,13 +7,21 @@ extern crate alloc;
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn main(_: &BTreeMap<String, String>) -> Result<()> {
-    let file = File::open("lines.txt").expect("file don't exist?");
+    let file1 = File::open("lines.txt").expect("file1 don't exist?");
+    let file2 = File::open("fake_data_0.txt").expect("file2 don't exist?");
 
-    let mmap_area = Mmap::mmap_file(file)?;
+    let mmap_area1 = Mmap::mmap_file(file1)?;
+    let mmap_area2 = Mmap::mmap_file(file2)?;
     // println!("successfully libos mmap");
 
-    let array = mmap_area.as_ref();
-    println!("mmap_area content is: {:?}", String::from_utf8_lossy(array));
+    println!(
+        "mmap_area2 content is: {:?}",
+        String::from_utf8_lossy(mmap_area2.as_ref())
+    );
+    println!(
+        "mmap_area1 content is: {:?}",
+        String::from_utf8_lossy(mmap_area1.as_ref())
+    );
 
     Ok(().into())
 }
