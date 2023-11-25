@@ -1,27 +1,21 @@
 use std::{
     ffi::c_void,
-    iter::zip,
     mem::{ManuallyDrop, MaybeUninit},
-    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
+    os::fd::{AsFd, BorrowedFd, RawFd},
     slice::from_raw_parts_mut,
-    sync::{Mutex, RwLock},
+    sync::{Mutex, MutexGuard, RwLock},
     u64,
 };
 
 use lazy_static::lazy_static;
-use ms_std::{fs::File, io::Read, libos::libos, println};
 use nix::{
     fcntl::{fcntl, FcntlArg, OFlag},
-    poll::{poll, PollFd, PollFlags},
-    sys::{
-        epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags},
-        eventfd::{eventfd, EfdFlags},
-    },
+    sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags},
 };
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
 use ms_hostcall::{err::LibOSResult, types::Fd};
-pub use ms_std;
+use ms_std::{fs::File, io::Read, libos::libos, println};
 
 #[repr(C, align(4096))]
 struct Page([u8; PAGE_SIZE]);
@@ -79,6 +73,21 @@ struct RegisterdMemRegion {
     src_fd: Fd,
 }
 
+fn read_at_offset(fd: Fd, offset: u32, page: *mut u8) {
+    // Copy the page pointed to by 'page' into the faulting region. Vary the contents that are
+    // copied in, so that it is more obvious that each fault is handled separately.
+    let mut src_file = ManuallyDrop::new(File::from_raw_fd(fd));
+    src_file.seek(offset);
+
+    let page = unsafe { from_raw_parts_mut(page, PAGE_SIZE) };
+
+    let read_size = src_file.read(page).expect("read file failed.");
+    println!(
+        "src_file aligned_offset={}, read {} bytes",
+        offset, read_size
+    );
+}
+
 fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
     let uffd = &region.uffd;
     let event = uffd
@@ -91,30 +100,14 @@ fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
             "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
             event, region
         );
-        // Copy the page pointed to by 'page' into the faulting region. Vary the contents that are
-        // copied in, so that it is more obvious that each fault is handled separately.
-        let mut src_file = ManuallyDrop::new(File::from_raw_fd(region.src_fd));
         let offset = addr as usize - region.start_addr;
         let aligned_offset = offset & (!PAGE_SIZE + 1);
-        src_file.seek(aligned_offset as u32);
-
-        let page = unsafe { from_raw_parts_mut(page, PAGE_SIZE) };
-
-        let read_size = src_file.read(page).expect("read file failed.");
-        println!(
-            "src_file aligned_offset={}, read {} bytes",
-            aligned_offset, read_size
-        );
+        read_at_offset(region.src_fd, aligned_offset as u32, page);
 
         let dst = (addr as usize & !(PAGE_SIZE - 1)) as *mut c_void;
         let _copy = unsafe {
-            uffd.copy(
-                page.as_mut_ptr() as usize as *mut c_void,
-                dst,
-                PAGE_SIZE,
-                true,
-            )
-            .expect("uffd copy failed.")
+            uffd.copy(page as usize as *mut c_void, dst, PAGE_SIZE, true)
+                .expect("uffd copy failed.")
         };
 
         // println!("(uffdio_copy.copy returned {})", copy);
@@ -147,20 +140,18 @@ pub fn file_page_fault_handler() {
 
         let epoll = Epoll::new(EpollCreateFlags::empty()).expect("create epoll failed");
 
-        for (idx, region) in regions.iter().enumerate() {
+        let uffd_events: Vec<_> = regions
+            .iter()
+            .map(|region| region.uffd.as_fd())
+            .enumerate()
+            .collect();
+        let notify_event = [(u64::MAX as usize, notify_fd.as_fd())];
+
+        for (idx, fd) in uffd_events.iter().chain(notify_event.iter()) {
             epoll
-                .add(
-                    region.uffd.as_fd(),
-                    EpollEvent::new(EpollFlags::EPOLLIN, idx as u64),
-                )
+                .add(fd, EpollEvent::new(EpollFlags::EPOLLIN, *idx as u64))
                 .expect("add event failed");
         }
-        epoll
-            .add(
-                notify_fd.as_fd(),
-                EpollEvent::new(EpollFlags::EPOLLIN, u64::MAX),
-            )
-            .expect("add event failed");
 
         let mut ready_events = [EpollEvent::empty()];
         epoll
@@ -168,6 +159,9 @@ pub fn file_page_fault_handler() {
             .expect("epoll wait failed");
         // let revents = pollfd.revents().unwrap();
 
+        if !ready_events[0].events().contains(EpollFlags::EPOLLIN) {
+            continue;
+        }
         let event_idx = ready_events[0].data();
         if let Some(region) = regions.get(event_idx as usize) {
             do_page_fault(page.as_mut_ptr() as usize as *mut u8, region);
@@ -182,6 +176,17 @@ pub fn file_page_fault_handler() {
     let mut notify_pipe = NOTIFY_PIPE.write().unwrap();
     *notify_pipe = None;
     println!("page fault handler exit.");
+}
+
+fn acquire_regions_or_notify() -> MutexGuard<'static, std::vec::Vec<RegisterdMemRegion>> {
+    match REGISTERD_REGIONS.try_lock() {
+        Ok(regions) => regions,
+        Err(_) => {
+            let notify_pipe = NOTIFY_PIPE.read().unwrap();
+            notify_pipe.as_ref().expect("notify has not init?").notify();
+            REGISTERD_REGIONS.lock().unwrap()
+        }
+    }
 }
 
 #[no_mangle]
@@ -200,14 +205,7 @@ pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResu
     uffd.register(mm_region.as_mut_ptr(), mm_region.len())
         .expect("register failed");
 
-    let mut regions = match REGISTERD_REGIONS.try_lock() {
-        Ok(regions) => regions,
-        Err(_) => {
-            let notify_pipe = NOTIFY_PIPE.read().unwrap();
-            notify_pipe.as_ref().expect("notify has not init?").notify();
-            REGISTERD_REGIONS.lock().unwrap()
-        }
-    };
+    let mut regions = acquire_regions_or_notify();
     regions.push(RegisterdMemRegion {
         uffd,
         start_addr: mm_region.as_ptr() as usize,
@@ -233,7 +231,7 @@ pub fn unregister_file_backend(addr: usize) -> LibOSResult<()> {
     let pipe = NOTIFY_PIPE.read().unwrap();
     let pipe = pipe.as_ref().expect("notify pipe not exist?");
     pipe.notify();
-    let mut regions = REGISTERD_REGIONS.lock().unwrap();
+    let mut regions = acquire_regions_or_notify();
 
     for (idx, region) in (*regions).iter().enumerate() {
         if region.start_addr == addr {
