@@ -15,11 +15,11 @@ pub fn main(_: &BTreeMap<String, String>) -> Result<()> {
     // println!("successfully libos mmap");
 
     println!(
-        "mmap_area2 content is: {:?}",
+        "mmap_area2 content is: {}",
         String::from_utf8_lossy(mmap_area2.as_ref())
     );
     println!(
-        "mmap_area1 content is: {:?}",
+        "mmap_area1 content is: {}",
         String::from_utf8_lossy(mmap_area1.as_ref())
     );
 

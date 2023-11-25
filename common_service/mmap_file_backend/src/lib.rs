@@ -15,7 +15,7 @@ use nix::{
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
 use ms_hostcall::{err::LibOSResult, types::Fd};
-use ms_std::{fs::File, io::Read, libos::libos, println};
+use ms_std::{fs::File, io::Read, libos::libos};
 
 #[repr(C, align(4096))]
 struct Page([u8; PAGE_SIZE]);
@@ -81,11 +81,11 @@ fn read_at_offset(fd: Fd, offset: u32, page: *mut u8) {
 
     let page = unsafe { from_raw_parts_mut(page, PAGE_SIZE) };
 
-    let read_size = src_file.read(page).expect("read file failed.");
-    println!(
-        "src_file aligned_offset={}, read {} bytes",
-        offset, read_size
-    );
+    let _read_size = src_file.read(page).expect("read file failed.");
+    // println!(
+    //     "src_file aligned_offset={}, read {} bytes",
+    //     offset, read_size
+    // );
 }
 
 fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
@@ -96,10 +96,10 @@ fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
         .expect("uffd_msg ready");
 
     if let Event::Pagefault { addr, .. } = event {
-        println!(
-            "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
-            event, region
-        );
+        // println!(
+        //     "UFFD_EVENT_PAGEFAULT event: {:?}, register_info: {:?}",
+        //     event, region
+        // );
         let offset = addr as usize - region.start_addr;
         let aligned_offset = offset & (!PAGE_SIZE + 1);
         read_at_offset(region.src_fd, aligned_offset as u32, page);
@@ -133,12 +133,12 @@ pub fn file_page_fault_handler() {
     let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
 
     loop {
+        let epoll = Epoll::new(EpollCreateFlags::empty()).expect("create epoll failed");
+
         let regions = REGISTERD_REGIONS.lock().unwrap();
         if regions.is_empty() {
             break;
         }
-
-        let epoll = Epoll::new(EpollCreateFlags::empty()).expect("create epoll failed");
 
         let uffd_events: Vec<_> = regions
             .iter()
@@ -175,7 +175,7 @@ pub fn file_page_fault_handler() {
 
     let mut notify_pipe = NOTIFY_PIPE.write().unwrap();
     *notify_pipe = None;
-    println!("page fault handler exit.");
+    // println!("page fault handler exit.");
 }
 
 fn acquire_regions_or_notify() -> MutexGuard<'static, std::vec::Vec<RegisterdMemRegion>> {
