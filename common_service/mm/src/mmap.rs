@@ -7,11 +7,13 @@ use ms_hostcall::{
     err::{LibOSErr, LibOSResult},
     types::{Fd, ProtFlags},
 };
-use ms_std::{libos::libos, println};
+use ms_std::libos::libos;
+
+const PAGE_SIZE: usize = 0x1000;
 
 #[no_mangle]
 pub fn libos_mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> {
-    if length % 0x1000 > 0 {
+    if length % PAGE_SIZE > 0 {
         return Err(LibOSErr::BadArgs);
     }
     let layout = Layout::from_size_align(length, 0x1000).map_err(|_| LibOSErr::BadArgs)?;
@@ -40,6 +42,27 @@ pub fn libos_mmap(length: usize, prot: ProtFlags, fd: Fd) -> LibOSResult<usize> 
 
     // println!("finish mmap, mmap_addr={}", mmap_addr);
     Ok(mmap_addr)
+}
+
+#[no_mangle]
+pub fn libos_munmap(mem_region: &mut [u8], _file_based: bool) -> LibOSResult<()> {
+    libos!(unregister_file_backend(mem_region.as_ptr() as usize))
+        .expect("unregister file backend failed.");
+
+    let aligned_length = (mem_region.len() + PAGE_SIZE - 1) & (!PAGE_SIZE + 1);
+    unsafe {
+        libc::mprotect(
+            mem_region.as_mut_ptr() as usize as *mut libc::c_void,
+            aligned_length,
+            libc::PROT_READ | libc::PROT_WRITE,
+        );
+        alloc::alloc::dealloc(
+            mem_region.as_mut_ptr(),
+            Layout::from_size_align(aligned_length, PAGE_SIZE).expect("wrong align."),
+        );
+    };
+
+    Ok(())
 }
 
 pub fn trans_protflag(flags: ProtFlags) -> i32 {

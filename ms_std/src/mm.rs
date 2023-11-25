@@ -28,3 +28,10 @@ impl AsRef<[u8]> for Mmap {
         unsafe { slice::from_raw_parts(self.ptr as *const u8, self.length) }
     }
 }
+
+impl Drop for Mmap {
+    fn drop(&mut self) {
+        let region = unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.length) };
+        libos!(munmap(region)).expect("munmap failed")
+    }
+}
