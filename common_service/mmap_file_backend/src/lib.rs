@@ -2,9 +2,10 @@ use std::{
     ffi::c_void,
     iter::zip,
     mem::{ManuallyDrop, MaybeUninit},
-    os::fd::{BorrowedFd, RawFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     slice::from_raw_parts_mut,
     sync::{Mutex, RwLock},
+    u64,
 };
 
 use lazy_static::lazy_static;
@@ -12,6 +13,10 @@ use ms_std::{fs::File, io::Read, libos::libos, println};
 use nix::{
     fcntl::{fcntl, FcntlArg, OFlag},
     poll::{poll, PollFd, PollFlags},
+    sys::{
+        epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags},
+        eventfd::{eventfd, EfdFlags},
+    },
 };
 use userfaultfd::{Event, Uffd, UffdBuilder};
 
@@ -131,7 +136,6 @@ fn init_notify_pipe() {
 pub fn file_page_fault_handler() {
     let notify_fd =
         unsafe { BorrowedFd::borrow_raw(NOTIFY_PIPE.read().unwrap().as_ref().unwrap().recevier) };
-    let notify_pollfd = PollFd::new(&notify_fd, PollFlags::POLLIN);
 
     let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
 
@@ -141,31 +145,34 @@ pub fn file_page_fault_handler() {
             break;
         }
 
-        let mut pollfds: Vec<PollFd> = {
-            let mut pollfds: Vec<_> = regions
-                .iter()
-                .map(|region| PollFd::new(&region.uffd, PollFlags::POLLIN))
-                .collect();
-            pollfds.push(notify_pollfd);
-            pollfds
-        };
-        let mut nready = poll(pollfds.as_mut_slice(), -1).expect("poll");
+        let epoll = Epoll::new(EpollCreateFlags::empty()).expect("create epoll failed");
+
+        for (idx, region) in regions.iter().enumerate() {
+            epoll
+                .add(
+                    region.uffd.as_fd(),
+                    EpollEvent::new(EpollFlags::EPOLLIN, idx as u64),
+                )
+                .expect("add event failed");
+        }
+        epoll
+            .add(
+                notify_fd.as_fd(),
+                EpollEvent::new(EpollFlags::EPOLLIN, u64::MAX),
+            )
+            .expect("add event failed");
+
+        let mut ready_events = [EpollEvent::empty()];
+        epoll
+            .wait(&mut ready_events, -1)
+            .expect("epoll wait failed");
         // let revents = pollfd.revents().unwrap();
 
-        for (pollfd, region) in zip(pollfds.iter(), regions.iter()) {
-            if nready == 0 {
-                break;
-            }
-            if !pollfd.revents().unwrap().contains(PollFlags::POLLIN) {
-                continue;
-            }
-            nready -= 1;
+        let event_idx = ready_events[0].data();
+        if let Some(region) = regions.get(event_idx as usize) {
             do_page_fault(page.as_mut_ptr() as usize as *mut u8, region);
-        }
-
-        if nready > 0 {
+        } else {
             drop(regions);
-            println!("receive flush notify.");
             let pipe = NOTIFY_PIPE.read().unwrap();
             let pipe = pipe.as_ref().expect("pipe not exist?");
             pipe.consume()

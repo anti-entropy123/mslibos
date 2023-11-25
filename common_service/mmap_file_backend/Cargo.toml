@@ -12,6 +12,6 @@ crate-type = ["dylib"]
 ms_std = { path = "../../ms_std" }
 ms_hostcall = { path = "../../ms_hostcall" }
 
-nix = { version = "0.27.1", features = ["poll", "signal", "fs"] }
+nix = { version = "0.27.1", features = ["poll", "signal", "fs", "event"] }
 userfaultfd = { version = "0.7.0", features = [] }
 lazy_static = "1.4.0"
