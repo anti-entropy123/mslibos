@@ -260,26 +260,30 @@ pub fn close(fd: Fd) -> Result<(), ()> {
 
 #[no_mangle]
 pub fn connect(addr: SocketAddrV4) -> Result<SockFd, ()> {
-    libos!(smol_connect(addr)).map(|sockfd| {
-        let file = File {
-            mode: OpenMode::RDWR,
-            src: DataSource::Net(sockfd),
-        };
+    libos!(smol_connect(addr))
+        .map(|sockfd| {
+            let file = File {
+                mode: OpenMode::RDWR,
+                src: DataSource::Net(sockfd),
+            };
 
-        FD_TABLE.add_file(file)
-    })
+            FD_TABLE.add_file(file)
+        })
+        .map_err(|_| ())
 }
 
 #[no_mangle]
 pub fn bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
-    libos!(smol_bind(addr)).map(|listened_sockfd| {
-        let file = File {
-            mode: OpenMode::RD,
-            src: DataSource::Net(listened_sockfd),
-        };
+    libos!(smol_bind(addr))
+        .map(|listened_sockfd| {
+            let file = File {
+                mode: OpenMode::RD,
+                src: DataSource::Net(listened_sockfd),
+            };
 
-        FD_TABLE.add_file(file)
-    })
+            FD_TABLE.add_file(file)
+        })
+        .map_err(|_| LibOSErr::Unknown)
 }
 
 #[no_mangle]
@@ -302,7 +306,7 @@ pub fn accept(listened_sockfd: SockFd) -> LibOSResult<SockFd> {
         };
 
         // old file is still listened socket, with new socket handle.
-        old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd))?);
+        old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd)).unwrap());
         Ok(listened_sockfd)
     })?;
 

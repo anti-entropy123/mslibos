@@ -12,7 +12,7 @@ panic_def = []
 alloc_def = []
 
 [dependencies]
-ms_hostcall = { workspace = true }
+ms_hostcall = { workspace = true, features = ["socket"] }
 ms_std_proc_macro = { path = "../ms_std_proc_macro" }
 
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }

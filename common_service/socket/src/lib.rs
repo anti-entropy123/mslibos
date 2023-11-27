@@ -1,12 +1,14 @@
 #![feature(ip_in_core)]
-#![allow(clippy::result_unit_err)]
 
 mod drop_tap;
 // mod logs;
 mod setup_tap;
 
 use core::net::Ipv4Addr;
-use std::{os::fd::AsRawFd, sync::Mutex};
+use std::{
+    os::fd::AsRawFd,
+    sync::{Mutex, MutexGuard},
+};
 
 use lazy_static::lazy_static;
 use smoltcp::{
@@ -18,7 +20,7 @@ use smoltcp::{
 
 use crate::setup_tap::exec_tap_setup;
 use ms_hostcall::{
-    err::{LibOSErr, LibOSResult},
+    socket::{SmoltcpError, SmoltcpResult},
     types::{NetdevName, SockFd},
 };
 use ms_std::init_context;
@@ -118,7 +120,19 @@ fn try_phy_wait(
     timestamp: Instant,
     iface: &mut Interface,
     sockets: &mut SocketSet,
-) -> LibOSResult<()> {
+) -> SmoltcpResult<()> {
     phy_wait(get_tap_raw_fd(), iface.poll_delay(timestamp, sockets))
-        .map_err(|_| LibOSErr::PhyWaitErr)
+        .map_err(|e| SmoltcpError::HostIOErr(e.to_string()))
+}
+
+fn acquire_sockets() -> SmoltcpResult<MutexGuard<'static, SocketSet<'static>>> {
+    SOCKETS
+        .lock()
+        .map_err(|e| SmoltcpError::AcquireLockErr("SOCKETS".to_owned(), e.to_string()))
+}
+
+fn acquire_iface() -> SmoltcpResult<MutexGuard<'static, Interface>> {
+    IFACE
+        .lock()
+        .map_err(|e| SmoltcpError::AcquireLockErr("IFACE".to_owned(), e.to_string()))
 }

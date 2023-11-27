@@ -4,7 +4,7 @@ use core::{
 };
 
 use ms_hostcall::{
-    err::{LibOSErr, LibOSResult},
+    socket::{SmoltcpError, SmoltcpResult},
     types::{Size, SockFd},
 };
 use smoltcp::{
@@ -16,54 +16,54 @@ use smoltcp::{
     wire::{DnsQueryType, Ipv4Address},
 };
 
-use crate::{from_sockfd, iface_poll, to_sockfd, try_phy_wait, IFACE, SOCKETS};
+use crate::{acquire_iface, acquire_sockets, from_sockfd, iface_poll, to_sockfd, try_phy_wait};
 
 #[no_mangle]
-pub fn addrinfo(name: &str) -> Result<Ipv4Addr, ()> {
+pub fn addrinfo(name: &str) -> SmoltcpResult<Ipv4Addr> {
     // println!("Device raw_fd is {}", fd);
-
-    let mut iface = IFACE.lock().unwrap();
+    let mut iface = acquire_iface()?;
 
     let (dns_handle, query) = {
         let servers = &[Ipv4Address::new(114, 114, 114, 114).into()];
         let dns_socket = dns::Socket::new(servers, vec![]);
 
-        let mut sockets = SOCKETS.lock().unwrap();
+        let mut sockets = acquire_sockets()?;
+
         let dns_handle: SocketHandle = sockets.add(dns_socket);
         let dns_socket = sockets.get_mut::<dns::Socket>(dns_handle);
         let query = dns_socket
             .start_query(iface.context(), name, DnsQueryType::A)
-            .unwrap();
+            .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?;
 
         (dns_handle, query)
     };
 
     loop {
-        let mut sockets = SOCKETS.lock().unwrap();
+        let mut sockets = acquire_sockets()?;
         let timestamp = iface_poll(&mut iface, &mut sockets);
 
         let dns_socket = sockets.get_mut::<dns::Socket>(dns_handle);
         match dns_socket.get_query_result(query) {
             Ok(addrs) => {
-                let addr = match addrs.get(0).unwrap() {
+                let addr = match addrs.get(0).ok_or(SmoltcpError::DNSQueryFailed)? {
                     smoltcp::wire::IpAddress::Ipv4(ipv4) => ipv4.0,
                 };
                 sockets.remove(dns_handle);
                 return Ok(Ipv4Addr::from(addr));
             }
             Err(GetQueryResultError::Pending) => {} // not done yet
-            Err(e) => panic!("query failed: {e:?}"),
+            Err(e) => Err(SmoltcpError::SmoltcpErr(e.to_string()))?,
         }
 
-        try_phy_wait(timestamp, &mut iface, &mut sockets).expect("wait err")
+        try_phy_wait(timestamp, &mut iface, &mut sockets)?
     }
 }
 
 #[no_mangle]
-pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<SockFd, ()> {
+pub fn smol_connect(sockaddr: SocketAddrV4) -> SmoltcpResult<SockFd> {
     // println!("smol_connect");
-    let mut iface = IFACE.lock().unwrap();
-    let mut sockets = SOCKETS.lock().unwrap();
+    let mut iface = acquire_iface()?;
+    let mut sockets = acquire_sockets()?;
 
     let tcp_handle = {
         let tcp_rx_buffer = tcp::SocketBuffer::new(vec![0; 1024]);
@@ -78,21 +78,26 @@ pub fn smol_connect(sockaddr: SocketAddrV4) -> Result<SockFd, ()> {
     let tcp_socket: &mut tcp::Socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
     if tcp_socket.is_active() {
         // bad state.
-        return Err(());
+        return Err(SmoltcpError::BadTCPState(
+            "is_active".to_owned(),
+            tcp_socket.state().to_string(),
+        ));
     };
 
     let cx = iface.context();
     let local_port = 49152 + rand::random::<u16>() % 16384;
-    tcp_socket.connect(cx, sockaddr, local_port).unwrap();
+    tcp_socket
+        .connect(cx, sockaddr, local_port)
+        .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?;
 
     Ok(to_sockfd(tcp_handle))
 }
 
 #[no_mangle]
-pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
+pub fn smol_send(handle: SockFd, data: &[u8]) -> SmoltcpResult<()> {
     // println!("smol_send, handle={}", handle);
-    let mut iface = IFACE.lock().unwrap();
-    let mut sockets = SOCKETS.lock().unwrap();
+    let mut iface = acquire_iface()?;
+    let mut sockets = acquire_sockets()?;
     let mut cursor = 0;
 
     loop {
@@ -108,22 +113,24 @@ pub fn smol_send(handle: SockFd, data: &[u8]) -> Result<(), ()> {
             //     socket.remote_endpoint(),
             //     String::from_utf8_lossy(&data[cursor..])
             // );
-            cursor += socket.send_slice(&data[cursor..]).expect("cannot send");
+            cursor += socket
+                .send_slice(&data[cursor..])
+                .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?;
         }
 
         if cursor == data.len() {
             return Ok(());
         }
 
-        try_phy_wait(timestamp, &mut iface, &mut sockets).expect("wait error")
+        try_phy_wait(timestamp, &mut iface, &mut sockets)?
     }
 }
 
 #[no_mangle]
-pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
+pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> SmoltcpResult<Size> {
     // println!("smol_recv");
-    let mut iface = IFACE.lock().unwrap();
-    let mut sockets = SOCKETS.lock().unwrap();
+    let mut iface = acquire_iface()?;
+    let mut sockets = acquire_sockets()?;
 
     let mut cursor = 0;
     let mut freesize = buf.len();
@@ -147,24 +154,24 @@ pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> Result<Size, ()> {
                     // println!("read size={}, free size={}", size, freesize);
                     (size, ())
                 })
-                .expect("recv to slice failed");
+                .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?
         };
-        try_phy_wait(timestamp, &mut iface, &mut sockets).expect("wait error");
+        try_phy_wait(timestamp, &mut iface, &mut sockets)?
     }
 
     Ok(cursor)
 }
 
 #[no_mangle]
-pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
+pub fn smol_close(handle: SockFd) -> SmoltcpResult<()> {
     // println!("smol_close");
-    let mut iface = IFACE.lock().unwrap();
+    let mut iface = acquire_iface()?;
 
     let handle = from_sockfd(handle);
     let mut has_close = false;
 
     loop {
-        let mut sockets = SOCKETS.lock().unwrap();
+        let mut sockets = acquire_sockets()?;
         let timestamp = iface_poll(&mut iface, &mut sockets);
 
         let tcp_socket = sockets.get_mut::<tcp::Socket>(handle);
@@ -186,18 +193,16 @@ pub fn smol_close(handle: SockFd) -> LibOSResult<()> {
             break;
         }
 
-        if try_phy_wait(timestamp, &mut iface, &mut sockets).is_err() {
-            return Err(LibOSErr::PhyWaitErr);
-        };
+        try_phy_wait(timestamp, &mut iface, &mut sockets)?
     }
 
     Ok(())
 }
 
 #[no_mangle]
-pub fn smol_bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
-    let mut iface = IFACE.lock().unwrap();
-    let mut sockets = SOCKETS.lock().unwrap();
+pub fn smol_bind(addr: SocketAddrV4) -> SmoltcpResult<SockFd> {
+    let mut iface = acquire_iface()?;
+    let mut sockets = acquire_sockets()?;
 
     let tcp_handle = {
         let tcp_rx_buffer = tcp::SocketBuffer::new(vec![0; 64]);
@@ -210,19 +215,22 @@ pub fn smol_bind(addr: SocketAddrV4) -> LibOSResult<SockFd> {
 
     let socket = sockets.get_mut::<tcp::Socket>(tcp_handle);
     if socket.is_open() {
-        return Err(LibOSErr::WrongSockState);
+        Err(SmoltcpError::BadTCPState(
+            "is_open".to_owned(),
+            socket.state().to_string(),
+        ))?
     };
-    if socket.listen(addr.port()).is_err() {
-        return Err(LibOSErr::TcpListenErr);
-    }
+    socket
+        .listen(addr.port())
+        .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?;
 
     Ok(to_sockfd(tcp_handle))
 }
 
 #[no_mangle]
-pub fn smol_accept(handle: SockFd) -> LibOSResult<SockFd> {
-    let mut iface = IFACE.lock().unwrap();
-    let mut sockets = SOCKETS.lock().unwrap();
+pub fn smol_accept(handle: SockFd) -> SmoltcpResult<SockFd> {
+    let mut iface = acquire_iface()?;
+    let mut sockets = acquire_sockets()?;
 
     let conned_sock = loop {
         let timestamp = iface_poll(&mut iface, &mut sockets);
@@ -233,17 +241,18 @@ pub fn smol_accept(handle: SockFd) -> LibOSResult<SockFd> {
             break listened_sock;
         }
 
-        if try_phy_wait(timestamp, &mut iface, &mut sockets).is_err() {
-            return Err(LibOSErr::PhyWaitErr);
-        }
+        try_phy_wait(timestamp, &mut iface, &mut sockets)?
     };
 
     // println!("sock state is {:?}", sock.state());
     // println!("remote is {}", conned_sock.remote_endpoint().unwrap());
-    let local = conned_sock.local_endpoint().unwrap().port;
+    let local_port = conned_sock
+        .local_endpoint()
+        .ok_or(SmoltcpError::NoLocalEndpoint)?
+        .port;
 
     drop(iface);
     drop(sockets);
 
-    smol_bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), local))
+    smol_bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), local_port))
 }
