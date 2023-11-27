@@ -77,7 +77,9 @@ impl TcpListener {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
-        libos!(bind(sockaddrv4)).map(|raw_fd| Self { raw_fd })
+        libos!(bind(sockaddrv4))
+            .map(|raw_fd| Self { raw_fd })
+            .map_err(|_| LibOSErr::Unknown)
     }
 
     pub fn incoming(&self) -> Incoming {

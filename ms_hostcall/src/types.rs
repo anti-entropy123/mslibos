@@ -1,10 +1,9 @@
 #![allow(improper_ctypes_definitions)]
 
+use core::alloc::Layout;
 use core::ffi::c_void;
-use core::{alloc::Layout, net::SocketAddrV4};
 
 use alloc::{collections::BTreeMap, string::String};
-// use smoltcp::{iface::Interface, phy::TunTapInterface};
 
 use crate::{err::LibOSResult, HostCallID, IsolationContext};
 
@@ -56,19 +55,9 @@ bitflags! {
 }
 pub type Fd = u32;
 pub type Size = usize;
-
-pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> Result<Fd, ()>;
-pub type WriteFunc = fn(Fd, &[u8]) -> LibOSResult<Size>;
-pub type ReadFunc = fn(Fd, &mut [u8]) -> LibOSResult<Size>;
-pub type CloseFunc = fn(Fd) -> Result<(), ()>;
-pub type LseekFunc = fn(Fd, u32) -> LibOSResult<()>;
 pub struct Stat {
     pub st_size: Size,
 }
-pub type StatFunc = fn(Fd) -> Result<Stat, ()>;
-pub type ConnectFunc = fn(SocketAddrV4) -> Result<Fd, ()>;
-pub type BindFunc = fn(SocketAddrV4) -> LibOSResult<Fd>;
-pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
 
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;

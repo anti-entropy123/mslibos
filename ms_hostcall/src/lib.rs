@@ -8,6 +8,8 @@ extern crate alloc;
 pub mod err;
 #[cfg(feature = "fatfs")]
 pub mod fatfs;
+#[cfg(feature = "fdtab")]
+pub mod fdtab;
 #[cfg(feature = "socket")]
 pub mod socket;
 pub mod types;

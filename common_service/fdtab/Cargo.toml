@@ -10,7 +10,11 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["fatfs", "socket"] }
+ms_hostcall = { path = "../../ms_hostcall", features = [
+    "fatfs",
+    "socket",
+    "fdtab",
+] }
 
 lazy_static = "*"
 spin = "*"

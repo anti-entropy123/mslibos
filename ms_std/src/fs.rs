@@ -39,7 +39,7 @@ impl File {
     }
 
     pub fn metadata(&self) -> Result<Stat, ()> {
-        libos!(stat(self.raw_fd))
+        libos!(stat(self.raw_fd)).map_err(|_| ())
     }
 }
 

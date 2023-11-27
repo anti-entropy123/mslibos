@@ -10,7 +10,7 @@ edition = "2021"
 [dependencies]
 # smoltcp.workspace = true
 derive_more = "0.99.17"
-bitflags = "2.4.0"
+bitflags = "2.4.1"
 thiserror-no-std = "2.0.2"
 # managed = { version = "0.8", default-features = false, features = ["map"] }
 # defmt = { version = "0.3", optional = true }
@@ -19,3 +19,4 @@ thiserror-no-std = "2.0.2"
 [features]
 fatfs = []
 socket = []
+fdtab = []
