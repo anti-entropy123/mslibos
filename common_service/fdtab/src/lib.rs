@@ -137,10 +137,11 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> LibOSResult<Size> {
         }
 
         match file.src {
-            DataSource::FatFS(raw_fd) => libos!(fatfs_read(raw_fd, buf)),
-            DataSource::Net(socket) => libos!(recv(socket, buf)),
+            DataSource::FatFS(raw_fd) => {
+                libos!(fatfs_read(raw_fd, buf)).map_err(|_| LibOSErr::Unknown)
+            }
+            DataSource::Net(socket) => libos!(recv(socket, buf)).map_err(|_| LibOSErr::Unknown),
         }
-        .map_err(|_| LibOSErr::Unknown)
     })
 }
 
@@ -252,7 +253,7 @@ pub fn close(fd: Fd) -> Result<(), ()> {
     };
 
     match file.src {
-        DataSource::FatFS(raw_fd) => Ok(libos!(fatfs_close(raw_fd))?),
+        DataSource::FatFS(raw_fd) => libos!(fatfs_close(raw_fd)).map_err(|_| ()),
         DataSource::Net(socket) => libos!(smol_close(socket)).map_err(|_| ()),
     }
 }

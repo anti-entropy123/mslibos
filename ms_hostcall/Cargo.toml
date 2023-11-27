@@ -15,3 +15,6 @@ thiserror-no-std = "2.0.2"
 # managed = { version = "0.8", default-features = false, features = ["map"] }
 # defmt = { version = "0.3", optional = true }
 # libc = { version = "0.2.18", optional = true }
+
+[features]
+fatfs = []

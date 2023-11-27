@@ -1,12 +1,11 @@
 #![feature(seek_stream_len)]
-#![allow(clippy::result_unit_err)]
 
 use std::{fs, mem::ManuallyDrop, path::PathBuf, sync::Mutex};
 
 use fscommon::BufStream;
 use lazy_static::lazy_static;
 
-use ms_hostcall::types::Fd;
+use ms_hostcall::{fatfs::FatfsError, types::Fd};
 use ms_std::libos::libos;
 
 type FileSystem = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
@@ -37,21 +36,23 @@ struct FatfsFileList {
 }
 
 impl FatfsFileList {
-    fn get_file_raw_ptr(&self, fd: Fd) -> usize {
+    fn get_file_raw_ptr(&self, fd: Fd) -> Option<usize> {
         if let Some(Some(file_addr)) = self.table.get(fd as usize) {
             // println!("get_file_mut: file addr=0x{:x}", file_addr);
-            *file_addr
+            Some(*file_addr)
         } else {
-            panic!("fatfs_fd={} don't exist", fd);
+            None
         }
     }
 
-    fn _get_file(&self, fd: Fd) -> &'static File<'static> {
-        unsafe { &*(self.get_file_raw_ptr(fd) as *const File) }
+    fn _get_file(&self, fd: Fd) -> Option<&'static File<'static>> {
+        self.get_file_raw_ptr(fd)
+            .map(|ptr| unsafe { &*(ptr as *const File) })
     }
 
-    fn get_file_mut(&mut self, fd: Fd) -> &'static mut File<'static> {
-        unsafe { &mut *(self.get_file_raw_ptr(fd) as *mut File) }
+    fn get_file_mut(&mut self, fd: Fd) -> Option<&'static mut File<'static>> {
+        self.get_file_raw_ptr(fd)
+            .map(|ptr| unsafe { &mut *(ptr as *mut File) })
     }
 
     fn add_file(&mut self, file: &File) -> FatfsHandle {
@@ -59,7 +60,7 @@ impl FatfsFileList {
         self.table.len() - 1
     }
 
-    fn remove_file(&mut self, handle: FatfsHandle) -> Result<(), ()> {
+    fn remove_file(&mut self, handle: FatfsHandle) -> Result<(), FatfsError> {
         let file = self.table.get_mut(handle);
         if let Some(file) = file {
             match file.take() {
@@ -67,10 +68,10 @@ impl FatfsFileList {
                     let _ = unsafe { Box::from_raw(file_addr as *mut File) };
                     Ok(())
                 }
-                None => Err(()),
+                None => Err(FatfsError::BadInputFd(handle as Fd)),
             }
         } else {
-            Err(())
+            Err(FatfsError::BadInputFd(handle as Fd))
         }
     }
 }

@@ -13,12 +13,12 @@ pub macro func_type {
     (connect) => (ms_hostcall::types::ConnectFunc),
     (bind) => (ms_hostcall::types::BindFunc),
     (accept) => (ms_hostcall::types::AcceptFunc),
-    (fatfs_open) => (ms_hostcall::types::FatfsOpenFunc),
-    (fatfs_write) => (ms_hostcall::types::FatfsWriteFunc),
-    (fatfs_read) => (ms_hostcall::types::FatfsReadFunc),
-    (fatfs_close) => (ms_hostcall::types::FatfsCloseFunc),
-    (fatfs_seek) => (ms_hostcall::types::FatfsSeekFunc),
-    (fatfs_stat) => (ms_hostcall::types::FatfsStatFunc),
+    (fatfs_open) => (ms_hostcall::fatfs::FatfsOpenFunc),
+    (fatfs_write) => (ms_hostcall::fatfs::FatfsWriteFunc),
+    (fatfs_read) => (ms_hostcall::fatfs::FatfsReadFunc),
+    (fatfs_close) => (ms_hostcall::fatfs::FatfsCloseFunc),
+    (fatfs_seek) => (ms_hostcall::fatfs::FatfsSeekFunc),
+    (fatfs_stat) => (ms_hostcall::fatfs::FatfsStatFunc),
     (stdout) => (ms_hostcall::types::HostStdioFunc),
     (addrinfo) => (ms_hostcall::types::SmoltcpAddrInfoFunc),
     (smol_connect) => (ms_hostcall::types::SmoltcpConnectFunc),
@@ -77,7 +77,7 @@ pub macro hostcall_id {
 pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
-            fn binding() -> func_type!($name) {
+            fn binding() -> func_type!($name){
                 let mut table = USER_HOST_CALL.lock();
                 unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
             }

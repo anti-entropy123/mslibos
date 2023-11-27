@@ -73,14 +73,6 @@ pub type AcceptFunc = fn(SockFd) -> LibOSResult<SockFd>;
 // stdio
 pub type HostStdioFunc = fn(&[u8]) -> Size;
 
-// Fatfs
-pub type FatfsOpenFunc = fn(&str, OpenFlags) -> Result<Fd, ()>;
-pub type FatfsWriteFunc = fn(Fd, &[u8]) -> Result<Size, ()>;
-pub type FatfsReadFunc = fn(Fd, &mut [u8]) -> Result<Size, ()>;
-pub type FatfsCloseFunc = fn(Fd) -> Result<(), ()>;
-pub type FatfsSeekFunc = fn(Fd, u32) -> Result<(), ()>;
-pub type FatfsStatFunc = fn(Fd) -> Result<Stat, ()>;
-
 // socket
 pub type SockFd = u32;
 

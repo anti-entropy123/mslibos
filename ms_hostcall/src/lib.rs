@@ -6,6 +6,8 @@
 extern crate alloc;
 
 pub mod err;
+#[cfg(feature = "fatfs")]
+pub mod fatfs;
 pub mod types;
 
 use alloc::{borrow::ToOwned, string::String};
