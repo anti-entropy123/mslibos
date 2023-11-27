@@ -8,6 +8,8 @@ extern crate alloc;
 pub mod err;
 #[cfg(feature = "fatfs")]
 pub mod fatfs;
+#[cfg(feature = "socket")]
+pub mod socket;
 pub mod types;
 
 use alloc::{borrow::ToOwned, string::String};
