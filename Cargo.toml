@@ -1,7 +1,7 @@
 # cargo-features = ["profile-rustflags"]
 
 [workspace]
-members = ["bins/*", "libmsvisor", "ms_hostcall", "ms_std", "ms_std_proc_macro"]
+members = ["bins/*", "libmsvisor", "ms_hostcall", "ms_std_proc_macro", "ms_std"]
 
 # The reason for excluding "user/" is obvious. This workspace can be regarded as 
 # a toolchain of libos. But "user/" are users' function. 

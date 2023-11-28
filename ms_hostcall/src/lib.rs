@@ -1,10 +1,21 @@
 #![no_std]
 #![feature(ip_in_core)]
 #![feature(decl_macro)]
+#![feature(error_in_core)]
 
 extern crate alloc;
 
 pub mod err;
+#[cfg(feature = "fatfs")]
+pub mod fatfs;
+#[cfg(feature = "fdtab")]
+pub mod fdtab;
+#[cfg(feature = "mm")]
+pub mod mm;
+#[cfg(feature = "mmap_file_backend")]
+pub mod mmap_file_backend;
+#[cfg(feature = "socket")]
+pub mod socket;
 pub mod types;
 
 use alloc::{borrow::ToOwned, string::String};
@@ -174,6 +185,16 @@ pub struct IsolationContext {
     pub find_handler: usize,
     pub panic_handler: usize,
     pub heap_range: (usize, usize),
+}
+impl IsolationContext {
+    pub const fn uninit() -> Self {
+        Self {
+            isol_id: 0,
+            find_handler: 0,
+            panic_handler: 0,
+            heap_range: (0, 0),
+        }
+    }
 }
 
 pub const SERVICE_HEAP_SIZE: usize = 4 * 1024 * 1024 * 1024;

@@ -4,14 +4,14 @@
 use std::{
     collections::{BTreeMap, HashSet},
     ffi::c_void,
-    mem::MaybeUninit,
+    mem::{forget, MaybeUninit},
     sync::Arc,
 };
 
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
-use log::info;
+use log::{error, info};
 use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, MetricEvent, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
@@ -138,7 +138,12 @@ impl ELFService {
         self.metric.mark(MetricEvent::SvcEnd);
 
         logger::info!("{} complete.", self.name);
-        result
+        if let Err(e) = result {
+            error!("run failed: {}", e);
+            // forget because String refer to heap of libos modules.
+            forget(e);
+        }
+        Ok(())
     }
 
     pub fn namespace(&self) -> Namespace {

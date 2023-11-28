@@ -10,8 +10,10 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std" }
-ms_hostcall = { path = "../../ms_hostcall" }
+ms_hostcall = { path = "../../ms_hostcall", features = [
+    "fatfs",
+    "mmap_file_backend",
+] }
 
 nix = { version = "0.27.1", features = ["poll", "signal", "fs", "event"] }
 userfaultfd = { version = "0.7.0", features = [] }
-lazy_static = "1.4.0"

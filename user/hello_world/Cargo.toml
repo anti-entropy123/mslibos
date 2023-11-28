@@ -10,6 +10,7 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }
+ms_hostcall = { path = "../../ms_hostcall" }
 
 [features]
 measure_mem = []

@@ -13,7 +13,6 @@ use ms_std::{
     println,
 };
 
-#[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn main() -> Result<()> {
     let path = "lines.txt";
@@ -37,7 +36,7 @@ pub fn main() -> Result<()> {
     assert_eq!(file_content, data);
 
     /////////////////// test seek. ///////////////////
-    input_file.seek(0);
+    input_file.seek(0)?;
     file_content_buf.clear();
     input_file
         .read_to_end(&mut file_content_buf)
