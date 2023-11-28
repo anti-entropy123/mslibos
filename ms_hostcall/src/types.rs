@@ -34,7 +34,7 @@ pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 pub type DropHandlerFunc = unsafe fn();
 
 // app main
-pub type RustMainFunc = unsafe fn(&BTreeMap<String, String>) -> Result<(), ()>;
+pub type RustMainFunc = unsafe fn(&BTreeMap<String, String>) -> Result<(), String>;
 
 // fdtab
 bitflags! {
@@ -63,7 +63,7 @@ pub type HostStdioFunc = fn(&[u8]) -> Size;
 pub type SockFd = u32;
 
 // time
-pub type GetTimeFunc = fn() -> Result<u128, ()>;
+pub type GetTimeFunc = fn() -> Result<u128, String>;
 
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;

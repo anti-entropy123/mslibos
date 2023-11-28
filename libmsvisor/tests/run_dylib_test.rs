@@ -20,10 +20,7 @@ fn run_dylib_test() {
 fn run_multi_dylib_test() {
     logger::init();
 
-    let threads: Vec<JoinHandle<_>> = (0..5)
-        .into_iter()
-        .map(|_| thread::spawn(|| run_dylib_test()))
-        .collect();
+    let threads: Vec<JoinHandle<_>> = (0..5).map(|_| thread::spawn(run_dylib_test)).collect();
 
     for thread in threads {
         thread.join().expect("thread join failed");

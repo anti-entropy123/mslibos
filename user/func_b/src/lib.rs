@@ -49,7 +49,6 @@ pub fn main() -> Result<MyComplexData> {
         assert_eq!(buffer.some_int, 42);
         Ok(buffer)
     } else {
-        println!("buffer is none");
-        Err(())
+        Err("buffer is none")?
     }
 }

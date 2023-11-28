@@ -208,8 +208,8 @@ fn get_current_vm_rss_kb() -> usize {
 #[test]
 fn get_current_vm_rss_test() {
     let mut data = [0usize; 1024]; // 8 kb
-    for i in 0..data.len() {
-        data[i] = i
+    for (idx, val) in data.iter_mut().enumerate() {
+        *val = idx
     }
 
     let vm_rss = get_current_vm_rss_kb();

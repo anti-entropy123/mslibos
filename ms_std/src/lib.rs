@@ -6,8 +6,8 @@
 #![feature(decl_macro)]
 #![feature(concat_idents)]
 #![feature(generic_const_exprs)]
-#![allow(clippy::result_unit_err)]
 #![allow(incomplete_features)]
+#![feature(const_maybe_uninit_zeroed)]
 
 use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
@@ -71,28 +71,27 @@ pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<()> {
 }
 
 #[no_mangle]
-pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), ()> {
+pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
     #[cfg(feature = "unwinding")]
     {
-        use unwinding::panic;
-        let result = panic::catch_unwind(|| main(args));
+        let result = unwinding::panic::catch_unwind(|| main(args));
 
         match result {
             Ok(func_res) => {
                 if let Err(e) = func_res {
-                    println!("function exec error: {:#?}", e);
+                    Err(alloc::format!("function exec error: {}", e.msg()))?;
                 }
             }
-            Err(e) => {
-                println!("catch_unwind error: {:#?}", e);
-                return Err(());
+            Err(_e) => {
+                Err(alloc::format!("catch user function panic."))?;
             }
         }
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        let r = main(args);
-        assert!(r.is_ok());
+        if let Err(e) = main(args) {
+            Err(alloc::format!("function exec error: {}", e.msg()))?
+        };
     }
     Ok(())
 }

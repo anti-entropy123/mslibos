@@ -6,14 +6,9 @@
 
 use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
-use lazy_static::lazy_static;
 use spin::Mutex;
 
-lazy_static! {
-    // In fact, isolation_ctx should be readonly, so don't have to
-    // use Mutex or UPSafeCell.
-    pub static ref ISOLATION_CTX: Mutex<IsolationContext> = Mutex::default();
-}
+pub static ISOLATION_CTX: Mutex<IsolationContext> = Mutex::new(IsolationContext::uninit());
 
 /// This is a non-pub function because it should not be init in other file.
 fn isolation_ctx_mut() -> spin::MutexGuard<'static, IsolationContext> {

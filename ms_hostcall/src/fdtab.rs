@@ -31,9 +31,9 @@ pub enum FdtabError {
     NoReadPerm(Fd),
     #[error("missing write permission, fd={0}")]
     NoWritePerm(Fd),
-    #[error(transparent)]
+    #[error("fatfs error: {0}")]
     FatfsError(#[from] FatfsError),
-    #[error(transparent)]
+    #[error("smoltcp error: {0}")]
     SocketError(#[from] SmoltcpError),
     #[error("undefine {op} to {fd_type}, fd={fd}")]
     UndefinedOperation { op: String, fd: Fd, fd_type: String },

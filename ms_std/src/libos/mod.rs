@@ -1,4 +1,5 @@
-use lazy_static::lazy_static;
+use core::mem::MaybeUninit;
+
 use spin::Mutex;
 
 use crate::init_context::isolation_ctx;
@@ -10,9 +11,7 @@ use ms_hostcall::{
 mod utils;
 pub use utils::libos;
 
-lazy_static! {
-    pub static ref USER_HOST_CALL: Mutex<UserHostCall> = Mutex::new(UserHostCall::new());
-}
+pub static USER_HOST_CALL: Mutex<UserHostCall> = Mutex::new(UserHostCall::new());
 
 #[derive(Default)]
 pub struct UserHostCall {
@@ -62,8 +61,9 @@ pub struct UserHostCall {
 }
 
 impl UserHostCall {
-    fn new() -> Self {
-        UserHostCall::default()
+    const fn new() -> Self {
+        let v: MaybeUninit<Self> = MaybeUninit::zeroed();
+        unsafe { v.assume_init() }
     }
 }
 

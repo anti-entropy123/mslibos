@@ -1,6 +1,10 @@
 use core::{mem::ManuallyDrop, slice};
 
-use ms_hostcall::mm::ProtFlags;
+use ms_hostcall::{
+    fdtab::FdtabError,
+    mm::{MMError, ProtFlags},
+};
+use thiserror_no_std::Error;
 
 use crate::{fs::File, libos::libos};
 
@@ -11,13 +15,20 @@ pub struct Mmap {
     length: usize,
 }
 
+#[derive(Debug, Error)]
+pub enum MmapError {
+    #[error(transparent)]
+    FileErr(#[from] FdtabError),
+    #[error(transparent)]
+    MMErr(#[from] MMError),
+}
+
 impl Mmap {
-    pub fn mmap_file(file: File) -> Result<Self, ()> {
+    pub fn mmap_file(file: File) -> Result<Self, MmapError> {
         let file = ManuallyDrop::new(file);
-        let length = file.metadata().expect("file stat failed.").st_size;
+        let length = file.metadata()?.st_size;
         let aligned_length = (length + PAGE_SIZE - 1) & (!PAGE_SIZE + 1);
-        let ptr = libos!(mmap(aligned_length, ProtFlags::READ, file.as_raw_fd()))
-            .expect("libos mmap failed");
+        let ptr = libos!(mmap(aligned_length, ProtFlags::READ, file.as_raw_fd()))?;
 
         Ok(Mmap { ptr, length })
     }

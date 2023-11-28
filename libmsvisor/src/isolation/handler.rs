@@ -115,17 +115,14 @@ fn find_host_call_test() {
 
     let isol = {
         // let mut isol_table = ISOL_TABLE.lock().unwrap();
-        let services = {
-            let mut s = Vec::new();
-            s.push(LoadableUnit(
-                "fdtab".to_owned(),
-                utils::TARGET_DEBUG_PATH.join("libfdtab.so"),
-            ));
-            s
-        };
+        let services = vec![LoadableUnit(
+            "fdtab".to_owned(),
+            utils::TARGET_DEBUG_PATH.join("libfdtab.so"),
+        )];
+
         log::debug!("services={:#?}", services);
 
-        let isol = Isolation::new(&IsolationConfig {
+        Isolation::new(&IsolationConfig {
             services,
             apps: vec![LoadableUnit(
                 "hello1".to_owned(),
@@ -133,9 +130,8 @@ fn find_host_call_test() {
             )],
             groups: Default::default(),
             fs_image: None,
-        });
+        })
         // isol_table.insert(1, Arc::clone(&isol));
-        isol
     };
 
     let hostcall_id = HostCallID::Common(ms_hostcall::CommonHostCall::Write);

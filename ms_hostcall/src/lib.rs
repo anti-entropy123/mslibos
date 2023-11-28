@@ -186,6 +186,16 @@ pub struct IsolationContext {
     pub panic_handler: usize,
     pub heap_range: (usize, usize),
 }
+impl IsolationContext {
+    pub const fn uninit() -> Self {
+        Self {
+            isol_id: 0,
+            find_handler: 0,
+            panic_handler: 0,
+            heap_range: (0, 0),
+        }
+    }
+}
 
 pub const SERVICE_HEAP_SIZE: usize = 4 * 1024 * 1024 * 1024;
 

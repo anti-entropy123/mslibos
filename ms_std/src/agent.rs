@@ -1,11 +1,38 @@
-use core::{alloc::Layout, borrow::Borrow, mem::ManuallyDrop};
+use core::{alloc::Layout, borrow::Borrow, fmt::Display, mem::ManuallyDrop};
 
-use alloc::{boxed::Box, string::String};
+use alloc::{
+    boxed::Box,
+    format,
+    string::{String, ToString},
+};
 use ms_hostcall::Verify;
 
 use crate::{libos::libos, println};
 
-pub type FaaSFuncResult<T> = Result<DataBuffer<T>, ()>;
+pub type FaaSFuncResult<T> = Result<DataBuffer<T>, FaaSFuncError>;
+
+#[derive(Debug)]
+
+pub struct FaaSFuncError {
+    msg: String,
+}
+
+impl<T> From<T> for FaaSFuncError
+where
+    T: Display,
+{
+    fn from(value: T) -> Self {
+        Self {
+            msg: value.to_string(),
+        }
+    }
+}
+
+impl FaaSFuncError {
+    pub fn msg(&self) -> String {
+        format!("user function error: {}", self.msg)
+    }
+}
 
 #[derive(Debug)]
 pub struct DataBuffer<T> {

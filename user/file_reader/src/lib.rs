@@ -15,7 +15,6 @@ struct Reader2Mapper {
     content: String,
 }
 
-#[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let my_id = &args["id"];

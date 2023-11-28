@@ -2,6 +2,6 @@
 pub use ms_std;
 
 #[no_mangle]
-pub fn main() {
-    panic!("I must panic!")
+pub fn main() -> ms_std::agent::FaaSFuncResult<()> {
+    panic!("should return err")
 }
