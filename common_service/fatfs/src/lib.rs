@@ -1,9 +1,13 @@
 #![feature(seek_stream_len)]
 
-use std::{fs, mem::ManuallyDrop, path::PathBuf, sync::Mutex};
+use std::{
+    fs,
+    mem::ManuallyDrop,
+    path::PathBuf,
+    sync::{Mutex, OnceLock},
+};
 
 use fscommon::BufStream;
-use lazy_static::lazy_static;
 
 use ms_hostcall::{fatfs::FatfsError, types::Fd};
 use ms_std::libos::libos;
@@ -36,6 +40,10 @@ struct FatfsFileList {
 }
 
 impl FatfsFileList {
+    const fn new() -> Self {
+        Self { table: Vec::new() }
+    }
+
     fn get_file_raw_ptr(&self, fd: Fd) -> Option<usize> {
         if let Some(Some(file_addr)) = self.table.get(fd as usize) {
             // println!("get_file_mut: file addr=0x{:x}", file_addr);
@@ -76,30 +84,29 @@ impl FatfsFileList {
     }
 }
 
-lazy_static! {
-    static ref FS_REF_ADDR: usize = {
+static FTABLE: Mutex<FatfsFileList> = Mutex::new(FatfsFileList::new());
+static FS_REF_ADDR: OnceLock<usize> = OnceLock::new();
+
+fn get_fs_ref() -> &'static FileSystem {
+    let ref_addr = FS_REF_ADDR.get_or_init(|| {
         // I think this hack for getting reference to file system instance is
         // valid because `ManuallyDrop` can guarantee 'static lifetime.
-        let mut file_system: ManuallyDrop<Box<_>> = ManuallyDrop::new(Box::new(
-        {
+        let mut file_system: ManuallyDrop<Box<_>> = ManuallyDrop::new(Box::new({
             let image = {
                 let mut config = fs::File::options();
                 let image_path = get_fs_image_path();
-                BufStream::new(config
-                    .read(true)
-                    .write(true)
-                    .open(image_path.clone())
-                    .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", image_path, e)))
+                BufStream::new(
+                    config
+                        .read(true)
+                        .write(true)
+                        .open(image_path.clone())
+                        .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", image_path, e)),
+                )
             };
             FileSystem::new(image, fatfs::FsOptions::new()).expect("fatfs::new() failed.")
         }));
 
         file_system.as_mut() as *mut _ as usize
-    };
-
-    static ref FTABLE: Mutex<FatfsFileList> = Default::default();
-}
-
-fn get_fs_ref() -> &'static FileSystem {
-    unsafe { &*(*FS_REF_ADDR as *const FileSystem) }
+    });
+    unsafe { &*(*ref_addr as *const FileSystem) }
 }
