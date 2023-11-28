@@ -1,9 +1,7 @@
 #![allow(improper_ctypes_definitions)]
 
-use core::alloc::Layout;
-use core::ffi::c_void;
-
 use alloc::{collections::BTreeMap, string::String};
+use core::alloc::Layout;
 
 use crate::{err::LibOSResult, HostCallID, IsolationContext};
 
@@ -82,11 +80,6 @@ bitflags! {
 }
 pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
 pub type MemunmapFunc = fn(&mut [u8]) -> LibOSResult<()>;
-
-// mmap_file_backend
-pub type RegisterFileBackendFunc = fn(&mut [c_void], Fd) -> LibOSResult<()>;
-pub type UnregisterFileBackendFunc = fn(usize) -> LibOSResult<()>;
-pub type FilePageFaultHandlerFunc = fn();
 
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;

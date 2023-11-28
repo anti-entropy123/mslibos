@@ -19,4 +19,6 @@ thiserror-no-std = "2.0.2"
 [features]
 fatfs = []
 socket = []
-fdtab = []
+
+fdtab = ["fatfs", "socket"]
+mmap_file_backend = ["fdtab"]

@@ -32,8 +32,8 @@ pub macro func_type {
     (buffer_dealloc) => (ms_hostcall::types::BufferDeallocFunc),
     (mmap) => (ms_hostcall::types::MemmapFunc),
     (munmap) => (ms_hostcall::types::MemunmapFunc),
-    (register_file_backend) => (ms_hostcall::types::RegisterFileBackendFunc),
-    (unregister_file_backend) => (ms_hostcall::types::UnregisterFileBackendFunc),
+    (register_file_backend) => (ms_hostcall::mmap_file_backend::RegisterFileBackendFunc),
+    (unregister_file_backend) => (ms_hostcall::mmap_file_backend::UnregisterFileBackendFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
 }
 

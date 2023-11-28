@@ -10,6 +10,8 @@ pub mod err;
 pub mod fatfs;
 #[cfg(feature = "fdtab")]
 pub mod fdtab;
+#[cfg(feature = "mmap_file_backend")]
+pub mod mmap_file_backend;
 #[cfg(feature = "socket")]
 pub mod socket;
 pub mod types;

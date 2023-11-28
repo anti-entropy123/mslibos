@@ -12,8 +12,8 @@ use spin::Mutex;
 
 lazy_static! {
     static ref RAW_P: Mutex<HashMap<String, (usize, u64)>> = Mutex::new(HashMap::new());
-    static ref DEFAULT_RAW_P: Mutex<Option<(usize, u64)>> = Mutex::new(None);
 }
+static DEFAULT_RAW_P: Mutex<Option<(usize, u64)>> = Mutex::new(None);
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]

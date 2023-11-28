@@ -1,21 +1,22 @@
+#![feature(error_in_core)]
+
 use std::{
     ffi::c_void,
-    mem::{ManuallyDrop, MaybeUninit},
-    os::fd::{AsFd, BorrowedFd, RawFd},
+    os::fd::RawFd,
     slice::from_raw_parts_mut,
-    sync::{Mutex, MutexGuard, RwLock},
-    u64,
+    sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
-use lazy_static::lazy_static;
-use nix::{
-    fcntl::{fcntl, FcntlArg, OFlag},
-    sys::epoll::{Epoll, EpollCreateFlags, EpollEvent, EpollFlags},
-};
-use userfaultfd::{Event, Uffd, UffdBuilder};
+use nix::fcntl::{fcntl, FcntlArg, OFlag};
+use userfaultfd::{Event, Uffd};
 
-use ms_hostcall::{err::LibOSResult, types::Fd};
-use ms_std::{fs::File, io::Read, libos::libos};
+use ms_hostcall::{
+    mmap_file_backend::{MmapFileErr, MmapFileResult},
+    types::Fd,
+};
+use ms_std::libos::libos;
+
+pub mod apis;
 
 #[repr(C, align(4096))]
 struct Page([u8; PAGE_SIZE]);
@@ -28,16 +29,16 @@ struct NotifyPipe {
 }
 
 impl NotifyPipe {
-    fn new() -> Self {
-        let (recevier, sender) = nix::unistd::pipe().expect("make os pipe failed");
-        let flags = fcntl(sender, FcntlArg::F_GETFL).expect("get flags failed");
-        fcntl(
-            sender,
-            FcntlArg::F_SETFL(OFlag::from_bits(flags).unwrap() | OFlag::O_NONBLOCK),
-        )
-        .expect("set non block failed");
+    fn create() -> MmapFileResult<Self> {
+        let (recevier, sender) = || -> Result<(i32, i32), Box<dyn core::error::Error>> {
+            let (recevier, sender) = nix::unistd::pipe()?;
+            fcntl(sender, FcntlArg::F_SETFL(OFlag::O_NONBLOCK))?;
 
-        Self { recevier, sender }
+            Ok((recevier, sender))
+        }()
+        .map_err(|e| MmapFileErr::NixErr(e.to_string()))?;
+
+        Ok(Self { recevier, sender })
     }
 
     fn consume(&self) {
@@ -60,11 +61,9 @@ impl Drop for NotifyPipe {
     }
 }
 
-lazy_static! {
-    static ref REGISTER: Mutex<()> = Default::default();
-    static ref REGISTERD_REGIONS: Mutex<Vec<RegisterdMemRegion>> = Default::default();
-    static ref NOTIFY_PIPE: RwLock<Option<NotifyPipe>> = Default::default();
-}
+static REGISTER: Mutex<()> = Mutex::new(());
+static NOTIFY_PIPE: RwLock<Option<NotifyPipe>> = RwLock::new(None);
+static REGISTERD_REGIONS: Mutex<Vec<RegisterdMemRegion>> = Mutex::new(Vec::new());
 
 #[derive(Debug)]
 struct RegisterdMemRegion {
@@ -73,27 +72,26 @@ struct RegisterdMemRegion {
     src_fd: Fd,
 }
 
-fn read_at_offset(fd: Fd, offset: u32, page: *mut u8) {
+fn read_at_offset(fd: Fd, offset: u32, page: *mut u8) -> MmapFileResult<()> {
     // Copy the page pointed to by 'page' into the faulting region. Vary the contents that are
     // copied in, so that it is more obvious that each fault is handled separately.
-    let mut src_file = ManuallyDrop::new(File::from_raw_fd(fd));
-    src_file.seek(offset);
-
     let page = unsafe { from_raw_parts_mut(page, PAGE_SIZE) };
 
-    let _read_size = src_file.read(page).expect("read file failed.");
+    libos!(lseek(fd, offset))?;
+    let _read_size = libos!(read(fd, page))?;
     // println!(
     //     "src_file aligned_offset={}, read {} bytes",
     //     offset, read_size
     // );
+    Ok(())
 }
 
-fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
+fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) -> MmapFileResult<()> {
     let uffd = &region.uffd;
     let event = uffd
         .read_event()
-        .expect("read uffd_msg")
-        .expect("uffd_msg ready");
+        .map_err(|e| MmapFileErr::UffdError(e.to_string()))?
+        .ok_or(MmapFileErr::Unknown("uffd_msg should ready".to_owned()))?;
 
     if let Event::Pagefault { addr, .. } = event {
         // println!(
@@ -102,143 +100,68 @@ fn do_page_fault(page: *mut u8, region: &RegisterdMemRegion) {
         // );
         let offset = addr as usize - region.start_addr;
         let aligned_offset = offset & (!PAGE_SIZE + 1);
-        read_at_offset(region.src_fd, aligned_offset as u32, page);
+        read_at_offset(region.src_fd, aligned_offset as u32, page)?;
 
         let dst = (addr as usize & !(PAGE_SIZE - 1)) as *mut c_void;
-        let _copy = unsafe {
-            uffd.copy(page as usize as *mut c_void, dst, PAGE_SIZE, true)
-                .expect("uffd copy failed.")
-        };
-
+        let _copy = unsafe { uffd.copy(page as usize as *mut c_void, dst, PAGE_SIZE, true) }
+            .map_err(|e| MmapFileErr::UffdError(e.to_string()))?;
         // println!("(uffdio_copy.copy returned {})", copy);
     } else {
-        panic!("Unexpected event on userfaultfd");
+        Err(MmapFileErr::Unknown(
+            "Unexpected event on userfaultfd".to_owned(),
+        ))?
     }
+
+    Ok(())
 }
 
-fn init_notify_pipe() {
-    let mut notify_pipe = NOTIFY_PIPE.write().unwrap();
+fn init_notify_pipe() -> MmapFileResult<()> {
+    let mut notify_pipe = write_notify_pipe()?;
+
     if notify_pipe.is_some() {
-        panic!("notify_pipe has exist")
+        Err(MmapFileErr::PipeStateErr("multi init".to_owned()))?
     }
-    let pipe = NotifyPipe::new();
+    let pipe = NotifyPipe::create()?;
     *notify_pipe = Some(pipe);
+
+    Ok(())
 }
 
-#[no_mangle]
-pub fn file_page_fault_handler() {
-    let notify_fd =
-        unsafe { BorrowedFd::borrow_raw(NOTIFY_PIPE.read().unwrap().as_ref().unwrap().recevier) };
-
-    let mut page: Box<MaybeUninit<Page>> = Box::new(MaybeUninit::uninit());
-
-    loop {
-        let epoll = Epoll::new(EpollCreateFlags::empty()).expect("create epoll failed");
-
-        let regions = REGISTERD_REGIONS.lock().unwrap();
-        if regions.is_empty() {
-            break;
-        }
-
-        let uffd_events: Vec<_> = regions
-            .iter()
-            .map(|region| region.uffd.as_fd())
-            .enumerate()
-            .collect();
-        let notify_event = [(u64::MAX as usize, notify_fd.as_fd())];
-
-        for (idx, fd) in uffd_events.iter().chain(notify_event.iter()) {
-            epoll
-                .add(fd, EpollEvent::new(EpollFlags::EPOLLIN, *idx as u64))
-                .expect("add event failed");
-        }
-
-        let mut ready_events = [EpollEvent::empty()];
-        epoll
-            .wait(&mut ready_events, -1)
-            .expect("epoll wait failed");
-        // let revents = pollfd.revents().unwrap();
-
-        if !ready_events[0].events().contains(EpollFlags::EPOLLIN) {
-            continue;
-        }
-        let event_idx = ready_events[0].data();
-        if let Some(region) = regions.get(event_idx as usize) {
-            do_page_fault(page.as_mut_ptr() as usize as *mut u8, region);
-        } else {
-            drop(regions);
-            let pipe = NOTIFY_PIPE.read().unwrap();
-            let pipe = pipe.as_ref().expect("pipe not exist?");
-            pipe.consume()
-        }
-    }
-
-    let mut notify_pipe = NOTIFY_PIPE.write().unwrap();
-    *notify_pipe = None;
-    // println!("page fault handler exit.");
+fn acquire_register() -> MmapFileResult<MutexGuard<'static, ()>> {
+    REGISTER
+        .lock()
+        .map_err(|e| MmapFileErr::AcquireLockErr("REGISTER".to_owned(), e.to_string()))
 }
 
-fn acquire_regions_or_notify() -> MutexGuard<'static, std::vec::Vec<RegisterdMemRegion>> {
+fn acquire_regions() -> MmapFileResult<MutexGuard<'static, Vec<RegisterdMemRegion>>> {
+    REGISTERD_REGIONS
+        .lock()
+        .map_err(|e| MmapFileErr::AcquireLockErr("REGISTERD_REGIONS".to_owned(), e.to_string()))
+}
+
+fn acquire_regions_or_notify() -> MmapFileResult<MutexGuard<'static, Vec<RegisterdMemRegion>>> {
     match REGISTERD_REGIONS.try_lock() {
-        Ok(regions) => regions,
+        Ok(regions) => Ok(regions),
         Err(_) => {
-            let notify_pipe = NOTIFY_PIPE.read().unwrap();
-            notify_pipe.as_ref().expect("notify has not init?").notify();
-            REGISTERD_REGIONS.lock().unwrap()
+            let notify_pipe = read_notify_pipe()?;
+            notify_pipe
+                .as_ref()
+                .ok_or(MmapFileErr::PipeStateErr("uninit".to_owned()))?
+                .notify();
+
+            acquire_regions()
         }
     }
 }
 
-#[no_mangle]
-pub fn register_file_backend(mm_region: &mut [c_void], file_fd: Fd) -> LibOSResult<()> {
-    let _lock = REGISTER.lock().unwrap();
-    // If have error: `OpenDevUserfaultfd(Os { code: 13, kind: PermissionDenied, message: "Permission denied" })`
-    // ,use this command:
-    //    `setfacl -m u:${USER}:rw /dev/userfaultfd`
-    let uffd = UffdBuilder::new()
-        .close_on_exec(true)
-        .non_blocking(true)
-        .user_mode_only(true)
-        .create()
-        .expect("uffd creation failed");
-
-    uffd.register(mm_region.as_mut_ptr(), mm_region.len())
-        .expect("register failed");
-
-    let mut regions = acquire_regions_or_notify();
-    regions.push(RegisterdMemRegion {
-        uffd,
-        start_addr: mm_region.as_ptr() as usize,
-        src_fd: file_fd,
-    });
-
-    if NOTIFY_PIPE.read().unwrap().is_none() {
-        init_notify_pipe();
-
-        libos!(spawn_fault_handler(
-            ms_std::init_context::isolation_ctx().isol_id
-        ))
-        .expect("spawn_fault_handler failed.");
-    }
-    // println!("spawn_fault_handler successfully.");
-
-    Ok(())
+fn read_notify_pipe() -> MmapFileResult<RwLockReadGuard<'static, Option<NotifyPipe>>> {
+    NOTIFY_PIPE
+        .read()
+        .map_err(|e| MmapFileErr::AcquireLockErr("NOTIFY_PIPE.read".to_owned(), e.to_string()))
 }
 
-#[no_mangle]
-pub fn unregister_file_backend(addr: usize) -> LibOSResult<()> {
-    let _lock = REGISTER.lock().unwrap();
-    let pipe = NOTIFY_PIPE.read().unwrap();
-    let pipe = pipe.as_ref().expect("notify pipe not exist?");
-    pipe.notify();
-    let mut regions = acquire_regions_or_notify();
-
-    for (idx, region) in (*regions).iter().enumerate() {
-        if region.start_addr == addr {
-            regions.remove(idx);
-            break;
-        }
-    }
-
-    Ok(())
+fn write_notify_pipe() -> MmapFileResult<RwLockWriteGuard<'static, Option<NotifyPipe>>> {
+    NOTIFY_PIPE
+        .write()
+        .map_err(|e| MmapFileErr::AcquireLockErr("NOTIFY_PIPE.read".to_owned(), e.to_string()))
 }
