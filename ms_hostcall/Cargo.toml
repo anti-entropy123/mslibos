@@ -22,3 +22,4 @@ socket = []
 
 fdtab = ["fatfs", "socket"]
 mmap_file_backend = ["fdtab"]
+mm = ["mmap_file_backend"]

@@ -1,6 +1,6 @@
 use core::{mem::ManuallyDrop, slice};
 
-use ms_hostcall::types::ProtFlags;
+use ms_hostcall::mm::ProtFlags;
 
 use crate::{fs::File, libos::libos};
 

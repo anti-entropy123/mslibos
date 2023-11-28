@@ -1,9 +1,8 @@
 #![allow(improper_ctypes_definitions)]
 
 use alloc::{collections::BTreeMap, string::String};
-use core::alloc::Layout;
 
-use crate::{err::LibOSResult, HostCallID, IsolationContext};
+use crate::{HostCallID, IsolationContext};
 
 use bitflags::bitflags;
 
@@ -65,21 +64,6 @@ pub type SockFd = u32;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, ()>;
-
-// mm
-pub type BufferAllocFunc = fn(&str, Layout, u64) -> Result<usize, ()>;
-pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
-pub type BufferDeallocFunc = fn(usize, Layout);
-bitflags! {
-    #[derive(PartialEq, Eq)]
-    pub struct ProtFlags: u32 {
-        const READ = 1;
-        const WRITE = 2;
-        const EXEC = 3;
-    }
-}
-pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> LibOSResult<usize>;
-pub type MemunmapFunc = fn(&mut [u8]) -> LibOSResult<()>;
 
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;
