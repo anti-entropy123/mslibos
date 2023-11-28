@@ -16,5 +16,4 @@ ms_hostcall = { path = "../../ms_hostcall", features = [
     "fdtab",
 ] }
 
-lazy_static = "*"
-spin = "*"
+spin = "0.9.8"

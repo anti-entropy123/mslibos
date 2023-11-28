@@ -5,7 +5,6 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use lazy_static::lazy_static;
 use spin::Mutex;
 
 use ms_hostcall::types::{Fd, OpenMode, SockFd};
@@ -37,18 +36,16 @@ impl File {
     }
 }
 
-lazy_static! {
-    static ref FD_TABLE: FdTable = FdTable::new();
-}
+static FD_TABLE: FdTable = FdTable::new();
 
 struct FdTable {
     inner: Mutex<Vec<Option<File>>>,
 }
 
 impl FdTable {
-    fn new() -> Self {
+    const fn new() -> Self {
         FdTable {
-            inner: Mutex::default(),
+            inner: Mutex::new(Vec::new()),
         }
     }
 
