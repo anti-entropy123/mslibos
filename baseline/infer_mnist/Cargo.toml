@@ -1,0 +1,12 @@
+[package]
+name = "infer_mnist"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
