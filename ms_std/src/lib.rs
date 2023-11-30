@@ -9,6 +9,8 @@
 #![allow(incomplete_features)]
 #![feature(const_maybe_uninit_zeroed)]
 
+use core::mem::forget;
+
 use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
 
@@ -21,6 +23,7 @@ pub mod io;
 pub mod libos;
 pub mod mm;
 pub mod net;
+pub mod sym_patch;
 pub mod sync;
 pub mod time;
 
@@ -50,16 +53,6 @@ cfg_if::cfg_if! {
 
             #[lang = "eh_personality"]
             extern "C" fn eh_personality() {}
-
-            // If remove this line, will have compile error: "undefined
-            // symbol: _Unwind_Resume"
-            #[allow(non_snake_case)]
-            #[linkage = "weak"]
-            #[no_mangle]
-            pub fn _Unwind_Resume() {
-                use crate::println;
-                println!("libos: _unwind_resume")
-            }
         }
     }
 }
@@ -82,7 +75,8 @@ pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
                     Err(alloc::format!("function exec error: {}", e.msg()))?;
                 }
             }
-            Err(_e) => {
+            Err(e) => {
+                forget(e);
                 Err(alloc::format!("catch user function panic."))?;
             }
         }

@@ -1,0 +1,38 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "mmap_file_backend",
+      "libmmap_file_backend.so"
+    ]
+  ],
+  "apps": [
+    [
+      "mnist",
+      "libnn_conv.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "mnist"
+      ],
+      "args": {}
+    }
+  ]
+}
