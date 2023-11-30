@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
 candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
-candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+burn = { path = "/home/yjn/rust_project/burn/burn", default-features = false, features = [
+    "ndarray-no-std",
+] }
+serde = { version = "1.0.193", default-features = false, features = ["derive"] }
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
