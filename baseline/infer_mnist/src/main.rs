@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     io::{Read, Write},
-    iter::zip,
     time::SystemTime,
 };
 
@@ -9,7 +8,7 @@ use burn::{
     module::Module,
     nn::{self, BatchNorm, PaddingConfig2d},
     record::{BinBytesRecorder, FullPrecisionSettings, Recorder},
-    tensor::{backend::Backend, Tensor},
+    tensor::{backend::Backend, Int, Tensor},
 };
 
 const LABELS: usize = 10;
@@ -161,57 +160,36 @@ fn tranform_image_tensor(input: Vec<u8>) -> Tensor<NdArrayBackend, 3> {
     .reshape([-1, 28, 28])
 }
 
-fn inference(model: Model<NdArrayBackend>) -> anyhow::Result<()> {
-    let (input_images, test_labels) = load_input_data_from_candle().unwrap();
-    // println!("input_images: {:?}", input_images);
-    // save_to_file(&input_images, &test_labels);
+fn inference(model: Model<NdArrayBackend>, images: Vec<u8>, labels: Vec<u8>) -> anyhow::Result<()> {
+    let input_images = tranform_image_tensor(images);
+    let expect_labels: Tensor<NdArrayBackend, 1, Int> = Tensor::from_ints(
+        labels
+            .iter()
+            .map(|v| *v as i32)
+            .collect::<Vec<i32>>()
+            .as_slice(),
+    );
 
-    let input_images = tranform_image_tensor(input_images);
-    // println!("input_images: {:?}", input_images);
+    let batch_size = input_images.shape().dims[0];
 
-    let bsz = input_images.shape().dims[0];
-    let images_and_labels = zip(input_images.iter_dim(0), test_labels);
+    let output = model.forward(input_images);
+    let output = burn::tensor::activation::softmax(output, 1);
+    let labels = output.argmax(1).reshape([-1]);
+    let test_accuracy = labels.equal(expect_labels).int().sum().into_scalar();
 
-    let mut correct = 0;
-    for (image, expect_label) in images_and_labels {
-        let t = SystemTime::now();
-        let output = model.forward(image);
-        let output = burn::tensor::activation::softmax(output, 1);
-        let label = output.argmax(1).reshape([1]).into_scalar() as u8;
-        // println!(
-        //     "expect label: {}, got: {}, take: {}",
-        //     .get(idx).unwrap(),
-        //     label,
-        //     t.elapsed().unwrap().as_millis()
-        // );
-        if expect_label == label {
-            correct += 1;
-        }
-    }
-    println!("test_accuracy: {}", correct as f32 / bsz as f32);
-    // let test_labels = input
-    //     .test_labels
-    //     .to_dtype(candle_core::DType::U32)?
-    //     .to_device(&candle_core::Device::Cpu)?;
-    // println!("test_images shape: {:?}", test_images.shape());
-
-    // let sum_ok = test_logits
-    //     .argmax(D::Minus1)?
-    //     .eq(&test_labels)?
-    //     .to_dtype(DType::F32)?
-    //     .sum_all()?
-    //     .to_scalar::<f32>()?;
-
-    // let test_accuracy = sum_ok / test_labels.dims1()? as f32;
-    // println!("{:5.2}%", 100. * test_accuracy);
+    println!(
+        "test_accuracy: {:5.2}%",
+        test_accuracy as f32 / batch_size as f32
+    );
 
     Ok(())
 }
 
 fn main() {
     let model = build_and_load_model().expect("load model failed");
+    let (input_images, test_labels) = load_input_data_from_candle().unwrap();
 
     let t = SystemTime::now();
-    inference(model).unwrap();
+    inference(model, input_images, test_labels).unwrap();
     println!("infer take time: {}ms", t.elapsed().unwrap().as_millis())
 }
