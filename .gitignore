@@ -10,3 +10,4 @@ _members.txt
 
 **/*.img
 **/fake*txt
+**/*.bin

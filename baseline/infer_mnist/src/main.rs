@@ -1,4 +1,9 @@
-use std::{fs::File, io::Read, time::SystemTime};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    iter::zip,
+    time::SystemTime,
+};
 
 use burn::{
     module::Module,
@@ -6,7 +11,6 @@ use burn::{
     record::{BinBytesRecorder, FullPrecisionSettings, Recorder},
     tensor::{backend::Backend, Tensor},
 };
-use image::ImageBuffer;
 
 const LABELS: usize = 10;
 
@@ -114,65 +118,77 @@ fn build_and_load_model() -> anyhow::Result<Model<NdArrayBackend>> {
     Ok(model.load_record(record))
 }
 
-fn save_to_img(idx: usize, tensor: &Tensor<NdArrayBackend, 3>) {
-    let mut img_buffer = ImageBuffer::new(28, 28);
-    for (x, row) in tensor.clone().reshape([28, 28]).iter_dim(0).enumerate() {
-        for (y, col) in row.reshape([28]).to_data().value.iter().enumerate() {
-            img_buffer.put_pixel(
-                x as u32,
-                y as u32,
-                image::Rgb([
-                    (*col * 255.) as u8,
-                    (*col * 255.) as u8,
-                    (*col * 255.) as u8,
-                ]),
-            );
-        }
-    }
-    img_buffer.save(format!("input{}.png", idx)).unwrap();
+#[allow(dead_code)]
+fn save_to_file(image_tensor: &Vec<u8>, labels_data: &Vec<u8>) {
+    // let mut img_buffer = ImageBuffer::new(28, 28);
+    let mut images = File::create("input_image.bin").unwrap();
+    images.write_all(image_tensor.as_slice()).unwrap();
+
+    let mut labels = File::create("labels.bin").unwrap();
+    labels.write_all(labels_data.as_slice()).unwrap()
 }
 
-fn load_input_data_from_candle() -> anyhow::Result<(Tensor<NdArrayBackend, 3>, Vec<u32>)> {
-    let input =
+fn load_input_data_from_candle() -> anyhow::Result<(Vec<u8>, Vec<u8>)> {
+    let data_set =
         candle_datasets::vision::mnist::load_dir("/home/yjn/Downloads/mnist_dataset").unwrap();
+
     let test_images: candle_core::Tensor =
-        input.test_images.to_device(&candle_core::Device::Cpu)?;
-    println!("{:?}", test_images.shape());
-    let bsz = test_images.shape().dims2()?.0;
+        data_set.test_images.to_device(&candle_core::Device::Cpu)?;
     let test_images = test_images.reshape((1, ()))?.get(0)?;
-    let test_images = test_images.to_vec1::<f32>()?;
-    let test_labels: Vec<u32> = input
+    let test_images: Vec<u8> = test_images
+        .to_vec1::<f32>()?
+        .iter()
+        .map(|v| (v * 255.) as u8)
+        .collect();
+
+    let test_labels: Vec<u8> = data_set
         .test_labels
-        .to_dtype(candle_core::DType::U32)?
+        .to_dtype(candle_core::DType::U8)?
         .to_device(&candle_core::Device::Cpu)?
         .to_vec1()?;
 
-    let input_images: Tensor<NdArrayBackend, 1> = Tensor::from_floats(test_images.as_slice());
-    let input_images = input_images.reshape([bsz, 28, 28]);
-    Ok((input_images, test_labels))
+    Ok((test_images, test_labels))
+}
+
+fn tranform_image_tensor(input: Vec<u8>) -> Tensor<NdArrayBackend, 3> {
+    Tensor::from_floats(
+        input
+            .iter()
+            .map(|v| ((*v as f32 / 255.) - 0.1307) / 0.3081)
+            .collect::<Vec<f32>>()
+            .as_slice(),
+    )
+    .reshape([-1, 28, 28])
 }
 
 fn inference(model: Model<NdArrayBackend>) -> anyhow::Result<()> {
     let (input_images, test_labels) = load_input_data_from_candle().unwrap();
+    // println!("input_images: {:?}", input_images);
+    // save_to_file(&input_images, &test_labels);
 
-    for (idx, image) in input_images.iter_dim(0).enumerate() {
-        save_to_img(idx, &image);
+    let input_images = tranform_image_tensor(input_images);
+    // println!("input_images: {:?}", input_images);
+
+    let bsz = input_images.shape().dims[0];
+    let images_and_labels = zip(input_images.iter_dim(0), test_labels);
+
+    let mut correct = 0;
+    for (image, expect_label) in images_and_labels {
         let t = SystemTime::now();
         let output = model.forward(image);
         let output = burn::tensor::activation::softmax(output, 1);
-        let label = output.argmax(1).reshape([1]).into_scalar();
-
-        println!(
-            "expect label: {}, got: {}, take: {}",
-            test_labels.get(idx).unwrap(),
-            label,
-            t.elapsed().unwrap().as_millis()
-        );
-        if idx == 9 {
-            break;
+        let label = output.argmax(1).reshape([1]).into_scalar() as u8;
+        // println!(
+        //     "expect label: {}, got: {}, take: {}",
+        //     .get(idx).unwrap(),
+        //     label,
+        //     t.elapsed().unwrap().as_millis()
+        // );
+        if expect_label == label {
+            correct += 1;
         }
     }
-
+    println!("test_accuracy: {}", correct as f32 / bsz as f32);
     // let test_labels = input
     //     .test_labels
     //     .to_dtype(candle_core::DType::U32)?
