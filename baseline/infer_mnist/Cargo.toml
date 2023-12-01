@@ -1,0 +1,16 @@
+[package]
+name = "infer_mnist"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+burn = { path = "/home/yjn/rust_project/burn/burn", default-features = false, features = [
+    "ndarray-no-std",
+] }
+serde = { version = "1.0.193", default-features = false, features = ["derive"] }
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.3.1" }
+image = "0.24.7"

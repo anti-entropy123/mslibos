@@ -8,7 +8,7 @@ use std::{
     thread,
 };
 
-use anyhow::{anyhow, Ok};
+use anyhow::{anyhow, Context, Ok};
 use lazy_static::lazy_static;
 
 use log::info;
@@ -140,7 +140,7 @@ impl Isolation {
         };
 
         for app in &self.app_names {
-            let app = self.service_or_load(app)?;
+            let app = self.service_or_load(app).context("load app failed.")?;
             let result = app.run(&args);
             result.map_err(|_| anyhow!("app_{} run failed.", app.name()))?
         }
@@ -182,7 +182,7 @@ impl Isolation {
         self.service_or_load(&"libc".to_owned())?;
 
         if self.groups.is_empty() {
-            self.run_as_sequence()?
+            self.run_as_sequence().context("run_as_sequence failed")?
         } else {
             for group in &self.groups {
                 self.run_group_in_parallel(group)?
