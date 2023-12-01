@@ -89,7 +89,9 @@ pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        if let Err(e) = main(args) {
+        let result = main(args);
+
+        if let Err(e) = result {
             Err(alloc::format!("function exec error: {}", e.msg()))?
         };
     }

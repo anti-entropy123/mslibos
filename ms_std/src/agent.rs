@@ -56,17 +56,22 @@ where
     where
         T: Default,
     {
-        let p = {
-            let l: Layout = Layout::new::<T>();
-            if l.size() == 0 {
-                core::ptr::null_mut::<T>()
-            } else {
-                let fingerprint = T::__fingerprint();
-                libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T
+        let l: Layout = Layout::new::<T>();
+
+        let p = if l.size() == 0 {
+            unsafe {
+                alloc::alloc::alloc(Layout::from_size_align(4, 4).unwrap()) as usize as *mut T
             }
+        } else {
+            let fingerprint = T::__fingerprint();
+            let addr =
+                libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T;
+
+            unsafe { core::ptr::write(addr, T::default()) };
+
+            addr
         };
 
-        unsafe { core::ptr::write(p, T::default()) };
         let inner = unsafe { Box::from_raw(p) };
 
         Self {
