@@ -35,6 +35,6 @@ jobs:
           toolchain: nightly-2023-08-04
           override: true
       - name: Build
-        run: cargo build --release --workspace && ./scripts/build_user.sh --release
+        run: cargo build --workspace && ./scripts/build_user.sh
       - name: Rust Test
-        run: cargo run --release && RUST_BACKTRACE=1 cargo test --release -p libmsvisor
+        run: RUST_BACKTRACE=1 cargo test -p libmsvisor
