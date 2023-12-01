@@ -37,4 +37,4 @@ jobs:
       - name: Build
         run: cargo build --release --workspace && ./scripts/build_user.sh --release
       - name: Rust Test
-        run: RUST_BACKTRACE=1 cargo test --release -p libmsvisor
+        run: cargo run --release && RUST_BACKTRACE=1 cargo test --release -p libmsvisor
