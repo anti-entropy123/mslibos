@@ -209,3 +209,10 @@ impl Verify for () {
         unsafe { *(&v as *const _ as usize as *const u64) }
     }
 }
+
+impl Verify for i32 {
+    fn __fingerprint() -> u64 {
+        let v: i64 = 0x43c29777932e38aei64;
+        unsafe { *(&v as *const _ as usize as *const u64) }
+    }
+}
