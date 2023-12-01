@@ -149,20 +149,20 @@ fn load_input_data_from_candle() -> anyhow::Result<(Vec<u8>, Vec<u8>)> {
     Ok((test_images, test_labels))
 }
 
-fn tranform_image_tensor(input: Vec<u8>) -> Tensor<NdArrayBackend, 3> {
-    Tensor::from_floats(
-        input
+fn tranform_image_tensor(
+    input_images: Vec<u8>,
+    labels: Vec<u8>,
+) -> (Tensor<NdArrayBackend, 3>, Tensor<NdArrayBackend, 1, Int>) {
+    let images = Tensor::from_floats(
+        input_images
             .iter()
             .map(|v| ((*v as f32 / 255.) - 0.1307) / 0.3081)
             .collect::<Vec<f32>>()
             .as_slice(),
     )
-    .reshape([-1, 28, 28])
-}
+    .reshape([-1, 28, 28]);
 
-fn inference(model: Model<NdArrayBackend>, images: Vec<u8>, labels: Vec<u8>) -> anyhow::Result<()> {
-    let input_images = tranform_image_tensor(images);
-    let expect_labels: Tensor<NdArrayBackend, 1, Int> = Tensor::from_ints(
+    let labels: Tensor<NdArrayBackend, 1, Int> = Tensor::from_ints(
         labels
             .iter()
             .map(|v| *v as i32)
@@ -170,15 +170,23 @@ fn inference(model: Model<NdArrayBackend>, images: Vec<u8>, labels: Vec<u8>) -> 
             .as_slice(),
     );
 
-    let batch_size = input_images.shape().dims[0];
+    (images, labels)
+}
 
-    let output = model.forward(input_images);
+fn inference(
+    model: Model<NdArrayBackend>,
+    images: Tensor<NdArrayBackend, 3>,
+    expect_labels: Tensor<NdArrayBackend, 1, Int>,
+) -> anyhow::Result<()> {
+    let batch_size = expect_labels.shape().dims[0];
+
+    let output = model.forward(images);
     let output = burn::tensor::activation::softmax(output, 1);
     let labels = output.argmax(1).reshape([-1]);
     let test_accuracy = labels.equal(expect_labels).int().sum().into_scalar();
 
     println!(
-        "test_accuracy: {:5.2}%",
+        "test_accuracy: {:5.2}",
         test_accuracy as f32 / batch_size as f32
     );
 
@@ -188,6 +196,7 @@ fn inference(model: Model<NdArrayBackend>, images: Vec<u8>, labels: Vec<u8>) -> 
 fn main() {
     let model = build_and_load_model().expect("load model failed");
     let (input_images, test_labels) = load_input_data_from_candle().unwrap();
+    let (input_images, test_labels) = tranform_image_tensor(input_images, test_labels);
 
     let t = SystemTime::now();
     inference(model, input_images, test_labels).unwrap();

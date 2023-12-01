@@ -8,14 +8,11 @@ use burn::{
     module::Module,
     nn::{self, BatchNorm, PaddingConfig2d},
     record::{BinBytesRecorder, FullPrecisionSettings, Recorder, RecorderError},
-    tensor::{backend::Backend, Distribution, Tensor},
+    tensor::{backend::Backend, Int, Tensor},
 };
 use ms_hostcall::fdtab::FdtabError;
 use ms_std::{
     agent::{FaaSFuncError, FaaSFuncResult as Result},
-    fs::File,
-    io::Read,
-    mm::Mmap,
     println,
 };
 use ms_std_proc_macro::FaasData;
@@ -137,38 +134,53 @@ pub fn build_and_load_model() -> core::result::Result<Model<NdArrayBackend>, Faa
     Ok(model.load_record(record))
 }
 
-pub fn load_input_image() -> core::result::Result<Tensor<NdArrayBackend, 3>, FaaSFuncError> {
-    // let input: Tensor<NdArrayBackend, 3> = Tensor::random([1, 28, 28], Distribution::Default);
-    let mut content_file = File::open("input.txt")?;
-    let mut content = String::new();
-    content_file.read_to_string(&mut content)?;
+pub fn load_input_image() -> core::result::Result<(Vec<u8>, Vec<u8>), FaaSFuncError> {
+    static IMAGES: &[u8] = include_bytes!("../input_image.bin");
+    static LABELS: &[u8] = include_bytes!("../labels.bin");
 
-    let pixels: Vec<f32> = content
-        .split(", ")
-        .map(|v| {
-            v.trim().parse::<u32>().unwrap_or_else(|e| {
-                println!("parse {} failed", v);
-                panic!()
-            })
-        })
-        .map(|v| ((v as f32 / 255.) - 0.1307) / 0.3081)
-        .collect();
-    let input: Tensor<NdArrayBackend, 1> = Tensor::from_floats(pixels.as_slice());
-
-    Ok(input.reshape([1, 28, 28]))
+    Ok((IMAGES.to_vec(), LABELS.to_vec()))
 }
 
-pub fn inference(model: &Model<NdArrayBackend>, input: Tensor<NdArrayBackend, 3>) {
-    let output = model.forward(input);
+fn tranform_image_tensor(
+    input_images: Vec<u8>,
+    labels: Vec<u8>,
+) -> (Tensor<NdArrayBackend, 3>, Tensor<NdArrayBackend, 1, Int>) {
+    let images = Tensor::from_floats(
+        input_images
+            .iter()
+            .map(|v| ((*v as f32 / 255.) - 0.1307) / 0.3081)
+            .collect::<Vec<f32>>()
+            .as_slice(),
+    )
+    .reshape([-1, 28, 28]);
+
+    let labels: Tensor<NdArrayBackend, 1, Int> = Tensor::from_ints(
+        labels
+            .iter()
+            .map(|v| *v as i32)
+            .collect::<Vec<i32>>()
+            .as_slice(),
+    );
+
+    (images, labels)
+}
+
+fn inference(
+    model: Model<NdArrayBackend>,
+    images: Tensor<NdArrayBackend, 3>,
+    expect_labels: Tensor<NdArrayBackend, 1, Int>,
+) {
+    let batch_size = expect_labels.shape().dims[0];
+
+    let output = model.forward(images);
     let output = burn::tensor::activation::softmax(output, 1);
-    let expect_label = output.clone().argmax(1).reshape([1]).into_scalar();
-    let got_label = *output.clone().argmax(1).to_data().value.first().unwrap();
-    let output = output.into_data().convert::<f32>().value;
+    let labels = output.argmax(1).reshape([-1]);
+    let test_accuracy = labels.equal(expect_labels).int().sum().into_scalar();
 
     println!(
-        "expect label: {}, got label: {},  output: {:?}",
-        expect_label, got_label, output
-    )
+        "test_accuracy: {:5.2}",
+        test_accuracy as f32 / batch_size as f32
+    );
 }
 
 #[no_mangle]
@@ -176,11 +188,15 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
     println!("main");
     let model = build_and_load_model()?;
     println!("load model ok");
-    let input = load_input_image()?;
-    println!("{:?}", input);
+    let (input_images, test_labels) = load_input_image()?;
     println!("load input ok");
+    let (input_images, test_labels) = tranform_image_tensor(input_images, test_labels);
 
-    inference(&model, input);
+    inference(
+        model,
+        input_images.slice([0..100]),
+        test_labels.slice([0..100]),
+    );
 
     Ok(().into())
 }
