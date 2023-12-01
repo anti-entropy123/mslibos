@@ -1,7 +1,7 @@
 #![no_std]
 
 use alloc::{collections::BTreeMap, string::String};
-use ms_std::{agent::FaaSFuncResult as Result, println};
+use ms_std::{agent::FaaSFuncResult as Result, libos::MetricEvent::Mem, println};
 
 extern crate alloc;
 
