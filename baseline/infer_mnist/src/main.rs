@@ -4,12 +4,13 @@ use burn::{
     module::Module,
     nn::{self, BatchNorm, PaddingConfig2d},
     record::{BinBytesRecorder, FullPrecisionSettings, Recorder},
-    tensor::{backend::Backend, Distribution, Tensor},
+    tensor::{backend::Backend, Tensor},
 };
+use image::ImageBuffer;
 
 const LABELS: usize = 10;
 
-pub type NdArrayBackend = burn::backend::ndarray::NdArray;
+type NdArrayBackend = burn::backend::ndarray::NdArray;
 
 #[derive(Module, Debug)]
 pub struct ConvBlock<B: Backend>
@@ -22,7 +23,7 @@ where
 }
 
 impl<B: Backend> ConvBlock<B> {
-    pub fn new(channels: [usize; 2], kernel_size: [usize; 2]) -> Self {
+    fn new(channels: [usize; 2], kernel_size: [usize; 2]) -> Self {
         let conv = nn::conv::Conv2dConfig::new(channels, kernel_size)
             .with_padding(PaddingConfig2d::Valid)
             .init();
@@ -35,7 +36,7 @@ impl<B: Backend> ConvBlock<B> {
         }
     }
 
-    pub fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
+    fn forward(&self, input: Tensor<B, 4>) -> Tensor<B, 4> {
         let x = self.conv.forward(input);
         let x = self.norm.forward(x);
 
@@ -98,39 +99,44 @@ impl<B: Backend> Model<B> {
     }
 }
 
-// static STATE_ENCODED: &[u8] = include_bytes!("../model.bin");
+static STATE_ENCODED: &[u8] = include_bytes!("../model.bin");
 
-pub fn build_and_load_model() -> anyhow::Result<Model<NdArrayBackend>> {
+fn build_and_load_model() -> anyhow::Result<Model<NdArrayBackend>> {
     let mut state_encoded = Vec::new();
     let mut state = File::open("model.bin")?;
-    state.read_to_end(&mut state_encoded);
-
-    println!("mmap_file ok");
+    state.read_to_end(&mut state_encoded)?;
 
     let model: Model<NdArrayBackend> = Model::new();
     let record = BinBytesRecorder::<FullPrecisionSettings>::default()
-        .load(state_encoded)
+        .load(STATE_ENCODED.to_vec())
         .expect("Failed to decode state");
 
     Ok(model.load_record(record))
 }
 
-pub fn inference(model: Model<NdArrayBackend>) {
-    let input: Tensor<NdArrayBackend, 3> =
-        Tensor::random([1, 28, 28], Distribution::Normal(0., 100.));
-
-    let output = model.forward(input);
-    let output = burn::tensor::activation::softmax(output, 1);
-    let output = output.into_data().convert::<f32>().value;
-
-    println!("{:?}", output)
+fn save_to_img(idx: usize, tensor: &Tensor<NdArrayBackend, 3>) {
+    let mut img_buffer = ImageBuffer::new(28, 28);
+    for (x, row) in tensor.clone().reshape([28, 28]).iter_dim(0).enumerate() {
+        for (y, col) in row.reshape([28]).to_data().value.iter().enumerate() {
+            img_buffer.put_pixel(
+                x as u32,
+                y as u32,
+                image::Rgb([
+                    (*col * 255.) as u8,
+                    (*col * 255.) as u8,
+                    (*col * 255.) as u8,
+                ]),
+            );
+        }
+    }
+    img_buffer.save(format!("input{}.png", idx)).unwrap();
 }
 
-fn infer(
-    input: candle_datasets::vision::Dataset,
-    model: Model<NdArrayBackend>,
-) -> anyhow::Result<()> {
-    let test_images = input.test_images.to_device(&candle_core::Device::Cpu)?;
+fn load_input_data_from_candle() -> anyhow::Result<(Tensor<NdArrayBackend, 3>, Vec<u32>)> {
+    let input =
+        candle_datasets::vision::mnist::load_dir("/home/yjn/Downloads/mnist_dataset").unwrap();
+    let test_images: candle_core::Tensor =
+        input.test_images.to_device(&candle_core::Device::Cpu)?;
     println!("{:?}", test_images.shape());
     let bsz = test_images.shape().dims2()?.0;
     let test_images = test_images.reshape((1, ()))?.get(0)?;
@@ -141,22 +147,30 @@ fn infer(
         .to_device(&candle_core::Device::Cpu)?
         .to_vec1()?;
 
-    // println!("label[0] {:?}", test_labels.get(0)?);
-
     let input_images: Tensor<NdArrayBackend, 1> = Tensor::from_floats(test_images.as_slice());
     let input_images = input_images.reshape([bsz, 28, 28]);
-    println!("{:?}", input_images.shape());
+    Ok((input_images, test_labels))
+}
 
-    for (idx, i) in input_images.iter_dim(0).enumerate() {
-        let output = model.forward(i);
+fn inference(model: Model<NdArrayBackend>) -> anyhow::Result<()> {
+    let (input_images, test_labels) = load_input_data_from_candle().unwrap();
+
+    for (idx, image) in input_images.iter_dim(0).enumerate() {
+        save_to_img(idx, &image);
+        let t = SystemTime::now();
+        let output = model.forward(image);
         let output = burn::tensor::activation::softmax(output, 1);
         let label = output.argmax(1).reshape([1]).into_scalar();
 
         println!(
-            "expect label: {}, got: {}",
+            "expect label: {}, got: {}, take: {}",
             test_labels.get(idx).unwrap(),
-            label
+            label,
+            t.elapsed().unwrap().as_millis()
         );
+        if idx == 9 {
+            break;
+        }
     }
 
     // let test_labels = input
@@ -179,11 +193,9 @@ fn infer(
 }
 
 fn main() {
-    let input =
-        candle_datasets::vision::mnist::load_dir("/home/yjn/Downloads/mnist_dataset").unwrap();
     let model = build_and_load_model().expect("load model failed");
 
     let t = SystemTime::now();
-    infer(input, model).unwrap();
+    inference(model).unwrap();
     println!("infer take time: {}ms", t.elapsed().unwrap().as_millis())
 }

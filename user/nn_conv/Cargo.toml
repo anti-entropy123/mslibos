@@ -17,3 +17,4 @@ burn = { path = "/home/yjn/rust_project/burn/burn", default-features = false, fe
     "ndarray-no-std",
 ] }
 serde = { version = "1.0.193", default-features = false, features = ["derive"] }
+thiserror-no-std = "2.0.2"

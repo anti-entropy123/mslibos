@@ -9,8 +9,6 @@
 #![allow(incomplete_features)]
 #![feature(const_maybe_uninit_zeroed)]
 
-use core::mem::forget;
-
 use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
 
@@ -76,7 +74,7 @@ pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
                 }
             }
             Err(e) => {
-                forget(e);
+                core::mem::forget(e);
                 Err(alloc::format!("catch user function panic."))?;
             }
         }

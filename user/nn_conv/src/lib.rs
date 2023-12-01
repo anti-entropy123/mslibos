@@ -1,21 +1,25 @@
 #![no_std]
+#![feature(error_in_core)]
 extern crate alloc;
 
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 
 use burn::{
     module::Module,
     nn::{self, BatchNorm, PaddingConfig2d},
-    record::{BinBytesRecorder, FullPrecisionSettings, Recorder},
+    record::{BinBytesRecorder, FullPrecisionSettings, Recorder, RecorderError},
     tensor::{backend::Backend, Distribution, Tensor},
 };
+use ms_hostcall::fdtab::FdtabError;
 use ms_std::{
     agent::{FaaSFuncError, FaaSFuncResult as Result},
     fs::File,
+    io::Read,
     mm::Mmap,
     println,
 };
 use ms_std_proc_macro::FaasData;
+use thiserror_no_std::Error;
 
 const NUM_CLASSES: usize = 10;
 
@@ -82,7 +86,6 @@ impl<B: Backend> Model<B> {
             .init();
 
         let dropout = nn::DropoutConfig::new(0.5).init();
-
         Self {
             conv1,
             conv2,
@@ -104,7 +107,6 @@ impl<B: Backend> Model<B> {
 
         let [batch_size, channels, height, width] = x.dims();
         let x = x.reshape([batch_size, channels * height * width]);
-
         let x = self.dropout.forward(x);
         let x = self.fc1.forward(x);
         let x = self.activation.forward(x);
@@ -113,37 +115,72 @@ impl<B: Backend> Model<B> {
     }
 }
 
-// static STATE_ENCODED: &[u8] = include_bytes!("../model.bin");
+static STATE_ENCODED: &[u8] = include_bytes!("../model.bin");
+
+#[derive(Debug, Error)]
+enum LoadModelErr {
+    #[error("libos error: {0}")]
+    LibOSErr(#[from] FdtabError),
+    #[error("load model error: {0}")]
+    ModelErr(#[from] RecorderError),
+}
 
 pub fn build_and_load_model() -> core::result::Result<Model<NdArrayBackend>, FaaSFuncError> {
-    let state = File::open("model.bin")?;
-    let state_encoded = Mmap::mmap_file(state)?;
-    println!("mmap_file ok");
+    // let _state = File::open("model.bin")?;
+    // let _state_encoded = Mmap::mmap_file(state)?;
+    // println!("mmap_file ok");
 
     let model: Model<NdArrayBackend> = Model::new();
-    let record = BinBytesRecorder::<FullPrecisionSettings>::default()
-        .load(state_encoded.as_ref().to_vec())
-        .expect("Failed to decode state");
+    let record =
+        BinBytesRecorder::<FullPrecisionSettings>::default().load(STATE_ENCODED.to_vec())?;
 
     Ok(model.load_record(record))
 }
 
-pub fn inference(model: Model<NdArrayBackend>) {
-    let input: Tensor<NdArrayBackend, 3> =
-        Tensor::random([1, 28, 28], Distribution::Normal(0., 100.));
+pub fn load_input_image() -> core::result::Result<Tensor<NdArrayBackend, 3>, FaaSFuncError> {
+    // let input: Tensor<NdArrayBackend, 3> = Tensor::random([1, 28, 28], Distribution::Default);
+    let mut content_file = File::open("input.txt")?;
+    let mut content = String::new();
+    content_file.read_to_string(&mut content)?;
 
+    let pixels: Vec<f32> = content
+        .split(", ")
+        .map(|v| {
+            v.trim().parse::<u32>().unwrap_or_else(|e| {
+                println!("parse {} failed", v);
+                panic!()
+            })
+        })
+        .map(|v| ((v as f32 / 255.) - 0.1307) / 0.3081)
+        .collect();
+    let input: Tensor<NdArrayBackend, 1> = Tensor::from_floats(pixels.as_slice());
+
+    Ok(input.reshape([1, 28, 28]))
+}
+
+pub fn inference(model: &Model<NdArrayBackend>, input: Tensor<NdArrayBackend, 3>) {
     let output = model.forward(input);
     let output = burn::tensor::activation::softmax(output, 1);
+    let expect_label = output.clone().argmax(1).reshape([1]).into_scalar();
+    let got_label = *output.clone().argmax(1).to_data().value.first().unwrap();
     let output = output.into_data().convert::<f32>().value;
 
-    println!("{:?}", output)
+    println!(
+        "expect label: {}, got label: {},  output: {:?}",
+        expect_label, got_label, output
+    )
 }
 
 #[no_mangle]
 pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
+    println!("main");
     let model = build_and_load_model()?;
-    println!("load model successfully");
-    inference(model);
+    println!("load model ok");
+    let input = load_input_image()?;
+    println!("{:?}", input);
+    println!("load input ok");
+
+    inference(&model, input);
 
     Ok(().into())
 }

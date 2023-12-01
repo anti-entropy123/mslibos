@@ -1,6 +1,5 @@
 use core::{mem::ManuallyDrop, slice};
 
-use alloc::vec::Vec;
 use ms_hostcall::{
     fdtab::FdtabError,
     mm::{MMError, ProtFlags},
