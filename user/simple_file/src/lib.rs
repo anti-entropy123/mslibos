@@ -48,7 +48,9 @@ pub fn main() -> Result<()> {
     );
 
     /////////////////// test seek. ///////////////////
-    assert_eq!(input_file.metadata().unwrap().st_size, file_content.len());
+    if input_file.metadata().unwrap().st_size != file_content.len() {
+        Err("seek failed")?
+    }
 
     Ok(().into())
 }
