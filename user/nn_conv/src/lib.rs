@@ -194,8 +194,8 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
 
     inference(
         model,
-        input_images.slice([0..100]),
-        test_labels.slice([0..100]),
+        input_images,
+        test_labels,
     );
 
     Ok(().into())
