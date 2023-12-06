@@ -8,9 +8,9 @@ updates:
   - package-ecosystem: cargo
     directory: "."
     schedule:
-      interval: daily
+      interval: weekly
     open-pull-requests-limit: 10
     allow:
       - dependency-type: direct
-      - dependency-type: indirect
+      # - dependency-type: indirect
     target-branch: master
