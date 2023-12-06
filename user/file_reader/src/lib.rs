@@ -1,13 +1,7 @@
 #![no_std]
 
-extern crate alloc;
-
 use alloc::{collections::BTreeMap, format, string::String};
-use ms_std::{
-    agent::{DataBuffer, FaaSFuncResult as Result},
-    fs::File,
-    io::Read,
-};
+use ms_std::{fs::File, io::Read, prelude::*};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]

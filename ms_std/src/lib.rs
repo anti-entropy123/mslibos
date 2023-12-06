@@ -12,15 +12,15 @@
 use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
 
-pub mod console;
-
 pub mod agent;
+pub mod console;
 pub mod fs;
 pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
 pub mod net;
+pub mod prelude;
 pub mod sym_patch;
 pub mod sync;
 pub mod time;
