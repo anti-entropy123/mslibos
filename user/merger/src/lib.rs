@@ -1,7 +1,7 @@
 #![no_std]
 use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
 
-use ms_std::{prelude::*, println};
+use ms_std::prelude::*;
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -23,8 +23,11 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         })
         .collect();
 
-    let merged_result = merge_partitions(partitions.iter().map(|buffer| &buffer.array).collect());
-    println!("merged_result: {:?}", merged_result);
+    let mut merged_result: DataBuffer<VecArg> =
+        DataBuffer::with_slot(format!("merge_result_{}", my_id));
+
+    merged_result.array = merge_partitions(partitions.iter().map(|buffer| &buffer.array).collect());
+    // println!("merged_result: {:?}", merged_result);
 
     Ok(().into())
 }

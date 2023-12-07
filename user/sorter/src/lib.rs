@@ -18,8 +18,8 @@ struct VecArg {
 #[no_mangle]
 pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let my_id = &args["id"];
-    let merger_num: usize = {
-        let n = &args["merger_num"];
+    let sorter_num: usize = {
+        let n = &args["sorter_num"];
         n.parse().unwrap()
     };
 
@@ -29,9 +29,12 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let mut array: DataBuffer<VecArg> =
         DataBuffer::with_slot(format!("sorter-resp-part-{}", my_id));
     for num in input.raw_data.split(',') {
+        let num = num.trim();
+        if num.is_empty() {
+            continue;
+        }
         array.array.push(
-            num.trim()
-                .parse()
+            num.parse()
                 .map_err(|_| format!("parse Int failed, num={}", num))?,
         )
     }
@@ -39,14 +42,14 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     array.array.sort();
     if my_id.eq("0") {
         // let mut pivots: DataBuffer<VecArg> = ;
-        let pivots: Vec<_> = (0..merger_num - 1)
+        let pivots: Vec<_> = (0..sorter_num - 1)
             .map(|i| {
-                let idx = (i + 1) * array.array.len() / merger_num;
+                let idx = (i + 1) * array.array.len() / sorter_num;
                 array.array[idx]
             })
             .collect();
 
-        for i in 0..merger_num {
+        for i in 0..sorter_num {
             let mut pivots_buffer: DataBuffer<VecArg> =
                 DataBuffer::with_slot(format!("pivots-{}", i));
             pivots_buffer.array = pivots.clone();

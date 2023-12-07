@@ -33,8 +33,13 @@
     [
       "merger",
       "libmerger.so"
+    ],
+    [
+      "checker",
+      "libchecker.so"
     ]
   ],
+  "fs_image": "fs_images/fatfs_large_sort.img",
   "groups": [
     {
       "list": [
@@ -51,6 +56,27 @@
             "slot_name": "input-part-1",
             "input_file": "sort_data_1.txt"
           }
+        },
+        {
+          "name": "file_reader",
+          "args": {
+            "slot_name": "input-part-2",
+            "input_file": "sort_data_2.txt"
+          }
+        },
+        {
+          "name": "file_reader",
+          "args": {
+            "slot_name": "input-part-3",
+            "input_file": "sort_data_3.txt"
+          }
+        },
+        {
+          "name": "file_reader",
+          "args": {
+            "slot_name": "input-part-4",
+            "input_file": "sort_data_4.txt"
+          }
         }
       ],
       "args": {}
@@ -58,14 +84,20 @@
     {
       "list": [
         "sorter",
+        "sorter",
+        "sorter",
+        "sorter",
         "sorter"
       ],
       "args": {
-        "merger_num": "3"
+        "sorter_num": "5"
       }
     },
     {
       "list": [
+        "splitter",
+        "splitter",
+        "splitter",
         "splitter",
         "splitter"
       ],
@@ -75,10 +107,19 @@
       "list": [
         "merger",
         "merger",
+        "merger",
         "merger"
       ],
       "args": {
-        "sorter_num": "2"
+        "sorter_num": "5"
+      }
+    },
+    {
+      "list": [
+        "checker"
+      ],
+      "args": {
+        "merger_num": "4"
       }
     }
   ]
