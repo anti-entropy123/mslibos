@@ -19,5 +19,5 @@ fn run_should_panic_test() {
         .expect("Open config file failed.");
 
     let isol1 = Isolation::new(&config1);
-    assert!(isol1.run().is_ok());
+    assert!(isol1.run().is_err());
 }
