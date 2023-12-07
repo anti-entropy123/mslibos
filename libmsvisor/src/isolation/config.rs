@@ -9,7 +9,7 @@ use std::io;
 
 use crate::utils;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct App {
     pub name: ServiceName,
     pub args: BTreeMap<String, String>,
@@ -54,6 +54,7 @@ impl IsolationGroup {
 
                 args.extend(app.args);
                 app.args = args;
+                debug!("App info: {:?}", app);
 
                 app
             })

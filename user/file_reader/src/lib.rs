@@ -1,22 +1,23 @@
 #![no_std]
 
-use alloc::{collections::BTreeMap, format, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String};
 use ms_std::{fs::File, io::Read, prelude::*};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
-struct Reader2Mapper {
+struct VecArg {
     content: String,
 }
 
 #[no_mangle]
 pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
-    let my_id = &args["id"];
+    let slot_name = &args["slot_name"];
+    let input_file = &args["input_file"];
 
-    let mut buffer: DataBuffer<Reader2Mapper> = DataBuffer::with_slot(format!("part-{}", my_id));
+    let mut buffer: DataBuffer<VecArg> = DataBuffer::with_slot(slot_name.to_owned());
 
     buffer.content = {
-        let mut f = File::open(&format!("fake_data_{}.txt", my_id))?;
+        let mut f = File::open(input_file)?;
         let mut buf = String::new();
         f.read_to_string(&mut buf).expect("read file failed.");
         buf
