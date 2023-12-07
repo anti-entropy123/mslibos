@@ -25,6 +25,10 @@
     [
       "sorter",
       "libsorter.so"
+    ],
+    [
+      "splitter",
+      "libsplitter.so"
     ]
   ],
   "groups": [
@@ -47,6 +51,12 @@
       "args": {
         "merger_num": "3"
       }
+    },
+    {
+      "list": [
+        "splitter"
+      ],
+      "args": {}
     }
   ]
 }
