@@ -142,7 +142,7 @@ impl Isolation {
         for app in &self.app_names {
             let app = self.service_or_load(app).context("load app failed.")?;
             let result = app.run(&args);
-            result.map_err(|_| anyhow!("app_{} run failed.", app.name()))?
+            result.map_err(|e| anyhow!("app_{} run failed, reason: {}", app.name(), e))?
         }
 
         Ok(())
@@ -161,7 +161,7 @@ impl Isolation {
                 let builder = thread::Builder::new().name(app.name());
                 let app_result = builder.spawn_scoped(scope, move || {
                     app.run(&app_config.args)
-                        .map_err(|_| anyhow!("app {} run failed.", app.name()))
+                        .map_err(|e| anyhow!("app {} run failed. {}", app.name(), e))
                 })?;
                 join_handles.push(Some(app_result));
             }

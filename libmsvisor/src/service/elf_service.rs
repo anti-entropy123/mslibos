@@ -11,7 +11,7 @@ use std::{
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
-use log::{error, info};
+use log::info;
 use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, MetricEvent, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE,
@@ -124,7 +124,7 @@ impl ELFService {
         unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), ()> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
         let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
@@ -138,12 +138,12 @@ impl ELFService {
         self.metric.mark(MetricEvent::SvcEnd);
 
         logger::info!("{} complete.", self.name);
-        if let Err(e) = result {
-            error!("run failed: {}", e);
+        result.map_err(|e| {
+            let err_msg = format!("function {} run failed: {}", self.name, e);
             // forget because String refer to heap of libos modules.
             forget(e);
-        }
-        Ok(())
+            err_msg
+        })
     }
 
     pub fn namespace(&self) -> Namespace {
