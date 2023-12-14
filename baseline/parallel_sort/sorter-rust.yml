@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:32331
+functions:
+  sorter-rust:
+    lang: rust
+    handler: ./sorter-rust
+    image: antientropy/sorter-rust:latest
+
