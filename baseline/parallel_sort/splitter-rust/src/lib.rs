@@ -8,60 +8,51 @@ type Error = Box<dyn std::error::Error>;
 const MINIO_BASE_URL: &str = "minio-service.yasb-mapreduce-db.svc.cluster.local:9000";
 const APP: &str = "parallel_sort";
 
-pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let event: HashMap<String, serde_json::Value> = serde_json::from_slice(&body)?;
-    let input_part = event["input_part"].as_u64().unwrap();
-    let input_name = &event["input_name"].as_str().unwrap();
-    let sorter_num = event["sorter_num"].as_u64().unwrap() as usize;
-
-    let read_start = SystemTime::now();
-    let content = get_object(input_name, &format!("part-{}", input_part))?;
-    let read_end: SystemTime = SystemTime::now();
-
-    let mut sorter_resp: Vec<u32> = Vec::new();
-    let mut pivots = Vec::new();
-
-    for num in content.split(',') {
+fn parse_to_vec(numbers: String) -> Vec<u32> {
+    let mut result = Vec::new();
+    for num in numbers.split(',') {
         let num = num.trim();
         if num.is_empty() {
             continue;
         }
-        sorter_resp.push(
+        result.push(
             num.parse::<u32>()
-                .map_err(|_| format!("parse Int failed, num={}", num))?,
+                .map_err(|_| format!("parse Int failed, num={}", num))
+                .unwrap(),
         )
     }
-    sorter_resp.sort();
+    result
+}
 
-    if input_part == 0 {
-        // let mut pivots: DataBuffer<VecArg> = ;
-        pivots = (0..sorter_num - 1)
-            .map(|i| {
-                let idx = (i + 1) * sorter_resp.len() / sorter_num;
-                sorter_resp[idx]
-            })
-            .collect();
-    }
+fn dump_to_string(numbers: &[u32]) -> String {
+    numbers
+        .iter()
+        .map(|num| num.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
+    let event: HashMap<String, serde_json::Value> = serde_json::from_slice(&body)?;
+    let input_part = event["input_part"].as_u64().unwrap();
+    let input_name = &event["input_name"].as_str().unwrap();
+
+    let read_start = SystemTime::now();
+    let pivots = get_object(input_name, &"pivots".to_owned())?;
+    let numbers = get_object(input_name, &format!("part-{}", input_part))?;
+    let read_end: SystemTime = SystemTime::now();
+
+    let pivots = parse_to_vec(pivots);
+    let numbers = parse_to_vec(numbers);
+
+    let partitions = split_numbers(&numbers, &pivots);
 
     let com_end = SystemTime::now();
-    put_object_to_minio(
-        &format!("part-{}", input_part),
-        &sorter_resp
-            .iter()
-            .map(|num| num.to_string())
-            .collect::<Vec<_>>()
-            .join(","),
-    )
-    .unwrap();
 
-    if input_part == 0 {
+    for (idx, part) in partitions.iter().enumerate() {
         put_object_to_minio(
-            &"pivots".to_owned(),
-            &pivots
-                .iter()
-                .map(|num| num.to_string())
-                .collect::<Vec<_>>()
-                .join(","),
+            &format!("splitter-{}-resp-part-{}", input_part, idx),
+            &dump_to_string(part),
         )
         .unwrap();
     }
@@ -98,7 +89,7 @@ fn put_object_to_minio(object_name: &String, val: &String) -> Result<(), Error> 
     };
     let credentials = Credentials::new(Some("admin123"), Some("admin123"), None, None, None)?;
 
-    let bucket_name = "rust-sorter-resp";
+    let bucket_name = "rust-splitter-resp";
     let bucket = {
         Bucket::create_with_path_style(bucket_name, region, credentials, Default::default())?.bucket
     };
@@ -106,4 +97,33 @@ fn put_object_to_minio(object_name: &String, val: &String) -> Result<(), Error> 
     bucket.put_object(object_name, val.as_bytes())?;
 
     Ok(())
+}
+
+fn split_numbers(numbers: &Vec<u32>, pivots: &Vec<u32>) -> Vec<Vec<u32>> {
+    let mut result = Vec::new();
+    let mut current_start = 0;
+
+    for &pivot in pivots {
+        let mut current_partition = Vec::new();
+
+        for &num in &numbers[current_start..] {
+            if num < pivot {
+                current_partition.push(num);
+            } else {
+                break;
+            }
+        }
+
+        result.push(current_partition.clone());
+        current_start += current_partition.len();
+
+        if current_start >= numbers.len() {
+            break;
+        }
+    }
+
+    // Add the remaining numbers as the last partition
+    result.push(numbers[current_start..].to_vec());
+
+    result
 }
