@@ -5,7 +5,7 @@ use serde_json::json;
 
 type Error = Box<dyn std::error::Error>;
 
-const MINIO_BASE_URL: &str = "minio-service.yasb-mapreduce-db.svc.cluster.local:9000";
+const MINIO_BASE_URL: &str = "minio-service.openfaas-yjn.svc.cluster.local:9000";
 const APP: &str = "parallel_sort";
 
 fn parse_to_vec(numbers: String) -> Vec<u32> {

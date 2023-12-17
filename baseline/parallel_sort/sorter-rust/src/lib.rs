@@ -5,7 +5,7 @@ use serde_json::json;
 
 type Error = Box<dyn std::error::Error>;
 
-const MINIO_BASE_URL: &str = "minio-service.yasb-mapreduce-db.svc.cluster.local:9000";
+const MINIO_BASE_URL: &str = "minio-service.openfaas-yjn.svc.cluster.local:9000";
 const APP: &str = "parallel_sort";
 
 pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
@@ -15,7 +15,7 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
     let sorter_num = event["sorter_num"].as_u64().unwrap() as usize;
 
     let read_start = SystemTime::now();
-    let content = get_object(input_name, &format!("part-{}", input_part))?;
+    let content = get_object(input_name, &format!("part-{}", input_part)).unwrap();
     let read_end: SystemTime = SystemTime::now();
 
     let mut sorter_resp: Vec<u32> = Vec::new();
