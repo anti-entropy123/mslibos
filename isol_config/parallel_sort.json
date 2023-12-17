@@ -90,7 +90,8 @@
         "sorter"
       ],
       "args": {
-        "sorter_num": "5"
+        "sorter_num": "5",
+        "merger_num": "4"
       }
     },
     {

@@ -43,7 +43,7 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
         .map(|idx| {
             get_object(
                 input_name,
-                &format!("splitter-{}-resp-part-{}", input_part, idx),
+                &format!("splitter-{}-resp-part-{}", idx, input_part),
             )
             .unwrap()
         })

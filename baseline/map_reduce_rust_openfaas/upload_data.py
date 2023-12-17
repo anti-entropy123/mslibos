@@ -11,6 +11,6 @@ if not minioClient.bucket_exists(BUCKET_NAME):
     minioClient.make_bucket(BUCKET_NAME)
 
 for i in range(5):
-    local_path = f"/mnt/fatfs/sort_data_{i}.txt"
+    local_path = f"/home/yjn/rust_project/mslibos/input-part-{i}.txt"
     minioClient.fput_object(
-        BUCKET_NAME, object_name=f"sort_data_{i}.txt", file_path=local_path)
+        BUCKET_NAME, object_name=f"part-{i}", file_path=local_path)

@@ -12,7 +12,7 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
     let event: HashMap<String, serde_json::Value> = serde_json::from_slice(&body)?;
     let input_part = event["input_part"].as_u64().unwrap();
     let input_name = &event["input_name"].as_str().unwrap();
-    let sorter_num = event["sorter_num"].as_u64().unwrap() as usize;
+    let merger_num = event["merger_num"].as_u64().unwrap() as usize;
 
     let read_start = SystemTime::now();
     let content = get_object(input_name, &format!("part-{}", input_part)).unwrap();
@@ -35,9 +35,9 @@ pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {
 
     if input_part == 0 {
         // let mut pivots: DataBuffer<VecArg> = ;
-        pivots = (0..sorter_num - 1)
+        pivots = (0..merger_num - 1)
             .map(|i| {
-                let idx = (i + 1) * sorter_resp.len() / sorter_num;
+                let idx = (i + 1) * sorter_resp.len() / merger_num;
                 sorter_resp[idx]
             })
             .collect();

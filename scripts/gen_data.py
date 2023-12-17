@@ -39,7 +39,7 @@ def gen_parallel_sort():
 
                 f.write(text)
 
-                if os.stat(file_name).st_size > 60_000_000:
+                if os.stat(file_name).st_size > 20_000_000:
                     break
 
 
