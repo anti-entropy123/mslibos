@@ -1,11 +1,13 @@
+#!python3
+
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
 rc('mathtext', default='regular')
 
-latency = [207, 174, 173, 196, 210, 198, 197]  # us
-throughput = [20, 47, 71, 83, 97, 124, 145]  # MB/s
-dats_sizes = [f'{i * 4}KB' for i in range(1, 8)]
+latency = [38, 37, 38, 38, 37, 35]  # us
+throughput = [540, 665, 755, 863, 997, 1171]  # MB/s
+dats_sizes = [f'{i * 4}KB' for i in range(5, 11)]
 
 fig = plt.figure()
 
@@ -14,7 +16,7 @@ p_latency = ax.plot(dats_sizes, latency, '-', label='Latency (µs)')
 ax.grid()
 ax.set_xlabel("DataSize (KB)")
 ax.set_ylabel("Latency (µs)")
-ax.set_ylim(100, 500)
+ax.set_ylim(30, 70)
 
 ax2 = ax.twinx()
 p_throughtput = ax2.plot(dats_sizes, throughput, 'r',

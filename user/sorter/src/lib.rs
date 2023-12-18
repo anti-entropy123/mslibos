@@ -22,6 +22,10 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         let n = &args["sorter_num"];
         n.parse().unwrap()
     };
+    let merger_num: usize = {
+        let n = &args["merger_num"];
+        n.parse().unwrap()
+    };
 
     let input: DataBuffer<Reader2Sorter> =
         DataBuffer::from_buffer_slot(format!("input-part-{}", my_id)).unwrap();
@@ -42,9 +46,9 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     array.array.sort();
     if my_id.eq("0") {
         // let mut pivots: DataBuffer<VecArg> = ;
-        let pivots: Vec<_> = (0..sorter_num - 1)
+        let pivots: Vec<_> = (0..merger_num - 1)
             .map(|i| {
-                let idx = (i + 1) * array.array.len() / sorter_num;
+                let idx = (i + 1) * array.array.len() / merger_num;
                 array.array[idx]
             })
             .collect();
