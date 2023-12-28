@@ -25,7 +25,7 @@ def gen_parallel_sort():
 
     sorter_num = 5
     for i in range(sorter_num):
-        file_name = f'input-part-{i}.txt'
+        file_name = f'part-{i}'
         first = True
 
         with open(file_name, 'w') as f:
@@ -39,7 +39,7 @@ def gen_parallel_sort():
 
                 f.write(text)
 
-                if os.stat(file_name).st_size > 20_000_000:
+                if os.stat(file_name).st_size > 5_000_000:
                     break
 
 
