@@ -47,7 +47,3 @@ def handle(req):
         threads[i].join()
 
     return json.dumps({'comp_time': time.time() - com_start})
-
-
-if __name__ == '__main__':
-    handle("{}")

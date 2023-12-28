@@ -17,13 +17,6 @@ session = requests.sessions.Session()
 
 
 def invoke_func(func_name: str, data: dict) -> requests.Response:
-    # p = subprocess.Popen(
-    #     ["curl", "-s",
-    #      f'localhost:32331/function/{func_name}',
-    #      '-H', f'mslibos-trace:{round( time.time())}',
-    #      '-d', json.dumps(data).encode()],
-    #     stdout=subprocess.PIPE, shell=False)
-
     resp = session.request(
         "GET", f'http://10.244.1.227:8080/function/{func_name}',
         headers={
