@@ -5,11 +5,17 @@ import json
 import time
 import concurrent.futures
 from typing import List
+import random
 
 func_name = "alu-flask-remote"
 loop_time = 80_000
-batch_size = 1000
+batch_size = 1500
 con_num = 64
+
+payload_size = [0, 512, 4096]  # KB
+payloads: List[str] = [''.join([str(random.randint(0, 9)) for i in range(size*1024)])
+                       for size in payload_size]
+
 
 def invoke_func(func_name: str, data: dict) -> requests.Response:
     resp = requests.request(
@@ -24,12 +30,13 @@ def invoke_func(func_name: str, data: dict) -> requests.Response:
     return resp
 
 
-def batch_invoke():
+def batch_invoke(payload: str):
     alu_res = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=con_num) as executor:
         resps = executor.map(
             lambda data: invoke_func(func_name, data),
-            [{'loop_time': loop_time} for i in range(batch_size)]
+            [{'loop_time': loop_time, 'payload': payload}
+                for i in range(batch_size)]
         )
 
         for resp in resps:
@@ -40,7 +47,7 @@ def batch_invoke():
     return alu_res
 
 
-def display_breakdown(resps: list):
+def breakdown(resps: list) -> str:
     trace_info = {}
     for resp in resps:
         resp['body'] = json.loads(resp['body'])
@@ -66,10 +73,12 @@ def display_breakdown(resps: list):
         func_info[func_label] = [
             round(resp['body'][func_label]*1000, 3) for resp in resps]
 
-    print(json.dumps(trace_info))
-    print(json.dumps(func_info))
+    return json.dumps(trace_info) + '\n' + json.dumps(func_info)
 
 
 if __name__ == '__main__':
-    resps = batch_invoke()
-    display_breakdown(resps[10:])
+    for payload in payloads:
+        resps = batch_invoke(payload)
+        result = breakdown(resps[100:])
+        with open(f"alu-flask-remote-{len(payload)//1024}kb.trace", 'w') as f:
+            f.write(result)

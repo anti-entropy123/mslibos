@@ -23,7 +23,7 @@ def invoke_func(func_name: str, data: dict) -> requests.Response:
 def batch_invoke():
     alu_res = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        batch_size = 110
+        batch_size = 50
         resps = executor.map(
             lambda data: invoke_func("alu", data),
             [{'loop_time': 1_000_000} for i in range(batch_size)]

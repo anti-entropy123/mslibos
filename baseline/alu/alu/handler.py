@@ -30,6 +30,7 @@ def handle(req):
     Args:
         req (str): request body
     """
+    print("request: ", req)
     req: dict = json.loads(req)
     loopTime = req.get('loop_time') or defaultLoopTime
 
