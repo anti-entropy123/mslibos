@@ -1,0 +1,13 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:32331
+functions:
+  alu:
+    lang: python3
+    handler: ./alu
+    image: antientropy/alu:latest
+    labels:
+      "com.openfaas.scale.max": "5" 
+    constraints:
+     - "kubernetes.io/hostname=kube-node-7"

@@ -1,0 +1,13 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:32331
+functions:
+  alu-flask-remote:
+    lang: python3-flask
+    handler: ./alu-flask
+    image: antientropy/alu-flask:latest
+    labels:
+      "com.openfaas.scale.min": "5" 
+    constraints:
+     - "kubernetes.io/hostname=kube-node-6"
