@@ -1,6 +1,6 @@
 import json
 
-with open("/home/yjn/rust_project/mslibos/baseline/alu-flask/alu-flask-remote-512kb.trace", 'r') as f:
+with open("/home/yjn/rust_project/mslibos/baseline/alu-flask/alu-flask-remote-0kb.trace", 'r') as f:
     trace_info = json.loads(f.readline())
     func_info = json.loads(f.readline())
 
@@ -21,7 +21,12 @@ netes_to_watchdog = [(trace_info['watchdog_begin'][i]-trace_info['netes-resolve-
 netes_to_watchdog = sum(netes_to_watchdog) / batch_size
 print("netes_to_watchdog:", netes_to_watchdog)
 
+# watchdog_to_func = [(trace_info['watchdog-resp'][i]-trace_info['watchdog_begin'][i]) - trace_info['X-Duration-Useconds'][i]
+#                     for i in range(batch_size)]
 watchdog_to_func = [(trace_info['watchdog-resp'][i]-trace_info['watchdog_begin'][i]) - func_info['comp_time'][i]
                     for i in range(batch_size)]
 watchdog_to_func = sum(watchdog_to_func) / batch_size
 print("watchdog_to_func:", watchdog_to_func)
+
+func_comp = sum(func_info['comp_time'])/batch_size
+print("func_comp:", func_comp)

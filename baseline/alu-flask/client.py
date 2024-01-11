@@ -9,8 +9,8 @@ import random
 
 func_name = "alu-flask-remote"
 loop_time = 80_000
-batch_size = 1500
-con_num = 64
+batch_size = 850  # 0
+con_num = 16
 
 payload_size = [0, 512, 4096]  # KB
 payloads: List[str] = [''.join([str(random.randint(0, 9)) for i in range(size*1024)])
@@ -24,14 +24,14 @@ def invoke_func(func_name: str, data: dict) -> requests.Response:
             'mslibos-trace': f'invoke:{str(round(time.time()*1000_000))}'},
         data=json.dumps(data).encode()
     )
-    resp.headers['mslibos-trace'] += ',finish:' + \
-        str(round(time.time()*1000_000))
+    resp.headers['mslibos-trace'] += f',finish:{ str(round(time.time()*1000_000))}'
 
     return resp
 
 
 def batch_invoke(payload: str):
     alu_res = []
+    start_time = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=con_num) as executor:
         resps = executor.map(
             lambda data: invoke_func(func_name, data),
@@ -41,9 +41,10 @@ def batch_invoke(payload: str):
 
         for resp in resps:
             alu_res.append(
-                {'trace': resp.headers['mslibos-trace'], 'body': resp.text})
+                {'trace': resp.headers['mslibos-trace'], 'X-Duration-Seconds': resp.headers['X-Duration-Seconds'], 'body': resp.text})
 
     end_time = time.time()
+    print("qps:", batch_size/(end_time-start_time))
     return alu_res
 
 
@@ -67,6 +68,10 @@ def breakdown(resps: list) -> str:
     for trace_label in resps[0]['trace']:
         trace_info[trace_label] = [resp['trace'][trace_label]
                                    for resp in resps]
+
+    # f',X-Duration-Useconds:{round(float(resp.headers["X-Duration-Seconds"]) * 1000_000)}'
+    trace_info["X-Duration-Useconds"] = [
+        round(float(resp["X-Duration-Seconds"]) * 1000) for resp in resps]
 
     func_info = {}
     for func_label in resps[0]['body']:
