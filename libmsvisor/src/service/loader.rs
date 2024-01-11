@@ -87,7 +87,7 @@ impl ServiceLoader {
         let service = Service::new(name, lib, metric);
         self.namespace.get_or_init(|| service.namespace());
 
-        service.init(self.isol_id);
+        service.init(self.isol_id)?;
         Ok(Arc::from(service))
     }
 
