@@ -188,7 +188,7 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
 
 #[test]
 fn service_drop_test() {
-    use crate::{metric::MetricBucket, service::elf_service::ELFService};
+    use crate::{metric::MetricBucket, service::elf_service::WithLibOSService};
     // std::env::set_var("RUST_LOG", "INFO");
     // logger::init();
 
@@ -197,7 +197,7 @@ fn service_drop_test() {
 
     let lib = Arc::from(load_dynlib(&path, None).unwrap());
 
-    let socket = ELFService::new(
+    let socket = WithLibOSService::new(
         "socket",
         lib,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),

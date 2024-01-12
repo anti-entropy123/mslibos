@@ -80,8 +80,11 @@ impl ElfService {
         Ok(())
     }
 
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing rust_main?")?;
+    fn invoke_elf_symbol(
+        &self,
+        rust_main: RustMainFuncSybmol,
+        args: &BTreeMap<String, String>,
+    ) -> Result<(), String> {
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
             self.name,
@@ -100,6 +103,11 @@ impl ElfService {
             forget(e);
             err_msg
         })
+    }
+
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+        let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing main?")?;
+        self.invoke_elf_symbol(rust_main, args)
     }
 
     pub fn namespace(&self) -> Namespace {
@@ -214,7 +222,8 @@ impl WithLibOSService {
     }
 
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        self.elf.run(args)
+        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").ok_or("missing rust_main?")?;
+        self.elf.invoke_elf_symbol(rust_main, args)
     }
 
     pub fn namespace(&self) -> Namespace {

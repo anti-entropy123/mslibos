@@ -130,6 +130,7 @@ fn find_host_call_test() {
             )],
             groups: Default::default(),
             fs_image: None,
+            with_libos: None,
         })
         // isol_table.insert(1, Arc::clone(&isol));
     };
