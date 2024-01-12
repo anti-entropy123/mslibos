@@ -1,0 +1,48 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ]
+  ],
+  "apps": [
+    [
+      "compose_review",
+      "libcompose_review.so"
+    ],
+    [
+      "upload_user_id",
+      "libupload_user_id.so"
+    ],
+    [
+      "upload_movie_id",
+      "libupload_movie_id.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "compose_review"
+      ],
+      "args": {
+        "username": "abcd",
+        "title": "duo_la_a_meng"
+      }
+    },
+    {
+      "list": [
+        "upload_user_id",
+        "upload_movie_id"
+      ],
+      "args": {}
+    }
+  ]
+}
