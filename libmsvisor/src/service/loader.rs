@@ -34,15 +34,17 @@ pub struct ServiceLoader {
     registered: HashMap<ServiceName, PathBuf>,
     metric: Arc<MetricBucket>,
     namespace: OnceLock<Namespace>,
+    with_libos: bool,
 }
 
 impl ServiceLoader {
-    pub fn new(isol_id: IsolationID, metric: Arc<MetricBucket>) -> Self {
+    pub fn new(isol_id: IsolationID, metric: Arc<MetricBucket>, with_libos: bool) -> Self {
         Self {
             isol_id,
             registered: HashMap::new(),
             namespace: OnceLock::new(),
             metric,
+            with_libos,
         }
     }
 
@@ -84,10 +86,10 @@ impl ServiceLoader {
             self.namespace.get().map(|ns| ns.as_lmid_t()),
         )?);
 
-        let service = Service::new(name, lib, metric);
+        let service = Service::new(name, lib, metric, self.with_libos);
         self.namespace.get_or_init(|| service.namespace());
 
-        service.init(self.isol_id);
+        service.init(self.isol_id)?;
         Ok(Arc::from(service))
     }
 
@@ -186,7 +188,7 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
 
 #[test]
 fn service_drop_test() {
-    use crate::{metric::MetricBucket, service::elf_service::ELFService};
+    use crate::{metric::MetricBucket, service::elf_service::WithLibOSService};
     // std::env::set_var("RUST_LOG", "INFO");
     // logger::init();
 
@@ -195,7 +197,7 @@ fn service_drop_test() {
 
     let lib = Arc::from(load_dynlib(&path, None).unwrap());
 
-    let socket = ELFService::new(
+    let socket = WithLibOSService::new(
         "socket",
         lib,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),

@@ -41,6 +41,16 @@ macro_rules! now_millis {
     };
 }
 
+#[macro_export]
+macro_rules! now_microsec {
+    () => {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_micros()
+    };
+}
+
 #[test]
 fn test_now_millis() {
     let now = now_millis!();

@@ -8,6 +8,7 @@ use std::{
     sync::Arc,
 };
 
+use anyhow::Ok;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
@@ -17,6 +18,7 @@ use ms_hostcall::{
     IsolationContext, SERVICE_HEAP_SIZE,
 };
 use nix::libc::RTLD_DI_LMID;
+use thiserror::Error;
 
 use crate::{
     isolation::handler::{find_host_call, panic_handler},
@@ -53,79 +55,36 @@ struct ServiceHeap {
     heap: [u8; SERVICE_HEAP_SIZE],
 }
 
-pub struct ELFService {
+pub struct ElfService {
     pub name: String,
     lib: Arc<Library>,
-    heap: Box<MaybeUninit<ServiceHeap>>,
     metric: Arc<SvcMetricBucket>,
 }
 
-impl ELFService {
+impl ElfService {
     pub fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         metric.mark(MetricEvent::SvcInit);
         logger::debug!("ELFService::new, name={name}");
-
         Self {
             name: name.to_string(),
             lib,
-            heap: Box::new_uninit(),
             metric,
         }
-    }
-
-    fn should_set_context(&self) -> bool {
-        !SHOULD_NOT_SET_CONTEXT.contains(&self.name.to_owned())
-    }
-
-    pub fn init(&self, isol_id: IsolationID) {
-        let heap_start = self.heap.as_ptr() as usize;
-        let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
-        logger::debug!(
-            "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
-            self.name,
-            isol_id,
-            find_host_call as usize,
-            heap_range
-        );
-
-        // If this is a common_service that does not dependent on IsolationContext,
-        // then directly return. Because it is not a no_std elf, and not have
-        // symbols `set_handler_addr` and `get_handler_addr`.
-        if !self.should_set_context() {
-            return;
-        };
-
-        let isol_ctx = IsolationContext {
-            isol_id,
-            find_handler: find_host_call as usize,
-            panic_handler: panic_handler as usize,
-            heap_range,
-        };
-
-        let set_handler: SetHandlerFuncSybmol = self
-            .symbol("set_handler_addr")
-            .expect("missing set_handler_addr?");
-        logger::info!("start set_handler...");
-        unsafe { set_handler(&isol_ctx) }.expect("service init failed.");
-        logger::info!("set_handler complete.");
-
-        let get_handler: GetHandlerFuncSybmol = self
-            .symbol("get_handler_addr")
-            .expect("missing get_handler_addr?");
-        logger::debug!(
-            "service_{} get_hander addr=0x{:x}.",
-            self.name,
-            *get_handler as usize
-        );
-        assert!(unsafe { get_handler() } == find_host_call as usize)
     }
 
     pub fn symbol<T>(&self, symbol: &str) -> Option<Symbol<T>> {
         unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
+    pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn invoke_elf_symbol(
+        &self,
+        rust_main: RustMainFuncSybmol,
+        args: &BTreeMap<String, String>,
+    ) -> Result<(), String> {
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
             self.name,
@@ -146,6 +105,11 @@ impl ELFService {
         })
     }
 
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+        let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing main?")?;
+        self.invoke_elf_symbol(rust_main, args)
+    }
+
     pub fn namespace(&self) -> Namespace {
         // The reason for using this hack, is same to `fn load_dynlib()`, that must
         // get `handle: *mut c_void` to call `dlinfo()`.
@@ -159,11 +123,110 @@ impl ELFService {
     }
 }
 
-impl Drop for ELFService {
+impl Drop for ElfService {
     fn drop(&mut self) {
         if let Some(drop_fn) = self.symbol::<DropHandlerFunc>("drop") {
             logger::info!("service {} will invoke drop symbol.", self.name);
             unsafe { drop_fn() }
         }
+    }
+}
+
+#[derive(Error, Debug)]
+enum ServiceInitError {
+    #[error("set isol context failed")]
+    SetIsolCtxErr,
+    #[error("missing set_handler_addr?")]
+    MissingSetCtx,
+    #[error("missing get_handler_addr?")]
+    MissingGetCtx,
+    #[error("check isol ctx failed.")]
+    CtxCheckFailed,
+}
+
+pub struct WithLibOSService {
+    elf: ElfService,
+
+    heap: Box<MaybeUninit<ServiceHeap>>,
+}
+
+impl WithLibOSService {
+    pub fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
+        Self {
+            elf: ElfService::new(name, lib, metric),
+            heap: Box::new_uninit(),
+        }
+    }
+
+    fn should_set_context(&self) -> bool {
+        !SHOULD_NOT_SET_CONTEXT.contains(&self.elf.name.to_owned())
+    }
+
+    #[inline]
+    pub fn name(&self) -> String {
+        self.elf.name.clone()
+    }
+
+    pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+        let heap_start = self.heap.as_ptr() as usize;
+        let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
+        logger::debug!(
+            "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
+            self.elf.name,
+            isol_id,
+            find_host_call as usize,
+            heap_range
+        );
+
+        // If this is a common_service that does not dependent on IsolationContext,
+        // then directly return. Because it is not a no_std elf, and not have
+        // symbols `set_handler_addr` and `get_handler_addr`.
+        if !self.should_set_context() {
+            return Ok(());
+        };
+
+        let isol_ctx = IsolationContext {
+            isol_id,
+            find_handler: find_host_call as usize,
+            panic_handler: panic_handler as usize,
+            heap_range,
+        };
+
+        let set_handler: SetHandlerFuncSybmol = self
+            .symbol("set_handler_addr")
+            .ok_or(ServiceInitError::MissingSetCtx)?;
+
+        logger::info!("start set_handler...");
+        unsafe { set_handler(&isol_ctx) }.map_err(|_| ServiceInitError::SetIsolCtxErr)?;
+        logger::info!("set_handler complete.");
+
+        let get_handler: GetHandlerFuncSybmol = self
+            .symbol("get_handler_addr")
+            .ok_or(ServiceInitError::MissingGetCtx)?;
+
+        logger::debug!(
+            "service_{} get_hander addr=0x{:x}.",
+            self.elf.name,
+            *get_handler as usize
+        );
+
+        if unsafe { get_handler() } != find_host_call as usize {
+            Err(ServiceInitError::CtxCheckFailed)?
+        }
+
+        Ok(())
+    }
+
+    pub fn symbol<T>(&self, symbol: &str) -> Option<Symbol<T>> {
+        self.elf.symbol(symbol)
+    }
+
+    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").ok_or("missing rust_main?")?;
+        self.elf.invoke_elf_symbol(rust_main, args)
+    }
+
+    pub fn namespace(&self) -> Namespace {
+        self.elf.namespace()
     }
 }

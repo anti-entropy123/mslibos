@@ -9,10 +9,15 @@ build = "../../build_user.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = ["alloc_def", "panic_def"] }
-ms_hostcall = { path = "../../ms_hostcall" }
+ms_std = { path = "../../ms_std", features = [
+    "alloc_def",
+    "panic_def",
+], optional = true }
+ms_hostcall = { path = "../../ms_hostcall", optional = true }
+cfg-if = "1.0.0"
 
 [features]
-measure_mem = []
+with_libos = ["ms_std", "ms_hostcall"]
+measure_mem = ["with_libos"]
 
 default = ["measure_mem"]
