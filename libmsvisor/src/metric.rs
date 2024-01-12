@@ -9,7 +9,7 @@ use ms_hostcall::types::{MetricEvent, ServiceName};
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::now_millis;
+use crate::{now_microsec, now_millis};
 
 #[derive(Default, Serialize)]
 struct MetricBucketInner {
@@ -25,7 +25,7 @@ struct MetricBucketInner {
 impl MetricBucketInner {
     fn to_json(&self) -> Value {
         let mut val = serde_json::json!(self);
-        val["total_dur"] = json!(self.end_t - self.begin_t);
+        val["total_dur(ms)"] = json!((self.end_t - self.begin_t) as f32 / 1000.);
 
         val
     }
@@ -71,11 +71,11 @@ impl MetricBucket {
             }
             MetricEvent::IsolBegin => {
                 assert_eq!(inner.begin_t, 0);
-                inner.begin_t = now_millis!()
+                inner.begin_t = now_microsec!()
             }
             MetricEvent::IsolEnd => {
                 assert_eq!(inner.end_t, 0);
-                inner.end_t = now_millis!()
+                inner.end_t = now_microsec!()
             }
 
             _ => {
