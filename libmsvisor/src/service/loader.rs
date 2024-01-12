@@ -34,15 +34,17 @@ pub struct ServiceLoader {
     registered: HashMap<ServiceName, PathBuf>,
     metric: Arc<MetricBucket>,
     namespace: OnceLock<Namespace>,
+    with_libos: bool,
 }
 
 impl ServiceLoader {
-    pub fn new(isol_id: IsolationID, metric: Arc<MetricBucket>) -> Self {
+    pub fn new(isol_id: IsolationID, metric: Arc<MetricBucket>, with_libos: bool) -> Self {
         Self {
             isol_id,
             registered: HashMap::new(),
             namespace: OnceLock::new(),
             metric,
+            with_libos,
         }
     }
 
@@ -84,7 +86,7 @@ impl ServiceLoader {
             self.namespace.get().map(|ns| ns.as_lmid_t()),
         )?);
 
-        let service = Service::new(name, lib, metric);
+        let service = Service::new(name, lib, metric, self.with_libos);
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id)?;

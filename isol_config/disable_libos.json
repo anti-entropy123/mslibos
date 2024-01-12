@@ -1,0 +1,27 @@
+{
+  "with_libos": false,
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ]
+  ],
+  "apps": [
+    [
+      "hello1",
+      "libhello_world.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "hello1"
+      ],
+      "args": {}
+    }
+  ]
+}

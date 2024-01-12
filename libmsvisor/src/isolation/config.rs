@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fs, io::BufReader, path::PathBuf};
 
 use anyhow;
-use log::debug;
+use log::{debug, warn};
 use ms_hostcall::types::ServiceName;
 use serde::{Deserialize, Serialize};
 
@@ -73,6 +73,7 @@ pub struct IsolationConfig {
     pub services: Vec<LoadableUnit>,
     pub apps: Vec<LoadableUnit>,
     pub fs_image: Option<String>,
+    pub with_libos: Option<bool>,
     #[serde(default = "Vec::default")]
     pub groups: Vec<IsolationGroup>,
 }
@@ -115,6 +116,10 @@ impl IsolationConfig {
                 PathBuf::from("/lib/x86_64-linux-gnu/libc.so.6"),
             ),
         );
+
+        if config.with_libos.eq(&Some(false)) && !config.services.is_empty() {
+            warn!("disable_libos is true, will ignore services");
+        }
 
         Ok(config)
     }

@@ -84,7 +84,12 @@ impl Isolation {
         metric.mark(IsolBegin);
         metric.mark(Mem);
 
-        let loader = ServiceLoader::new(new_id, Arc::clone(&metric)).register(config);
+        let loader = ServiceLoader::new(
+            new_id,
+            Arc::clone(&metric),
+            config.with_libos.unwrap_or(true),
+        )
+        .register(config);
 
         let isol = Arc::from(Self {
             id: new_id,

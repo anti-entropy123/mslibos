@@ -11,7 +11,7 @@ cfg_if::cfg_if! {
     }
 }
 
-#[cfg_attr(feature = "with_libos", no_mangle)]
+#[no_mangle]
 pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     println!("Hello, world! id: {}", args["id"]);
 

@@ -30,6 +30,7 @@ fn main() {
         )],
         groups: vec![group],
         fs_image: Some("fs_images/fatfs.img".to_owned()),
+        with_libos: None,
     };
 
     config1

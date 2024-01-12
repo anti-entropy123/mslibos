@@ -76,8 +76,12 @@ impl ElfService {
         unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
+    pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+        Ok(())
+    }
+
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").expect("missing rust_main?");
+        let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing rust_main?")?;
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
             self.name,
