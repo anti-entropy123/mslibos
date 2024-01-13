@@ -1,25 +1,45 @@
 #![cfg_attr(feature = "with_libos", no_std)]
 
+use rand::{rngs::SmallRng, Rng, SeedableRng};
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
-        use ms_std::{agent::FaaSFuncResult as Result, println};
+        use ms_std::{agent::FaaSFuncResult as Result, time::{SystemTime, UNIX_EPOCH}};
         extern crate alloc;
-        use alloc::{collections::BTreeMap, string::String};
+        use alloc::{format, string::ToString};
     } else {
         type Result<T> = core::result::Result<T, String>;
-        use std::collections::BTreeMap;
+        use std::time::{SystemTime, UNIX_EPOCH};
     }
 }
 
-#[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
-    println!("Hello, world! id: {}", args["id"]);
+fn generate_random_number(rng: &mut SmallRng, digits: usize) -> u64 {
+    // 计算上下界限
+    let lower_bound = 10u64.pow(digits as u32 - 1);
+    let upper_bound = 10u64.pow(digits as u32) - 1;
 
-    #[cfg(feature = "measure_mem")]
-    {
-        use ms_std::libos::MetricEvent::Mem;
-        ms_std::libos::metric(Mem);
-    }
+    // 生成随机数
+    rng.gen_range(lower_bound..=upper_bound)
+}
+
+#[no_mangle]
+pub fn main() -> Result<()> {
+    let mut rng = rand::rngs::SmallRng::from_seed(Default::default());
+    let machine_id = generate_random_number(&mut rng, 2);
+    #[cfg(feature = "with_libos")]
+    let timestamp =
+        (SystemTime::now().duration_since(UNIX_EPOCH).as_millis() - 1514764800000).to_string();
+    #[cfg(not(feature = "with_libos"))]
+    let timestamp = (SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "get timestamp failed")?
+        .as_millis()
+        - 1514764800000)
+        .to_string();
+
+    let timestamp = &timestamp[(timestamp.len() - 11)..];
+    let index_id = generate_random_number(&mut rng, 3);
+    let _review_id = format!("{}{}{}", machine_id, timestamp, index_id,);
 
     Ok(().into())
 }

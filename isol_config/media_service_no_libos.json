@@ -1,19 +1,6 @@
 {
   "with_libos": false,
-  "services": [
-    [
-      "fdtab",
-      "libfdtab.so"
-    ],
-    [
-      "stdio",
-      "libstdio.so"
-    ],
-    [
-      "mm",
-      "libmm.so"
-    ]
-  ],
+  "services": [],
   "apps": [
     [
       "compose_review",
@@ -26,6 +13,14 @@
     [
       "upload_movie_id",
       "libupload_movie_id.so"
+    ],
+    [
+      "mr_upload_text",
+      "libmr_upload_text.so"
+    ],
+    [
+      "mr_upload_unique",
+      "libmr_upload_unique.so"
     ]
   ],
   "groups": [
@@ -35,13 +30,16 @@
       ],
       "args": {
         "username": "abcd",
-        "title": "duo_la_a_meng"
+        "title": "duo_la_a_meng",
+        "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
     },
     {
       "list": [
         "upload_user_id",
-        "upload_movie_id"
+        "upload_movie_id",
+        "mr_upload_text",
+        "mr_upload_unique"
       ],
       "args": {}
     }

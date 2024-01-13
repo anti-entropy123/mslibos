@@ -24,7 +24,6 @@ cfg_if::cfg_if! {
         }
         const MESSAGE: MessageToUploadUserId = mock_message();
     }
-
 }
 
 #[no_mangle]
