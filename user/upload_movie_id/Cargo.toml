@@ -9,10 +9,7 @@ build = "../../build_user.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = [
-    "alloc_def",
-    "panic_def",
-], optional = true }
+ms_std = { path = "../../ms_std", optional = true }
 ms_hostcall = { path = "../../ms_hostcall", optional = true }
 ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
 
@@ -20,7 +17,8 @@ cfg-if = "1.0.0"
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
 
 [features]
-with_libos = ["ms_std", "ms_hostcall"]
+with_libos = ["ms_std/alloc_def", "ms_std/panic_def", "ms_hostcall"]
 measure_mem = ["with_libos"]
+mock = ["ms_std/mock_databuffer", "ms_hostcall"]
 
-default = ["measure_mem"]
+default = ["with_libos"]

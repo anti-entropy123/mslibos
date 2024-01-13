@@ -1,4 +1,4 @@
-use core::{alloc::Layout, borrow::Borrow, fmt::Display, mem::ManuallyDrop};
+use core::{alloc::Layout, borrow::Borrow, fmt::Display, mem::ManuallyDrop, ptr};
 
 use alloc::{
     boxed::Box,
@@ -63,12 +63,15 @@ where
                 alloc::alloc::alloc(Layout::from_size_align(4, 4).unwrap()) as usize as *mut T
             }
         } else {
-            let fingerprint = T::__fingerprint();
-            let addr =
-                libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T;
-
+            cfg_if::cfg_if! {
+                if #[cfg(feature = "mock_databuffer")] {
+                    let addr = unsafe {alloc::alloc::alloc(l)} as usize as *mut T;
+                } else {
+                    let fingerprint = T::__fingerprint();
+                    let addr = libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T;
+                }
+            };
             unsafe { core::ptr::write(addr, T::default()) };
-
             addr
         };
 
@@ -80,10 +83,12 @@ where
         }
     }
 
+    #[cfg(not(feature = "mock_databuffer"))]
     pub fn from_buffer() -> Option<Self> {
         Self::from_buffer_slot(String::new())
     }
 
+    #[cfg(not(feature = "mock_databuffer"))]
     pub fn from_buffer_slot(slot: String) -> Option<Self> {
         let buffer_meta: Option<(usize, u64)> = libos!(access_buffer(&slot));
 

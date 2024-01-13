@@ -10,6 +10,7 @@ crate-type = ["rlib"]
 [features]
 panic_def = []
 alloc_def = []
+mock_databuffer = []
 
 [dependencies]
 ms_hostcall = { workspace = true, features = [

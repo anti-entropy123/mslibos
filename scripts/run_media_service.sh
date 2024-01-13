@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+echo 'compose_review upload_user_id upload_movie_id' | 
+    xargs -n 1 printf 'user/%s/Cargo.toml\n' |
+    xargs -n 1 cargo build $1 --no-default-features --features with_libos --manifest-path && \
+cargo run $1 -- --files isol_config/media_service.json --metrics all
