@@ -9,7 +9,7 @@ use ms_std::{agent::FaaSFuncResult as Result, net::TcpStream, println};
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    let mut stream = TcpStream::connect("baidu.com".into())?;
+    let mut stream = TcpStream::connect("192.168.69.100:9999".into())?;
     stream.write_all(b"GET / HTTP/1.0\r\n\r\n")?;
     let mut buffer = [0; 4096];
     // println!("send data finish.");
