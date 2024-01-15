@@ -1,0 +1,19 @@
+[package]
+name = "tracing_and_charming"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "tracing_media_service"
+path = "src/tracing_media_service.rs"
+
+[[bin]]
+name = "charming_media_service"
+path = "src/charming_media_service.rs"
+
+
+[dependencies]
+charming = { version = "0.3.1", features = ["ssr"] }
+rand = "0.8.5"
+serde_json = { version = "1.0" }
