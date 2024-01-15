@@ -3,10 +3,7 @@ use core::{
     net::{Ipv4Addr, SocketAddrV4},
 };
 
-use ms_hostcall::{
-    socket::{SmoltcpError, SmoltcpResult},
-    types::{Size, SockFd},
-};
+use log::info;
 use smoltcp::{
     iface::SocketHandle,
     socket::{
@@ -15,6 +12,13 @@ use smoltcp::{
     },
     wire::{DnsQueryType, Ipv4Address},
 };
+
+use ms_hostcall::{
+    socket::{SmoltcpError, SmoltcpResult},
+    types::{Size, SockFd},
+};
+#[cfg(feature = "log")]
+use ms_std::println;
 
 use crate::{acquire_iface, acquire_sockets, from_sockfd, iface_poll, to_sockfd, try_phy_wait};
 
@@ -61,7 +65,7 @@ pub fn addrinfo(name: &str) -> SmoltcpResult<Ipv4Addr> {
 
 #[no_mangle]
 pub fn smol_connect(sockaddr: SocketAddrV4) -> SmoltcpResult<SockFd> {
-    // println!("smol_connect");
+    info!("smol_connect");
     let mut iface = acquire_iface()?;
     let mut sockets = acquire_sockets()?;
 

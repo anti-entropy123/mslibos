@@ -11,6 +11,7 @@ use std::{
 };
 
 use lazy_static::lazy_static;
+use log::{info, LevelFilter};
 use smoltcp::{
     iface::{Config, Interface, SocketHandle, SocketSet},
     phy::{wait as phy_wait, Device, Medium, TunTapInterface},
@@ -26,9 +27,18 @@ use ms_hostcall::{
 use ms_std::init_context;
 
 pub mod apis;
+pub mod logs;
 
 thread_local! {
     static DEVICE: Mutex<TunTapInterface> = {
+        log::set_logger(&logs::LOGGER).expect("fail to init log");
+        #[cfg(feature = "log")] {
+            log::set_max_level(LevelFilter::Trace);
+        }
+        #[cfg(not(feature = "log"))] {
+            log::set_max_level(LevelFilter::Off);
+        }
+        info!("begin init DEVICE");
         let mut netdev_name = NETDEV_NAME.lock().unwrap();
         if netdev_name.is_none() {
             *netdev_name = Some(NetdevName{
@@ -40,6 +50,7 @@ thread_local! {
 
         exec_tap_setup(netdev_name.as_ref().unwrap()).expect("setup tap device failed.");
 
+        info!("finish init DEVICE");
         Mutex::from(TunTapInterface::new(&netdev_name.as_ref().unwrap().name, Medium::Ethernet).unwrap())
     };
 }

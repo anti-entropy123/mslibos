@@ -1,12 +1,12 @@
 use std::{fs::File, os::fd::FromRawFd};
 
+use log::info;
+
 use crate::{get_tap_raw_fd, setup_tap::exec_tap_cleanup, NETDEV_NAME};
 
 #[no_mangle]
 pub fn drop() {
-    // println!(
-    //     "enter socket drop."
-    // );
+    info!("enter socket drop.");
     let netdev_name = NETDEV_NAME.try_lock().unwrap();
     // println!("netdev_name has init?: {}", netdev_name.is_some());
     if netdev_name.is_some() {
