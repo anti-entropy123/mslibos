@@ -1,0 +1,23 @@
+[package]
+name = "upload_user_review"
+version = "0.1.0"
+edition = "2021"
+build = "../../build_user.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+ms_std = { path = "../../ms_std", optional = true }
+ms_hostcall = { path = "../../ms_hostcall", optional = true }
+ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
+
+cfg-if = "1.0.0"
+
+[features]
+with_libos = ["ms_std/alloc_def", "ms_std/panic_def", "ms_hostcall"]
+measure_mem = ["with_libos"]
+mock = ["ms_std/mock_databuffer", "ms_hostcall"]
+
+default = ["with_libos"]

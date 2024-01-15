@@ -45,6 +45,14 @@
     [
       "store_review",
       "libstore_review.so"
+    ],
+    [
+      "upload_user_review",
+      "libupload_user_review.so"
+    ],
+    [
+      "upload_movie_review",
+      "libupload_movie_review.so"
     ]
   ],
   "groups": [
@@ -76,7 +84,9 @@
     },
     {
       "list": [
-        "store_review"
+        "store_review",
+        "upload_user_review",
+        "upload_movie_review"
       ],
       "args": {}
     }

@@ -52,6 +52,18 @@ struct MessageToStoreReview {
     rating: i32,
 }
 
+#[derive(FaasData, Default, Clone)]
+struct MessageToUploadUserReview {
+    review_id: String,
+    user_id: usize,
+}
+
+#[derive(FaasData, Default, Clone)]
+struct MessageToUploadMovieReview {
+    review_id: String,
+    movie_id: u64,
+}
+
 #[no_mangle]
 pub fn main() -> Result<()> {
     cfg_if::cfg_if! {
@@ -89,10 +101,31 @@ pub fn main() -> Result<()> {
             message1.text = upload_text.text.to_string();
         }
     }
-
     message1.user_id = user_id.0;
     message1.movie_id = movie_id.title_id;
     message1.rating = movie_id.rating;
+
+    let mut message2 =
+        DataBuffer::<MessageToUploadUserReview>::with_slot("to_upload_review".to_owned());
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "with_libos")] {
+            message2.review_id = unique_id.0.clone();
+        } else {
+            message2.review_id = unique_id.0.to_string();
+        }
+    }
+    message2.user_id = user_id.0;
+
+    let mut message3 =
+        DataBuffer::<MessageToUploadMovieReview>::with_slot("to_upload_movie_review".to_owned());
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "with_libos")] {
+            message3.review_id = unique_id.0.clone();
+        } else {
+            message3.review_id = unique_id.0.to_string();
+        }
+    }
+    message3.movie_id = movie_id.title_id;
 
     Ok(().into())
 }
