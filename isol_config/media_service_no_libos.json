@@ -21,6 +21,14 @@
     [
       "mr_upload_unique",
       "libmr_upload_unique.so"
+    ],
+    [
+      "mr_compose_and_upload",
+      "libmr_compose_and_upload.so"
+    ],
+    [
+      "store_review",
+      "libstore_review.so"
     ]
   ],
   "groups": [
@@ -31,7 +39,8 @@
       "args": {
         "username": "abcd",
         "title": "duo_la_a_meng",
-        "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "rating": "7"
       }
     },
     {
@@ -40,6 +49,18 @@
         "upload_movie_id",
         "mr_upload_text",
         "mr_upload_unique"
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "mr_compose_and_upload"
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "store_review"
       ],
       "args": {}
     }

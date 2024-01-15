@@ -20,6 +20,7 @@ struct MessageToUploadUserId(String);
 #[derive(FaasData, Default, Clone)]
 struct MessageToUploadMovieId {
     title: String,
+    rating: i32,
 }
 
 #[derive(FaasData, Default, Clone)]
@@ -51,6 +52,11 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         .get("title")
         .ok_or("missing arg: title".to_string())?
         .clone();
+    message2.rating = args
+        .get("rating")
+        .ok_or("missing arg: rating".to_string())?
+        .parse()
+        .map_err(|_| "wrong args: rating")?;
 
     let mut message3 = DataBuffer::<MessageToMrUploadText>::with_slot("upload_text".to_string());
     message3.text = args

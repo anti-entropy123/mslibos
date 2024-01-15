@@ -1,5 +1,5 @@
 [package]
-name = "upload_user_id"
+name = "mr_compose_and_upload"
 version = "0.1.0"
 edition = "2021"
 build = "../../build_user.rs"

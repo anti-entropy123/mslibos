@@ -6,12 +6,18 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
         use ms_std::{agent::FaaSFuncResult as Result, time::{SystemTime, UNIX_EPOCH}};
         extern crate alloc;
-        use alloc::{format, string::ToString};
+        use alloc::{format, string::{String, ToString}, borrow::ToOwned};
     } else {
         type Result<T> = core::result::Result<T, String>;
         use std::time::{SystemTime, UNIX_EPOCH};
     }
 }
+
+use ms_std::agent::DataBuffer;
+use ms_std_proc_macro::FaasData;
+
+#[derive(FaasData, Default, Clone)]
+struct UniqueReviewId(String);
 
 fn generate_random_number(rng: &mut SmallRng, digits: usize) -> u64 {
     // 计算上下界限
@@ -39,7 +45,10 @@ pub fn main() -> Result<()> {
 
     let timestamp = &timestamp[(timestamp.len() - 11)..];
     let index_id = generate_random_number(&mut rng, 3);
-    let _review_id = format!("{}{}{}", machine_id, timestamp, index_id,);
+    let review_id = format!("{}{}{}", machine_id, timestamp, index_id,);
+
+    let mut message = DataBuffer::<UniqueReviewId>::with_slot("unique_review_id".to_owned());
+    message.0 = review_id;
 
     Ok(().into())
 }

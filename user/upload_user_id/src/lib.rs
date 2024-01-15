@@ -3,8 +3,6 @@
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
         use ms_std::{agent::{FaaSFuncResult as Result}};
-        use ms_std::agent::DataBuffer;
-        use ms_std_proc_macro::FaasData;
 
         extern crate alloc;
         use alloc::{ string::String, borrow::ToOwned};
@@ -12,6 +10,9 @@ cfg_if::cfg_if! {
         type Result<T> = core::result::Result<T, String>;
     }
 }
+
+use ms_std::agent::DataBuffer;
+use ms_std_proc_macro::FaasData;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
@@ -26,6 +27,9 @@ cfg_if::cfg_if! {
     }
 }
 
+#[derive(FaasData, Default, Clone)]
+struct UserId(usize);
+
 #[no_mangle]
 pub fn main() -> Result<()> {
     cfg_if::cfg_if! {
@@ -39,11 +43,14 @@ pub fn main() -> Result<()> {
     }
 
     // should query database.
-    let _user_id = if user_name.0.eq("abcd") {
-        "112233"
+    let user_id = if user_name.0.eq("abcd") {
+        112233usize
     } else {
         Err("unknown username.")?
     };
+
+    let mut message = DataBuffer::<UserId>::with_slot("user_id".to_owned());
+    message.0 = user_id;
 
     Ok(().into())
 }
