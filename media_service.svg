@@ -17,13 +17,16 @@
 <text dominant-baseline="central" text-anchor="end" style="font-size:12px;font-family:sans-serif;" transform="translate(42 210)" fill="#6E7079">3</text>
 <text dominant-baseline="central" text-anchor="end" style="font-size:12px;font-family:sans-serif;" transform="translate(42 145)" fill="#6E7079">3.5</text>
 <text dominant-baseline="central" text-anchor="end" style="font-size:12px;font-family:sans-serif;" transform="translate(42 80)" fill="#6E7079">4</text>
-<path d="M133.6 229.9L183.6 229.9L183.6 193.4L133.6 193.4ZM158.6 280.3L158.6 229.9M158.6 144.2L158.6 193.4M133.6 280.3L183.6 280.3M133.6 144.2L183.6 144.2M133.6 217.5L183.6 217.5" fill="#fff" stroke="#5470c6"></path>
-<path d="M316.4 236.6L366.4 236.6L366.4 206.1L316.4 206.1ZM341.4 272.5L341.4 236.6M341.4 160.2L341.4 206.1M316.4 272.5L366.4 272.5M316.4 160.2L366.4 160.2M316.4 220.9L366.4 220.9" fill="#fff" stroke="#91cc75"></path>
-<path d="M-5 -5l182.2 0l0 26l-182.2 0Z" transform="translate(163.9 45)" fill="rgb(0,0,0)" fill-opacity="0" stroke="#ccc" stroke-width="0"></path>
-<path d="M3.5 0L21.5 0A3.5 3.5 0 0 1 25 3.5L25 10.5A3.5 3.5 0 0 1 21.5 14L3.5 14A3.5 3.5 0 0 1 0 10.5L0 3.5A3.5 3.5 0 0 1 3.5 0" transform="translate(164.9 46)" fill="#5470c6" stroke="#5470c6" stroke-width="2" stroke-linecap="butt" stroke-miterlimit="10"></path>
-<text dominant-baseline="central" text-anchor="start" style="font-size:12px;font-family:sans-serif;" x="30" y="7" transform="translate(164.9 46)" fill="#333">mslibos</text>
-<path d="M3.5 0L21.5 0A3.5 3.5 0 0 1 25 3.5L25 10.5A3.5 3.5 0 0 1 21.5 14L3.5 14A3.5 3.5 0 0 1 0 10.5L0 3.5A3.5 3.5 0 0 1 3.5 0" transform="translate(246.58 46)" fill="#91cc75" stroke="#91cc75" stroke-width="2" stroke-linecap="butt" stroke-miterlimit="10"></path>
-<text dominant-baseline="central" text-anchor="start" style="font-size:12px;font-family:sans-serif;" x="30" y="7" transform="translate(246.58 46)" fill="#333">faaslane-rs</text>
+<path d="M108.4 285.9L158.4 285.9L158.4 244.4L108.4 244.4ZM133.4 326L133.4 285.9M133.4 182.2L133.4 244.4M108.4 326L158.4 326M108.4 182.2L158.4 182.2M108.4 262.6L158.4 262.6" fill="#fff" stroke="#5470c6"></path>
+<path d="M225 277.5L275 277.5L275 238.2L225 238.2ZM250 321.5L250 277.5M250 183.5L250 238.2M225 321.5L275 321.5M225 183.5L275 183.5M225 258.3L275 258.3" fill="#fff" stroke="#91cc75"></path>
+<path d="M341.6 251.4L391.6 251.4L391.6 215.5L341.6 215.5ZM366.6 305.2L366.6 251.4M366.6 173.6L366.6 215.5M341.6 305.2L391.6 305.2M341.6 173.6L391.6 173.6M341.6 232.8L391.6 232.8" fill="#fff" stroke="#fac858"></path>
+<path d="M-5 -5l322.8 0l0 26l-322.8 0Z" transform="translate(93.6 45)" fill="rgb(0,0,0)" fill-opacity="0" stroke="#ccc" stroke-width="0"></path>
+<path d="M3.5 0L21.5 0A3.5 3.5 0 0 1 25 3.5L25 10.5A3.5 3.5 0 0 1 21.5 14L3.5 14A3.5 3.5 0 0 1 0 10.5L0 3.5A3.5 3.5 0 0 1 3.5 0" transform="translate(94.6 46)" fill="#5470c6" stroke="#5470c6" stroke-width="2" stroke-linecap="butt" stroke-miterlimit="10"></path>
+<text dominant-baseline="central" text-anchor="start" style="font-size:12px;font-family:sans-serif;" x="30" y="7" transform="translate(94.6 46)" fill="#333">mslibos</text>
+<path d="M3.5 0L21.5 0A3.5 3.5 0 0 1 25 3.5L25 10.5A3.5 3.5 0 0 1 21.5 14L3.5 14A3.5 3.5 0 0 1 0 10.5L0 3.5A3.5 3.5 0 0 1 3.5 0" transform="translate(176.28 46)" fill="#91cc75" stroke="#91cc75" stroke-width="2" stroke-linecap="butt" stroke-miterlimit="10"></path>
+<text dominant-baseline="central" text-anchor="start" style="font-size:12px;font-family:sans-serif;" x="30" y="7" transform="translate(176.28 46)" fill="#333">faaslane-rs</text>
+<path d="M3.5 0L21.5 0A3.5 3.5 0 0 1 25 3.5L25 10.5A3.5 3.5 0 0 1 21.5 14L3.5 14A3.5 3.5 0 0 1 0 10.5L0 3.5A3.5 3.5 0 0 1 3.5 0" transform="translate(276.8 46)" fill="#fac858" stroke="#fac858" stroke-width="2" stroke-linecap="butt" stroke-miterlimit="10"></path>
+<text dominant-baseline="central" text-anchor="start" style="font-size:12px;font-family:sans-serif;" x="30" y="7" transform="translate(276.8 46)" fill="#333">faaslane-rs-docker</text>
 <path d="M-62.1 -5l124.3 0l0 28l-124.3 0Z" transform="translate(250 5)" fill="rgb(0,0,0)" fill-opacity="0" stroke="#ccc" stroke-width="0"></path>
 <text dominant-baseline="central" text-anchor="middle" style="font-size:18px;font-family:sans-serif;font-weight:bold;" xml:space="preserve" y="9" transform="translate(250 5)" fill="#464646">Media Service</text>
 </svg>

@@ -1,3 +1,5 @@
+#!python3
+
 import json
 
 with open("/home/yjn/rust_project/mslibos/baseline/alu-flask/alu-flask-remote-0kb.trace", 'r') as f:

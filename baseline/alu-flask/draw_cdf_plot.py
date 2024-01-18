@@ -1,3 +1,5 @@
+#!python3
+
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -57,9 +59,9 @@ if __name__ == '__main__':
         data = read_data(filenames[i])
         CDF(data, line_labels[i], colors[i])
 
-    with open(f"/home/yjn/rust_project/mslibos/baseline/alu-flask/alu-flask-remote-0kb.trace", "r") as f:
-        data = json.loads(f.readlines()[1])["comp_time"]
-        CDF(data, "func exec", 'black')
+    # with open(f"/home/yjn/rust_project/mslibos/baseline/alu-flask/alu-flask-remote-0kb.trace", "r") as f:
+    #     data = json.loads(f.readlines()[1])["comp_time"]
+    #     CDF(data, "func exec", 'black')
 
     # plt.xscale('log')  # 对 x 轴进行对数转换
     plt.xlabel(x_label, labelpad=4)

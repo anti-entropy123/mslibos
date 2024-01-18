@@ -9,6 +9,10 @@ name = "tracing_media_service"
 path = "src/tracing_media_service.rs"
 
 [[bin]]
+name = "tracing_media_service_no_libos"
+path = "src/tracing_media_service_no_libos.rs"
+
+[[bin]]
 name = "charming_media_service"
 path = "src/charming_media_service.rs"
 

@@ -22,6 +22,13 @@ pub fn chart() -> Chart {
         file.read_to_string(&mut content).expect("read file failed");
         serde_json::from_str::<Vec<f64>>(&content).expect("wrong file content")
     }];
+    let data2 = vec![{
+        let mut file =
+            File::open("./media_service_no_libos_trace_docker.log").expect("no tracing file");
+        let mut content = String::new();
+        file.read_to_string(&mut content).expect("read file failed");
+        serde_json::from_str::<Vec<f64>>(&content).expect("wrong file content")
+    }];
 
     Chart::new()
         .title(Title::new().text("Media Service").left("center"))
@@ -30,6 +37,7 @@ pub fn chart() -> Chart {
             Dataset::new()
                 .source(data0)
                 .source(data1)
+                .source(data2)
                 .transform(
                     Transform::new()
                         .from_dataset_index(0)
@@ -38,6 +46,11 @@ pub fn chart() -> Chart {
                 .transform(
                     Transform::new()
                         .from_dataset_index(1)
+                        .transform(r#"{"type": "boxplot"}"#),
+                )
+                .transform(
+                    Transform::new()
+                        .from_dataset_index(2)
                         .transform(r#"{"type": "boxplot"}"#),
                 ),
             // .transform(
@@ -89,9 +102,9 @@ pub fn chart() -> Chart {
         //         .top("90%")
         //         .x_axis_index(0),
         // )
-        .series(Boxplot::new().name("mslibos").dataset_index(2))
-        .series(Boxplot::new().name("faaslane-rs").dataset_index(3))
-    // .series(Boxplot::new().name("category2").dataset_index(5))
+        .series(Boxplot::new().name("mslibos").dataset_index(3))
+        .series(Boxplot::new().name("faaslane-rs").dataset_index(4))
+        .series(Boxplot::new().name("faaslane-rs-docker").dataset_index(5))
 }
 
 fn _make_data() -> Vec<Vec<f64>> {
