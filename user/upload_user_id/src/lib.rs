@@ -14,6 +14,8 @@ cfg_if::cfg_if! {
 use ms_std::agent::DataBuffer;
 use ms_std_proc_macro::FaasData;
 
+mod dao;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
         #[derive(FaasData, Default, Clone)]
@@ -41,9 +43,11 @@ pub fn main() -> Result<()> {
             let user_name = MESSAGE;
         }
     }
+    let username = user_name.0;
 
     // should query database.
-    let user_id = if user_name.0.eq("abcd") {
+    let mmc_user_id = dao::memcached_get(format!("{username}:user_id"));
+    let user_id = if username.eq("abcd") {
         112233usize
     } else {
         Err("unknown username.")?

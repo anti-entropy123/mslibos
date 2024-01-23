@@ -30,7 +30,7 @@ pub fn chart() -> Chart {
                     Transform::new()
                         .from_dataset_index(1)
                         .transform(r#"{"type": "boxplot"}"#),
-                )
+                ),
         )
         .legend(Legend::new().top("10%"))
         .tooltip(

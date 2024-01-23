@@ -20,4 +20,4 @@ with_libos = ["ms_std/alloc_def", "ms_std/panic_def", "ms_hostcall"]
 measure_mem = ["with_libos"]
 mock = ["ms_std/mock_databuffer", "ms_hostcall"]
 
-default = ["with_libos"]
+default = ["mock"]
