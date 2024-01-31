@@ -9,10 +9,18 @@ import threading
 
 compose_review_url = "http://127.0.0.1:32331/function/compose-review"
 upload_user_id_url = "http://127.0.0.1:32331/function/upload-user-id"
+upload_movie_id_url = "http://127.0.0.1:32331/function/upload-movie-id"
+mr_upload_text_url = "http://127.0.0.1:32331/function/mr-upload-text"
+mr_upload_unique_id_url = "http://127.0.0.1:32331/function/mr-upload-unique-id"
+mr_compose_and_upload_url = "http://127.0.0.1:32331/function/mr-compose-and-upload"
+store_review_url = "http://127.0.0.1:32331/function/store-review"
+upload_user_review_url = "http://127.0.0.1:32331/function/upload-user-review"
+upload_movie_review_url = "http://127.0.0.1:32331/function/upload-movie-review"
 
-funcs = ["compose-review", "upload-user-id", ]
+funcs = ["compose-review", "upload-user-id", "upload-movie-id", "mr-upload-text", "mr-upload-unique-id",
+         "mr-compose-and-upload", "store-review", "upload-user-review", "upload-movie-review"]
 
-batch_size = 850
+batch_size = 1000
 con_num = 16
 
 
@@ -54,7 +62,7 @@ def workflow(_):
 
     parallel_res = []
     threads = []
-    for url in [upload_user_id_url,]:
+    for url in [upload_user_id_url, upload_movie_id_url, mr_upload_text_url, mr_upload_unique_id_url]:
         t = threading.Thread(target=post, args=(
             url, compose_res, parallel_res))
         threads.append(t)
@@ -65,7 +73,23 @@ def workflow(_):
     for t in threads:
         t.join()
 
-    # print(parallel_res)
+    compose_and_upload_res = requests.post(
+        mr_compose_and_upload_url, data=json.dumps(parallel_res)).text
+
+    parallel_res = []
+    threads = []
+    for url in [store_review_url, upload_user_review_url, upload_movie_review_url]:
+        t = threading.Thread(target=post, args=(
+            url, compose_and_upload_res, parallel_res))
+        threads.append(t)
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    return int((time.time()-start)*1000)
 
 
 def batch_invoke():
@@ -74,46 +98,10 @@ def batch_invoke():
     with concurrent.futures.ThreadPoolExecutor(max_workers=con_num) as executor:
         resps = executor.map(workflow, [None for i in range(batch_size)])
 
-        for resp in resps:
-            results.append(
-                {'trace': resp.headers['mslibos-trace'], 'X-Duration-Seconds': resp.headers['X-Duration-Seconds'], 'body': resp.text})
-
     end_time = time.time()
+    print(f"trace workflow mode, cost {time.time()-start_time} s")
     print("qps:", batch_size/(end_time-start_time))
     return results
-
-
-def breakdown(resps: list) -> str:
-    trace_info = {}
-    for resp in resps:
-        resp['body'] = json.loads(resp['body'])
-
-        trace_str = resp['trace']
-        resp['trace'] = {}
-
-        for items in trace_str.split(','):
-            kv = items.split(':')
-            resp['trace'][kv[0].strip()] = int(
-                kv[1].strip())
-
-        base = resp['trace']['invoke']
-        for label, val in resp['trace'].items():
-            resp['trace'][label] = round((val - base) / 1000, 3)
-
-    for trace_label in resps[0]['trace']:
-        trace_info[trace_label] = [resp['trace'][trace_label]
-                                   for resp in resps]
-
-    # f',X-Duration-Useconds:{round(float(resp.headers["X-Duration-Seconds"]) * 1000_000)}'
-    trace_info["X-Duration-Useconds"] = [
-        round(float(resp["X-Duration-Seconds"]) * 1000) for resp in resps]
-
-    func_info = {}
-    for func_label in resps[0]['body']:
-        func_info[func_label] = [
-            round(resp['body'][func_label]*1000, 3) for resp in resps]
-
-    return json.dumps(trace_info) + '\n' + json.dumps(func_info)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ functions:
     handler: ./media-service
     image: antientropy/media-service:latest
     labels:
-      "com.openfaas.scale.max": "1" 
-      "com.openfaas.scale.min": "1" 
+      "com.openfaas.scale.max": "9" 
+      "com.openfaas.scale.min": "9" 
     constraints:
       - "kubernetes.io/hostname=kube-node-7"
