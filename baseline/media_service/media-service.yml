@@ -1,0 +1,14 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:32331
+functions:
+  media-service:
+    lang: python3-flask
+    handler: ./media-service
+    image: antientropy/media-service:latest
+    labels:
+      "com.openfaas.scale.max": "9" 
+      "com.openfaas.scale.min": "9" 
+    constraints:
+      - "kubernetes.io/hostname=kube-node-7"
