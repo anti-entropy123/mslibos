@@ -11,6 +11,7 @@ use nix::unistd::read;
 pub mod fork;
 pub mod share_mem;
 pub mod socket;
+pub mod function;
 
 use fork::*;
 
