@@ -76,7 +76,7 @@ impl ElfService {
         unsafe { self.lib.get(symbol.as_bytes()) }.ok()
     }
 
-    pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+    pub fn init(&self, _isol_id: IsolationID) -> anyhow::Result<()> {
         Ok(())
     }
 
