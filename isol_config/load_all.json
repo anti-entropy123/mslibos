@@ -1,0 +1,46 @@
+{
+    "services": [
+        [
+            "fatfs",
+            "libfatfs.so"
+        ],
+        [
+            "fdtab",
+            "libfdtab.so"
+        ],
+        [
+            "mm",
+            "libmm.so"
+        ],
+        [
+            "mmap_file_backend",
+            "libmmap_file_backend.so"
+        ],
+        [
+            "socket",
+            "libsocket.so"
+        ],
+        [
+            "stdio",
+            "libstdio.so"
+        ],
+        [
+            "time",
+            "libtime.so"
+        ]
+    ],
+    "apps": [
+        [
+            "hello1",
+            "libhello_world.so"
+        ]
+    ],
+    "groups": [
+        {
+            "list": [
+                "hello1"
+            ],
+            "args": {}
+        }
+    ]
+}

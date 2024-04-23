@@ -87,6 +87,10 @@ impl FatfsFileList {
 static FTABLE: Mutex<FatfsFileList> = Mutex::new(FatfsFileList::new());
 static FS_REF_ADDR: OnceLock<usize> = OnceLock::new();
 
+fn has_fs_ref() -> bool {
+    FS_REF_ADDR.get().is_some()
+}
+
 fn get_fs_ref() -> &'static FileSystem {
     let ref_addr = FS_REF_ADDR.get_or_init(|| {
         // I think this hack for getting reference to file system instance is
