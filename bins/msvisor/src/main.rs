@@ -14,6 +14,8 @@ pub enum MetricOpt {
     None,
     #[display(fmt = "all")]
     All,
+    #[display(fmt = "total_dur")]
+    TotalDur,
     #[display(fmt = "mem")]
     Mem,
 }
@@ -24,6 +26,7 @@ impl MetricOpt {
             MetricOpt::None => libmsvisor::MetricOpt::None,
             MetricOpt::All => libmsvisor::MetricOpt::All,
             MetricOpt::Mem => libmsvisor::MetricOpt::Mem,
+            MetricOpt::TotalDur => libmsvisor::MetricOpt::TotalDur,
         }
     }
 }

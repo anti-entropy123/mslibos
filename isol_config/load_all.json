@@ -1,0 +1,47 @@
+{
+    "fs_image": "fs_images/fatfs.img",
+    "services": [
+        [
+            "fatfs",
+            "libfatfs.so"
+        ],
+        [
+            "fdtab",
+            "libfdtab.so"
+        ],
+        [
+            "mm",
+            "libmm.so"
+        ],
+        [
+            "mmap_file_backend",
+            "libmmap_file_backend.so"
+        ],
+        [
+            "socket",
+            "libsocket.so"
+        ],
+        [
+            "stdio",
+            "libstdio.so"
+        ],
+        [
+            "time",
+            "libtime.so"
+        ]
+    ],
+    "apps": [
+        [
+            "load_all",
+            "libload_all.so"
+        ]
+    ],
+    "groups": [
+        {
+            "list": [
+                "load_all"
+            ],
+            "args": {}
+        }
+    ]
+}
