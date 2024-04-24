@@ -1,4 +1,5 @@
 {
+    "fs_image": "fs_images/fatfs.img",
     "services": [
         [
             "fatfs",
@@ -31,14 +32,14 @@
     ],
     "apps": [
         [
-            "hello1",
-            "libhello_world.so"
+            "load_all",
+            "libload_all.so"
         ]
     ],
     "groups": [
         {
             "list": [
-                "hello1"
+                "load_all"
             ],
             "args": {}
         }

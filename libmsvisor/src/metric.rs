@@ -105,6 +105,9 @@ impl MetricBucket {
                 };
             }
             MetricOpt::Mem => result["mem_metrics"] = json!(inner.mem_metrics),
+            MetricOpt::TotalDur => {
+                result["total_dur(ms)"] = inner.to_json().get("total_dur(ms)").unwrap().clone()
+            }
         }
 
         eprintln!(
@@ -117,6 +120,7 @@ impl MetricBucket {
 pub enum MetricOpt {
     None,
     All,
+    TotalDur,
     Mem,
 }
 
