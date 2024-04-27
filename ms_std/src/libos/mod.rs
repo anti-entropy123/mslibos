@@ -58,6 +58,7 @@ pub struct UserHostCall {
     unregister_file_backend_addr: Option<usize>,
 
     get_time_addr: Option<usize>,
+    nanosleep_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -113,6 +114,7 @@ impl UserHostCall {
             CommonHostCall::FilePageFaultHandler => &mut self.pf_handler_addr,
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
+            CommonHostCall::NanoSleep => &mut self.nanosleep_addr,
         };
 
         if entry_addr.is_none() {

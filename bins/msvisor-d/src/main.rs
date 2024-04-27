@@ -27,6 +27,7 @@ struct TrigeWorkflowReq {
 async fn trige_workflow_handler(
     Query(TrigeWorkflowReq { mut isol_name }): Query<TrigeWorkflowReq>,
 ) -> AppResult<String> {
+    log::info!("trige_workflow_handler: isol_name={}", isol_name);
     if !isol_name.ends_with(".json") {
         isol_name += ".json"
     };

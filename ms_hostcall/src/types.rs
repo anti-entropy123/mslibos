@@ -64,6 +64,7 @@ pub type SockFd = u32;
 
 // time
 pub type GetTimeFunc = fn() -> Result<u128, String>;
+pub type NanoSleepFunc = fn(u64, u64);
 
 // isol_info
 pub type MetricFunc = fn(IsolationID, MetricEvent) -> Result<(), ()>;

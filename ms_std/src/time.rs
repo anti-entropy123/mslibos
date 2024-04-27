@@ -25,3 +25,10 @@ impl SystemTime {
         Self::now().duration_since(*self)
     }
 }
+
+pub fn sleep(dur: Duration) {
+    let sec = dur.as_secs();
+    let nsec = (dur.as_nanos() % 1_000_000_000) as u64;
+
+    libos!(nanosleep(sec, nsec));
+}

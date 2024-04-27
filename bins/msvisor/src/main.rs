@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, thread::sleep, time::Duration};
 
 use clap::{arg, Parser};
 use derive_more::Display;
@@ -51,6 +51,8 @@ struct Args {
 #[tokio::main]
 async fn main() {
     logger::init();
+
+    sleep(Duration::from_secs(1));
 
     let args = Args::parse();
     let configs: Vec<_> = if !args.files.is_empty() {
