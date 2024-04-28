@@ -598,7 +598,6 @@ dependencies = [
  "libmsvisor",
  "log",
  "thiserror-no-std",
- "tokio",
 ]
 
 [[package]]

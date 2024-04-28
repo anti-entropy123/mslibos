@@ -105,7 +105,7 @@ pub enum CommonHostCall {
 
     #[display(fmt = "get_time")]
     GetTime,
-    #[display(fmt = "nanosleep")]
+    #[display(fmt = "host_nanosleep")]
     NanoSleep,
 }
 

@@ -1,4 +1,8 @@
-use std::{sync::Arc, thread::sleep, time::Duration};
+use std::{
+    sync::Arc,
+    thread::{self, sleep},
+    time::Duration,
+};
 
 use clap::{arg, Parser};
 use derive_more::Display;
@@ -48,8 +52,7 @@ struct Args {
     metrics: MetricOpt,
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     logger::init();
 
     sleep(Duration::from_secs(1));
@@ -83,17 +86,28 @@ async fn main() {
         }
     }
 
-    let mut join_handles: Vec<_> = vec![];
-    for isol_handle in isol_handles {
-        let join_handle = tokio::task::spawn_blocking(move || {
-            let isol = get_isol(isol_handle).expect("isol don't exist?");
-            isol.run()
-        });
-        join_handles.push(join_handle)
-    }
+    let mut join_handles: Vec<_> = isol_handles
+        .map(|isol_handle| {
+            let builder = thread::Builder::new()
+                .name(format!("isol_{}", isol_handle))
+                .stack_size(8 * 1024 * 1024);
+
+            let isol_start_with_thread = move || {
+                let isol = get_isol(isol_handle).expect("isol don't exist?");
+                isol.run()
+            };
+
+            Some(
+                builder
+                    .spawn(isol_start_with_thread)
+                    .expect("spawn thread failed?"),
+            )
+        })
+        .collect();
 
     for (isol_idx, join_handle) in join_handles.iter_mut().enumerate() {
-        let app_result = join_handle.await;
+        let join_handle = join_handle.take();
+        let app_result = join_handle.unwrap().join().expect("join failed");
 
         let isol = isols.get(isol_idx).unwrap();
         if let Err(e) = app_result {
