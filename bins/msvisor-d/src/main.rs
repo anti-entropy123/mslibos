@@ -35,11 +35,14 @@ async fn trige_workflow_handler(
 
     // info!("preload?:{}", args.preload);
     let isol = Isolation::new(&config);
-    isol.run().map_err(|e| {
-        let err_msg = format!("isolation user function error: {}", e);
-        logger::error!("{}", err_msg);
-        AppError(err_msg)
-    })?;
+    tokio::task::spawn_blocking(move || isol.run())
+        .await
+        .unwrap()
+        .map_err(|e| {
+            let err_msg = format!("isolation user function error: {}", e);
+            logger::error!("{}", err_msg);
+            AppError(err_msg)
+        })?;
 
     Ok("ok".to_owned())
 }
