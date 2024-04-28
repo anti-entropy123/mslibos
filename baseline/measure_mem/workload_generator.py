@@ -7,24 +7,20 @@ import subprocess
 import signal
 
 
+instance_num = 10
+
 def mslibos_client():
-    url = "http://node-7:8000/workflow?isol_name=never_stop"
-    p = subprocess.Popen(["zsh", "-c", f"'curl {url}'"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(0.1)
-    p.send_signal(signal.SIGINT)
-    print("stdout", p.stdout.read(), "stderr", p.stderr.read())
+    url = "http://localhost:8000/workflow?isol_name=never_stop"
+    requests.get(url)
 
 
 if __name__ == "__main__":
     tasks = []
-    for i in range(10):
+    for i in range(instance_num):
         print("task", i)
-        time.sleep(3)
-        # t = threading.Thread(target=mslibos_client)
-        # tasks.append(t)
-        # t.start()
-        mslibos_client()
+        t = threading.Thread(target=mslibos_client)
+        tasks.append(t)
+        t.start()
 
-    # for t in tasks:
-    #     t.join()
-    time.sleep(1000)
+    for t in tasks:
+        t.join()
