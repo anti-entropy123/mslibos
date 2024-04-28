@@ -7,7 +7,8 @@ import subprocess
 import signal
 
 
-instance_num = 10
+instance_num = 30
+
 
 def mslibos_client():
     url = "http://localhost:8000/workflow?isol_name=never_stop"
@@ -18,6 +19,7 @@ if __name__ == "__main__":
     tasks = []
     for i in range(instance_num):
         print("task", i)
+        time.sleep(0.2)
         t = threading.Thread(target=mslibos_client)
         tasks.append(t)
         t.start()

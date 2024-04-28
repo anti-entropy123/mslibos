@@ -184,13 +184,16 @@ impl Isolation {
         self.metric.mark(Mem);
 
         #[cfg(feature = "namespace")]
-        self.service_or_load(&"libc".to_owned())?;
+        self.service_or_load(&"libc".to_owned())
+            .map_err(|e| anyhow!("namespace feature, load libc failed: {e}"))?;
 
         if self.groups.is_empty() {
-            self.run_as_sequence().context("run_as_sequence failed")?
+            self.run_as_sequence()
+                .map_err(|e| anyhow!("run_as_sequence failed: {e}"))?
         } else {
             for group in &self.groups {
-                self.run_group_in_parallel(group)?
+                self.run_group_in_parallel(group)
+                    .map_err(|e| anyhow!("run_group_in_parallel failed: {e}"))?
             }
         };
 

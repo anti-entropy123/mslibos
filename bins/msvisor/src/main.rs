@@ -55,8 +55,6 @@ struct Args {
 fn main() {
     logger::init();
 
-    sleep(Duration::from_secs(1));
-
     let args = Args::parse();
     let configs: Vec<_> = if !args.files.is_empty() {
         args.files
@@ -111,7 +109,7 @@ fn main() {
 
         let isol = isols.get(isol_idx).unwrap();
         if let Err(e) = app_result {
-            log::error!("isol{} run failed. err={}", isol.id, e)
+            log::error!("isol{} run failed. err={e:?}", isol.id)
         }
 
         log::debug!(

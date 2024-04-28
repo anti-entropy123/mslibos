@@ -71,20 +71,23 @@ impl ServiceLoader {
 
         // Service init contains Loading elf library.
         metric.mark(MetricEvent::SvcInit);
-        let lib = Arc::from(load_dynlib(
-            lib_path,
-            // &format!(
-            //     "target/{}/lib{}.so",
-            //     if cfg!(debug_assertions) {
-            //         "debug"
-            //     } else {
-            //         "release"
-            //     },
-            //     name
-            // )
-            // .into(),
-            self.namespace.get().map(|ns| ns.as_lmid_t()),
-        )?);
+        let lib = Arc::from(
+            load_dynlib(
+                lib_path,
+                // &format!(
+                //     "target/{}/lib{}.so",
+                //     if cfg!(debug_assertions) {
+                //         "debug"
+                //     } else {
+                //         "release"
+                //     },
+                //     name
+                // )
+                // .into(),
+                self.namespace.get().map(|ns| ns.as_lmid_t()),
+            )
+            .map_err(|e| anyhow!("load_dynlib faile: {e}"))?,
+        );
 
         let service = Service::new(name, lib, metric, self.with_libos);
         self.namespace.get_or_init(|| service.namespace());
@@ -145,14 +148,15 @@ fn do_dlmopen(
     );
     if handle.is_null() {
         let error = unsafe { dlerror() };
-        return if error.is_null() {
-            Err(anyhow!("unknown dlmopen error"))
+        let err_msg = if error.is_null() {
+            anyhow!("unknown dlmopen error")
         } else {
             let message = unsafe { CStr::from_ptr(error) }
                 .to_string_lossy()
                 .to_string();
-            Err(anyhow!(message))
+            anyhow!("dlmopen error: {message}",)
         };
+        return Err(err_msg);
     };
     Ok(handle)
 }
