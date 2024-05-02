@@ -9,7 +9,7 @@ use ms_std::{
 };
 use ms_std_proc_macro::FaasData;
 
-const DATA_SIZE: usize = 10000;
+const DATA_SIZE: usize = 5;
 
 #[allow(dead_code)]
 #[derive(FaasData)]
@@ -39,9 +39,9 @@ pub fn main() -> Result<MyComplexData> {
     d.year = 2025;
     d.name = "Euro".to_owned();
 
-    for (idx, val) in &mut d.big_data.iter_mut().enumerate() {
-        *val = (idx % 109usize) as u8
-    }
+    // for (idx, val) in &mut d.big_data.iter_mut().enumerate() {
+    //     *val = (idx % 109usize) as u8
+    // }
 
     // println!("construct d ok.");
     // println!("some_str={}, some_int={}", d.some_str, d.some_int);

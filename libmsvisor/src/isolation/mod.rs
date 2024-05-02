@@ -145,7 +145,9 @@ impl Isolation {
         };
 
         for app in &self.app_names {
-            let app = self.service_or_load(app).context("load app failed.")?;
+            let app = self
+                .service_or_load(app)
+                .map_err(|e| anyhow!("load app failed: {e}"))?;
             let result = app.run(&args);
             result.map_err(|e| anyhow!("app_{} run failed, reason: {}", app.name(), e))?
         }

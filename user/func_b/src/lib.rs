@@ -12,7 +12,7 @@ use ms_std::{
 };
 use ms_std_proc_macro::FaasData;
 
-const DATA_SIZE: usize = 10000;
+const DATA_SIZE: usize = 5;
 
 #[derive(FaasData)]
 pub struct MyComplexData {

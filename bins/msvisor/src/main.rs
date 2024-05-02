@@ -48,11 +48,8 @@ struct Args {
     metrics: MetricOpt,
 }
 
-#[tokio::main]
-async fn main() {
-    logger::init();
-
-    let args = Args::parse();
+async fn msvisor_start() {
+    let args: Args = Args::parse();
     let configs: Vec<_> = if !args.files.is_empty() {
         args.files
             .iter()
@@ -85,8 +82,8 @@ async fn main() {
         .map(|isol_handle| {
             let isol_start_with_thread = move || {
                 let isol = get_isol(isol_handle).expect("isol don't exist?");
-                let app_result = isol.run();
-                if let Err(e) = app_result {
+
+                if let Err(e) = isol.run() {
                     log::error!("isol{} run failed. err={e:?}", isol.id)
                 }
             };
@@ -113,4 +110,13 @@ async fn main() {
             isol.metric.analyze(&args.metrics.to_analyze());
         }
     }
+}
+fn main() {
+    logger::init();
+
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .thread_stack_size(8 * 1024 * 1024)
+        .build()
+        .expect("build tokio runtime failed?");
+    runtime.block_on(msvisor_start())
 }
