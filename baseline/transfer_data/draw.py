@@ -38,9 +38,9 @@ plt.bar([i + 3 * bar_width for i in index],
 
 # 在柱子中心位置显示数据
 for i in index:
-    plt.text(i, 10 ** (math.log10(vm_socket[i])/4),
+    plt.text(i + 0 * bar_width, 10 ** (math.log10(vm_socket[i])/4),
              str(vm_socket[i]), ha='center', rotation=90)
-    plt.text(i + bar_width, 10 ** (math.log10(proc_sock[i])/4),
+    plt.text(i + 1 * bar_width, 10 ** (math.log10(proc_sock[i])/4),
              str(proc_sock[i]), ha='center', rotation=90)
     plt.text(i + 2 * bar_width, 10 ** (math.log10(mmap[i])/4),
              str(mmap[i]), ha='center', rotation=90)

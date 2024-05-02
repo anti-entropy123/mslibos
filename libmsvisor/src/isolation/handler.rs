@@ -18,8 +18,7 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
     // let id = HostCallID::Common(CommonHostCall::Write);
     // thread::sleep(Duration::from_secs(1));
     logger::debug!(
-        "find_host_call, isol_id={:x}, call_id={:?}, call_name={}",
-        isol_id,
+        "find_host_call, isol_id={isol_id}, call_id={:?}, call_name={}",
         hc_id,
         hc_id.to_string()
     );

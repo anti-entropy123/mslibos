@@ -146,7 +146,7 @@ fn do_dlmopen(
         "load_dynlib: dlmopen, handle=0x{:x}, filename={:?}",
         handle as usize, filename
     );
-    if handle.is_null() {
+    if handle.is_null() || handle as usize == 0 {
         let error = unsafe { dlerror() };
         let err_msg = if error.is_null() {
             anyhow!("unknown dlmopen error")
