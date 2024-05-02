@@ -27,16 +27,23 @@ struct TrigeWorkflowReq {
 async fn trige_workflow_handler(
     Query(TrigeWorkflowReq { mut isol_name }): Query<TrigeWorkflowReq>,
 ) -> AppResult<String> {
+    log::info!("trige_workflow_handler: isol_name={}", isol_name);
     if !isol_name.ends_with(".json") {
         isol_name += ".json"
     };
-    let config = IsolationConfig::from_file(isol_name.into())?;
+    let config = IsolationConfig::from_file(isol_name.into())
+        .map_err(|e| AppError(format!("load config file failed: {}", e)))?;
 
     // info!("preload?:{}", args.preload);
     let isol = Isolation::new(&config);
-    if isol.run().is_err() {
-        logger::error!("isolation user function error.")
-    }
+    tokio::task::spawn_blocking(move || isol.run())
+        .await
+        .unwrap()
+        .map_err(|e| {
+            let err_msg = format!("isolation user function error: {}", e);
+            logger::error!("{}", err_msg);
+            AppError(err_msg)
+        })?;
 
     Ok("ok".to_owned())
 }
@@ -46,10 +53,11 @@ async fn main() -> std::io::Result<()> {
     logger::init();
     let app = Router::new().route("/workflow", get(trige_workflow_handler));
 
-    axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = "0.0.0.0:8000";
+    let server = axum::Server::bind(&addr.parse().unwrap()).serve(app.into_make_service());
+
+    log::info!("listenning on: {}", addr);
+    server.await.unwrap();
 
     Ok(())
 }

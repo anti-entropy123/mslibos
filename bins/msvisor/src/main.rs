@@ -1,4 +1,4 @@
-use std::{sync::Arc, thread};
+use std::sync::Arc;
 
 use clap::{arg, Parser};
 use derive_more::Display;
@@ -48,10 +48,8 @@ struct Args {
     metrics: MetricOpt,
 }
 
-fn main() {
-    logger::init();
-
-    let args = Args::parse();
+async fn msvisor_start() {
+    let args: Args = Args::parse();
     let configs: Vec<_> = if !args.files.is_empty() {
         args.files
             .iter()
@@ -82,31 +80,25 @@ fn main() {
 
     let mut join_handles: Vec<_> = isol_handles
         .map(|isol_handle| {
-            let builder = thread::Builder::new()
-                .name(format!("isol_{}", isol_handle))
-                .stack_size(8 * 1024 * 1024);
-
             let isol_start_with_thread = move || {
                 let isol = get_isol(isol_handle).expect("isol don't exist?");
-                isol.run()
+
+                if let Err(e) = isol.run() {
+                    log::error!("isol{} run failed. err={e:?}", isol.id)
+                }
             };
 
-            Some(
-                builder
-                    .spawn(isol_start_with_thread)
-                    .expect("spawn thread failed?"),
-            )
+            Some(tokio::task::spawn_blocking(move || {
+                isol_start_with_thread()
+            }))
         })
         .collect();
 
     for (isol_idx, join_handle) in join_handles.iter_mut().enumerate() {
-        let join_handle = join_handle.take();
-        let app_result = join_handle.unwrap().join().expect("join failed");
+        let join_handle = join_handle.take().unwrap();
+        join_handle.await.expect("join failed");
 
         let isol = isols.get(isol_idx).unwrap();
-        if let Err(e) = app_result {
-            log::error!("isol{} run failed. err={}", isol.id, e)
-        }
 
         log::debug!(
             "isol{} has strong count={}",
@@ -118,4 +110,13 @@ fn main() {
             isol.metric.analyze(&args.metrics.to_analyze());
         }
     }
+}
+fn main() {
+    logger::init();
+
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .thread_stack_size(8 * 1024 * 1024)
+        .build()
+        .expect("build tokio runtime failed?");
+    runtime.block_on(msvisor_start())
 }

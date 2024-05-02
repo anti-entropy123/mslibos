@@ -105,6 +105,8 @@ pub enum CommonHostCall {
 
     #[display(fmt = "get_time")]
     GetTime,
+    #[display(fmt = "host_nanosleep")]
+    NanoSleep,
 }
 
 #[derive(Debug, Display)]
@@ -159,7 +161,7 @@ impl HostCallID {
                 | CommonHostCall::FilePageFaultHandler
                 | CommonHostCall::UnregisterFileBackend => "mmap_file_backend".to_owned(),
 
-                CommonHostCall::GetTime => "time".to_owned(),
+                CommonHostCall::GetTime | CommonHostCall::NanoSleep => "time".to_owned(),
             },
             HostCallID::Custom(_) => todo!(),
         }

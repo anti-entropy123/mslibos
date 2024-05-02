@@ -1,0 +1,22 @@
+{
+    "services": [
+      [
+        "time",
+        "libtime.so"
+      ]
+    ],
+    "apps": [
+      [
+        "never_stop",
+        "libnever_stop.so"
+      ]
+    ],
+    "groups": [
+      {
+        "list": [
+          "never_stop"
+        ],
+        "args": {}
+      }
+    ]
+  }
