@@ -9,7 +9,7 @@ matplotlib.rcParams['ps.fonttype'] = 42
 plt.rcParams.update({'font.size': 11})
 
 # fig = plt.figure(figsize=(4.65, 2.5), dpi=300)
-fig = plt.figure(figsize=(4.25, 2.4), dpi=300)
+fig = plt.figure(figsize=(4.25, 2), dpi=300)
 
 plt.subplots_adjust(hspace=0.05, wspace=None, top=0.9,
                     bottom=0.15, left=0.18, right=0.98)
@@ -54,15 +54,19 @@ plt.plot(range(len(Unikraft_overhead)), Unikraft_overhead, label="Unikraft",
 # plt.yscale("log")
 
 plt.gca().xaxis.set_tick_params(pad=0.5, length=1)
-plt.gca().yaxis.set_tick_params(pad=0.5, length=2)
 
 plt.ylabel("Memory Footprint (MB)", fontsize=10, labelpad=0)
 plt.xlabel("Num of Instances", fontsize=10, labelpad=0)
 plt.xticks(range(len(instance_nums)), instance_nums)
 
 plt.grid(ls="--", zorder=1)
-plt.legend(loc=(0.01, 1.01), ncol=4, prop={'size': 8})
+plt.legend(framealpha=0, loc=(0.01, 1.01), ncol=4, prop={'size': 8})
 
 plt.savefig("/home/yjn/Downloads/sec6_mem.pdf")
+
+print(AS_overheads)
+print(AS_http_overheads)
+print(Faasm_overhead)
+print(Unikraft_overhead)
 
 plt.show()

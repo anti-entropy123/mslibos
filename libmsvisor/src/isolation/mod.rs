@@ -8,7 +8,7 @@ use std::{
     thread,
 };
 
-use anyhow::{anyhow, Context, Ok};
+use anyhow::{anyhow, Ok};
 use lazy_static::lazy_static;
 
 use log::info;
