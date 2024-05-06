@@ -35,18 +35,29 @@ pub fn native_write(buf: &[u8]) {
     println!("native_write size = {}", buf.len())
 }
 
+const IMAGE_PATH: &str = "../../fs_images/fatfs_large.img";
+
 type FatFs = fatfs::FileSystem<fscommon::BufStream<std::fs::File>>;
 pub fn build_fatfs() -> FatFs {
     let image = {
         let mut config = File::options();
-        let image_path = "../../fs_images/fatfs_large.img";
         BufStream::new(
             config
                 .read(true)
                 .write(true)
-                .open(image_path)
-                .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", image_path, e)),
+                .open(IMAGE_PATH)
+                .unwrap_or_else(|e| panic!("open img {:?} failed, err: {}", IMAGE_PATH, e)),
         )
     };
     fatfs::FileSystem::new(image, fatfs::FsOptions::new()).unwrap()
 }
+
+// type FatFs = fatfs::FileSystem<std::fs::File>;
+// pub fn build_fatfs() -> FatFs {
+//     let image = File::options()
+//         .write(true)
+//         .read(true)
+//         .open(IMAGE_PATH)
+//         .unwrap();
+//     fatfs::FileSystem::new(image, fatfs::FsOptions::new()).unwrap()
+// }

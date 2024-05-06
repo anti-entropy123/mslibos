@@ -2,6 +2,7 @@ use std::time::{Duration, SystemTime};
 
 use crate::fs_ops::{build_fatfs, fatfs_read, fatfs_write, native_read, native_write};
 
+mod ns_ops;
 mod fs_ops;
 
 fn test_fatfs_read() {
