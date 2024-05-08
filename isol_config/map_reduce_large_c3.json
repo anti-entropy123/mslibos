@@ -55,20 +55,6 @@
             "slot_name": "part-2",
             "input_file": "fake_data_2.txt"
           }
-        },
-        {
-          "name": "file_reader",
-          "args": {
-            "slot_name": "part-3",
-            "input_file": "fake_data_3.txt"
-          }
-        },
-        {
-          "name": "file_reader",
-          "args": {
-            "slot_name": "part-4",
-            "input_file": "fake_data_4.txt"
-          }
         }
       ],
       "args": {}
@@ -77,24 +63,20 @@
       "list": [
         "mapper",
         "mapper",
-        "mapper",
-        "mapper",
         "mapper"
       ],
       "args": {
-        "reducer_num": "5"
+        "reducer_num": "3"
       }
     },
     {
       "list": [
         "reducer",
         "reducer",
-        "reducer",
-        "reducer",
         "reducer"
       ],
       "args": {
-        "mapper_num": "5"
+        "mapper_num": "3"
       }
     }
   ]

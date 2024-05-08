@@ -10,8 +10,8 @@ use serde_json::json;
 
 type Error = Box<dyn std::error::Error>;
 
-const MINIO_BASE_URL: &str = "minio-service.yasb-mapreduce-db.svc.cluster.local:9000";
-const REDIS_BASE_URL: &str = "redis.yasb-mapreduce-db.svc.cluster.local:6379";
+const MINIO_BASE_URL: &str = "minio-service.openfaas-yjn.svc.cluster.local:9000";
+const REDIS_BASE_URL: &str = "redis.openfaas-yjn.svc.cluster.local:6379";
 const APP: &str = "wc";
 
 pub fn handle(body: Vec<u8>) -> Result<Vec<u8>, Error> {

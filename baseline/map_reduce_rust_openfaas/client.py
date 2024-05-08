@@ -3,15 +3,17 @@
 import json
 import time
 import subprocess
+import sys
 
 mapper_name = "mapper-rust"
 reducer_name = "reducer-rust"
 # mapper_name = "wc-mapper"
 # reducer_name = "wc-reducer"
-gateway = "node-7:9331"
+gateway = "node-7:32331"
 # gateway = "localhost:31119"
-mapper_num = 5
-reducer_num = 5
+
+mapper_num = int(sys.argv[1])
+reducer_num = mapper_num
 
 
 def invoke_func(func_name: str, data: dict,) -> subprocess.Popen:
@@ -60,8 +62,9 @@ def workflow():
 
 
 if __name__ == "__main__":
+    start = time.time()
     mapper_res, reducer_res = workflow()
-
+    print(f"total cost time: {1000*(time.time()-start)}ms", )
     print("===Map Info===", mapper_res)
     # get_res_info(mapper_res)
     print("===Reduce Info===", reducer_res)

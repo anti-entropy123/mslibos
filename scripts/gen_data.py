@@ -1,22 +1,21 @@
-#!python3
+#!/usr/bin/python3
 
 import os
 
 
-def gen_word_count():
+def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
 
     fake = Faker()
+    one_size = int(total_size / file_num)
 
-    FILE_NUM = 8
-
-    for i in range(FILE_NUM):
+    for i in range(file_num):
         file_name = f'fake_data_{i}.txt'
         with open(file_name, 'w') as f:
             while True:
                 f.write(fake.text(10_000))
 
-                if os.stat(file_name).st_size > 60_000_000:
+                if os.stat(file_name).st_size > one_size:
                     break
 
 
@@ -44,4 +43,4 @@ def gen_parallel_sort():
 
 
 if __name__ == "__main__":
-    gen_parallel_sort()
+    gen_word_count(10, 10*1024*1024)
