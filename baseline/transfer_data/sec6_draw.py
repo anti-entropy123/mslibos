@@ -7,12 +7,12 @@ import matplotlib.font_manager
 matplotlib.rcParams["font.family"] = 'Helvetica'
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
-plt.rcParams.update({'font.size': 20})
+plt.rcParams.update({'font.size': 16})
 # 线宽
 linewidth = 0.8
 mpl.rcParams['hatch.linewidth'] = linewidth
-fig = plt.figure(figsize=(9.3, 5), dpi=300)
-plt.subplots_adjust(hspace=0.05, wspace=None, top=0.85, bottom=0.1, left=0.15, right=0.9)
+fig = plt.figure(figsize=(7, 4), dpi=300)
+plt.subplots_adjust(hspace=0.05, wspace=None, top=0.82, bottom=0.15, left=0.13, right=0.85)
 
 # 数据
 categories  = ['4KB', '64KB', '1MB', '16MB', '256MB']
@@ -69,7 +69,6 @@ ax2.set_ylim([0.01, 30000])
 labelss = ax2.legend(framealpha=0, loc=(0., 1.01), ncol=3,).get_texts()
 [label.set_color('white') for label in labelss]
 
-plt.tight_layout()
 plt.grid(ls="--", zorder=1)
 plt.savefig('/home/yjn/Downloads/sec6_transfer.pdf')
 # plt.show()

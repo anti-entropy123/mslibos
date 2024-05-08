@@ -19,11 +19,11 @@ def gen_word_count(file_num: int, total_size: int):
                     break
 
 
-def gen_parallel_sort():
+def gen_parallel_sort(file_num: int, total_size: int):
     import random
 
-    sorter_num = 5
-    for i in range(sorter_num):
+    one_size = int(total_size / file_num)
+    for i in range(file_num):
         file_name = f'part-{i}'
         first = True
 
@@ -38,9 +38,9 @@ def gen_parallel_sort():
 
                 f.write(text)
 
-                if os.stat(file_name).st_size > 5_000_000:
+                if os.stat(file_name).st_size > one_size:
                     break
 
 
 if __name__ == "__main__":
-    gen_word_count(10, 10*1024*1024)
+    gen_parallel_sort(1, 5*1024*1024)

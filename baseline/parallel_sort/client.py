@@ -5,22 +5,23 @@ import time
 import concurrent.futures
 import requests
 from typing import List
+import sys
 
 sorter_name = "sorter-rust"
 splitter_name = "splitter-rust"
 merger_name = "merger-rust"
 
-sorter_num = 5
-merger_num = 4
+sorter_num = int(sys.argv[1])
+merger_num = sorter_num
 
 session = requests.sessions.Session()
 
 
 def invoke_func(func_name: str, data: dict) -> requests.Response:
     resp = session.request(
-        "GET", f'http://10.244.1.227:8080/function/{func_name}',
-        headers={
-            'mslibos-trace': f'invoke:{str(round(time.time()*1000_000))}'},
+        "GET", f'http://node-7:32331/function/{func_name}',
+        # headers={
+        #     'mslibos-trace': f'invoke:{str(round(time.time()*1000_000))}'},
         data=json.dumps(data).encode()
     )
 
@@ -39,10 +40,9 @@ def workflow():
         )
 
         for resp in resps:
-            sorter_res.append(
-                {'trace': resp.headers['mslibos-trace'], 'body': resp.text})
+            sorter_res.append({'body': resp.text})
 
-    sorter_end = time.time()
+    # sorter_end = time.time()
 
     splitter_res = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=sorter_num) as executor:
@@ -53,10 +53,9 @@ def workflow():
         )
 
         for resp in resps:
-            splitter_res.append(
-                {'trace': resp.headers['mslibos-trace'], 'body': resp.text})
+            splitter_res.append({'body': resp.text})
 
-    splitter_end = time.time()
+    # splitter_end = time.time()
 
     merger_res = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=merger_num) as executor:
@@ -67,10 +66,9 @@ def workflow():
         )
 
         for resp in resps:
-            merger_res.append(
-                {'trace': resp.headers['mslibos-trace'], 'body': resp.text})
+            merger_res.append({'body': resp.text})
 
-    merger_end = time.time()
+    # merger_end = time.time()
 
     return sorter_res, splitter_res, merger_res
 
@@ -105,15 +103,9 @@ def display_breakdown(resps: list):
 
 
 if __name__ == "__main__":
+    start = time.time()
     sorter_res, splitter_res, merger_res = workflow()
-
-    print("===Sort Info===")
-    display_breakdown(sorter_res)
-
-    # get_res_info(mapper_res)
-    print("===Split Info===")
-    display_breakdown(splitter_res)
-
-    # get_res_info(reducer_res)
-    print("===Merge Info===")
-    display_breakdown(merger_res)
+    print(f"total cost time: { 1000*(time.time()-start) }ms")
+    print(sorter_res)
+    print(splitter_res)
+    print(merger_res)

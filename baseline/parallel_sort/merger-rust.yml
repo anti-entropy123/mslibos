@@ -7,4 +7,8 @@ functions:
     lang: rust
     handler: ./merger-rust
     image: antientropy/merger-rust:latest
-
+    constraints:
+     - "kubernetes.io/hostname=kube-node-7"
+    labels:
+      "com.openfaas.scale.max": "5"
+      "com.openfaas.scale.min": "5"

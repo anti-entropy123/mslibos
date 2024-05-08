@@ -1,0 +1,88 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "file_reader",
+      "libfile_reader.so"
+    ],
+    [
+      "sorter",
+      "libsorter.so"
+    ],
+    [
+      "splitter",
+      "libsplitter.so"
+    ],
+    [
+      "merger",
+      "libmerger.so"
+    ],
+    [
+      "checker",
+      "libchecker.so"
+    ]
+  ],
+  "fs_image": "fs_images/fatfs_large_sort.img",
+  "groups": [
+    {
+      "list": [
+        {
+          "name": "file_reader",
+          "args": {
+            "slot_name": "input-part-0",
+            "input_file": "sort_data_0.txt"
+          }
+        }
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "sorter"
+      ],
+      "args": {
+        "sorter_num": "1",
+        "merger_num": "1"
+      }
+    },
+    {
+      "list": [
+        "splitter"
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "merger"
+      ],
+      "args": {
+        "sorter_num": "1"
+      }
+    },
+    {
+      "list": [
+        "checker"
+      ],
+      "args": {
+        "merger_num": "1"
+      }
+    }
+  ]
+}

@@ -19,8 +19,8 @@ line_labels = ['AlloyStack-C1', 'AlloyStack-C3',
                'AlloyStack-C5', 'OpenFaaS-C1', 'OpenFaaS-C3', 'OpenFaaS-C5']
 
 
-def read_data(filename: str,):
-    with open(f"/home/yjn/rust_project/mslibos/baseline/end2end/cdf_logs/{filename}", "r") as f:
+def read_data(app_name: str, filename: str,):
+    with open(f"/home/yjn/rust_project/mslibos/baseline/end2end/{app_name}_cdf_logs/{filename}", "r") as f:
         trace = f.readlines()
         end2end = []
 
@@ -56,14 +56,15 @@ def CDF(axs, data, label, color, linestyle,):
 
 def main():
     global line_labels
-    fig, axs = plt.subplots(1, 3, figsize=(17, 5))  # 1行3列
+    fig, axs = plt.subplots(2, 3, figsize=(17, 8))  # 1行3列
+    axs = axs.flatten()
 
     for idx, datasize in enumerate(['10', '100', '300']):
         filenames = [f"as_c1_{datasize}mb.txt", f"as_c3_{datasize}mb.txt", f"as_c5_{datasize}mb.txt",
                      f"of_c1_{datasize}mb.txt", f"of_c3_{datasize}mb.txt", f"of_c5_{datasize}mb.txt",]
 
         for i in range(6):
-            data = read_data(filenames[i])
+            data = read_data("wc", filenames[i])
             print(len(data), data)
             CDF(axs[idx], data, line_labels[i], colors[i % 3],
                 linestype[0 if i < 3 else 1])
@@ -73,12 +74,25 @@ def main():
     # plt.legend()
     # fig.xlabel(x_label, labelpad=4)
     # fig.ylabel(y_label, labelpad=8)
+    axs[0].set_ylabel("WC CDF (%)")
 
-    fig.legend(lines, line_labels, frameon=False, loc="upper center", ncol=3)
-    axs[0].set_ylabel("WordCount CDF (%)")
+    for idx, datasize in enumerate(['1', "25", "50"]):
+        idx += 3
+        filenames = [f"as_c1_{datasize}mb.txt", f"as_c3_{datasize}mb.txt", f"as_c5_{datasize}mb.txt",
+                     f"of_c1_{datasize}mb.txt", f"of_c3_{datasize}mb.txt", f"of_c5_{datasize}mb.txt",]
+        
+        for i in range(len(filenames)):
+            data = read_data("ps", filenames[i])
+            print(len(data), data)
+            CDF(axs[idx], data, line_labels[i], colors[i % 3],
+                linestype[0 if i < 3 else 1])
+            axs[idx].set_xlabel(f"{datasize}MB, Latency (ms)", labelpad=15)
+            # axs[idx].set_xscale("log")
 
+    axs[3].set_ylabel("PS CDF (%)")
     # fig.subplots_adjust(top=0.85, left=0.05, right=0.95, wspace=0.25, hspace=0.35)
-    plt.tight_layout(rect=[0, 0, 1, 0.80])
+    fig.legend(lines, line_labels, frameon=False, loc="upper center", ncol=3)
+    plt.tight_layout(rect=[0, 0, 1, 0.85])
 
     plt.savefig(f"/home/yjn/Downloads/sec6_end2end_mr.pdf")
     # plt.show()

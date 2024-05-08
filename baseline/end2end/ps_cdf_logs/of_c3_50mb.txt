@@ -1,0 +1,201 @@
+batch_size 100 c_num 3
+1
+total cost time: 12676.970481872559ms
+2
+total cost time: 8675.350666046143ms
+3
+total cost time: 13100.052118301392ms
+4
+total cost time: 9703.174591064453ms
+5
+total cost time: 6721.167087554932ms
+6
+total cost time: 11165.327072143555ms
+7
+total cost time: 12107.310056686401ms
+8
+total cost time: 12625.71907043457ms
+9
+total cost time: 10434.84354019165ms
+10
+total cost time: 11030.78818321228ms
+11
+total cost time: 10779.14810180664ms
+12
+total cost time: 8616.173505783081ms
+13
+total cost time: 13697.980642318726ms
+14
+total cost time: 6813.884019851685ms
+15
+total cost time: 8543.269157409668ms
+16
+total cost time: 8998.74997138977ms
+17
+total cost time: 13050.28486251831ms
+18
+total cost time: 12531.64291381836ms
+19
+total cost time: 8793.230772018433ms
+20
+total cost time: 10505.720853805542ms
+21
+total cost time: 16525.700092315674ms
+22
+total cost time: 10886.322259902954ms
+23
+total cost time: 8748.316049575806ms
+24
+total cost time: 10469.690561294556ms
+25
+total cost time: 9918.808937072754ms
+26
+total cost time: 12161.468982696533ms
+27
+total cost time: 12394.073009490967ms
+28
+total cost time: 11130.849123001099ms
+29
+total cost time: 8776.201725006104ms
+30
+total cost time: 6783.042430877686ms
+31
+total cost time: 12845.972776412964ms
+32
+total cost time: 13639.833688735962ms
+33
+total cost time: 10860.600709915161ms
+34
+total cost time: 6610.003709793091ms
+35
+total cost time: 8866.4231300354ms
+36
+total cost time: 12076.538801193237ms
+37
+total cost time: 15703.710556030273ms
+38
+total cost time: 11098.077297210693ms
+39
+total cost time: 11730.326414108276ms
+40
+total cost time: 11818.483114242554ms
+41
+total cost time: 11497.567653656006ms
+42
+total cost time: 8686.005115509033ms
+43
+total cost time: 10408.37025642395ms
+44
+total cost time: 10772.040128707886ms
+45
+total cost time: 6756.2994956970215ms
+46
+total cost time: 8525.049448013306ms
+47
+total cost time: 8385.644435882568ms
+48
+total cost time: 14104.506731033325ms
+49
+total cost time: 6913.687944412231ms
+50
+total cost time: 13006.831407546997ms
+51
+total cost time: 10308.071374893188ms
+52
+total cost time: 8629.73666191101ms
+53
+total cost time: 8954.30588722229ms
+54
+total cost time: 9036.237716674805ms
+55
+total cost time: 12269.785165786743ms
+56
+total cost time: 8662.59789466858ms
+57
+total cost time: 11068.95899772644ms
+58
+total cost time: 12464.391469955444ms
+59
+total cost time: 8705.165147781372ms
+60
+total cost time: 8638.91863822937ms
+61
+total cost time: 9406.258821487427ms
+62
+total cost time: 10812.935590744019ms
+63
+total cost time: 10812.424898147583ms
+64
+total cost time: 8610.193967819214ms
+65
+total cost time: 10345.296144485474ms
+66
+total cost time: 8530.05337715149ms
+67
+total cost time: 8554.06928062439ms
+68
+total cost time: 12701.294898986816ms
+69
+total cost time: 6719.434022903442ms
+70
+total cost time: 13215.523719787598ms
+71
+total cost time: 6742.679595947266ms
+72
+total cost time: 11102.441549301147ms
+73
+total cost time: 11950.281143188477ms
+74
+total cost time: 8944.684505462646ms
+75
+total cost time: 10255.616188049316ms
+76
+total cost time: 8517.518520355225ms
+77
+total cost time: 6876.955270767212ms
+78
+total cost time: 10389.829635620117ms
+79
+total cost time: 6854.1553020477295ms
+80
+total cost time: 10281.630039215088ms
+81
+total cost time: 9848.803281784058ms
+82
+total cost time: 8813.220024108887ms
+83
+total cost time: 10741.102457046509ms
+84
+total cost time: 10636.422157287598ms
+85
+total cost time: 13010.69188117981ms
+86
+total cost time: 8616.190910339355ms
+87
+total cost time: 6873.987913131714ms
+88
+total cost time: 8667.754411697388ms
+89
+total cost time: 10416.007995605469ms
+90
+total cost time: 10781.970500946045ms
+91
+total cost time: 6854.1529178619385ms
+92
+total cost time: 14280.49635887146ms
+93
+total cost time: 9688.936948776245ms
+94
+total cost time: 11243.14570426941ms
+95
+total cost time: 11404.874324798584ms
+96
+total cost time: 10621.911764144897ms
+97
+total cost time: 13708.035469055176ms
+98
+total cost time: 10693.168878555298ms
+99
+total cost time: 12491.007089614868ms
+100
+total cost time: 11598.968029022217ms

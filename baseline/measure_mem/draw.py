@@ -6,13 +6,13 @@ matplotlib.rcParams["font.family"] = 'Helvetica'
 matplotlib.rcParams['pdf.fonttype'] = 42
 # matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['ps.fonttype'] = 42
-plt.rcParams.update({'font.size': 11})
+plt.rcParams.update({'font.size': 16})
 
 # fig = plt.figure(figsize=(4.65, 2.5), dpi=300)
-fig = plt.figure(figsize=(4.25, 2), dpi=300)
+fig = plt.figure(figsize=(7, 4), dpi=300)
 
-plt.subplots_adjust(hspace=0.05, wspace=None, top=0.9,
-                    bottom=0.15, left=0.18, right=0.98)
+plt.subplots_adjust(hspace=0.05, wspace=None, top=0.82,
+                    bottom=0.15, left=0.12, right=0.98)
 
 AS_overheads = [4029.333333, 6472, 8569.333333, 10645.33333,
                 12702.66667, 14752, 16797.33333, 18864, 20928, 22974.66667, 25016]
@@ -34,19 +34,19 @@ Unikraft_overhead = [(i-Unikraft_overhead[0]) /
 
 instance_nums = [i+1 for i in range(10)]
 
-linewidth = 0.8
+linewidth = 2.5
 # markers = ["*", '♣\clubsuit', "P"]
 
 # plt.plot(range(len(ASF_overheads)), ASF_overheads, label="ASF + S3",
 #     color="#FF0F0F", linewidth=linewidth, marker="o")
 plt.plot(range(len(AS_overheads)), AS_overheads, label="AS",
-         color="#FF0F0F", linewidth=linewidth, marker="s")
+         color="#FF0F0F", linewidth=linewidth, marker="s", markersize=7)
 plt.plot(range(len(AS_http_overheads)), AS_http_overheads, label="AS-http",
-         color="#3288BD", linewidth=linewidth, marker="s")
+         color="#3288BD", linewidth=linewidth, marker="s", markersize=7)
 plt.plot(range(len(Faasm_overhead)), Faasm_overhead, label="Faasm",
-         color="#D11ED1", linewidth=linewidth, marker="s")
+         color="#D11ED1", linewidth=linewidth, marker="s", markersize=7)
 plt.plot(range(len(Unikraft_overhead)), Unikraft_overhead, label="Unikraft",
-         color="#2F4858", linewidth=linewidth, marker="s")
+         color="#2F4858", linewidth=linewidth, marker="s", markersize=7)
 
 # plt.text(1, ASF_overheads[2], "ASF + S3")
 # plt.text(2, OpenFaas_overheads[2], "OpenFaaS + MinIO")
@@ -55,18 +55,20 @@ plt.plot(range(len(Unikraft_overhead)), Unikraft_overhead, label="Unikraft",
 
 plt.gca().xaxis.set_tick_params(pad=0.5, length=1)
 
-plt.ylabel("Memory Footprint (MB)", fontsize=10, labelpad=0)
-plt.xlabel("Num of Instances", fontsize=10, labelpad=0)
+plt.ylabel("Memory Footprint (MB)", labelpad=10)
+plt.xlabel("Num of Instances", labelpad=5)
 plt.xticks(range(len(instance_nums)), instance_nums)
+plt.yticks(rotation=90, )
 
 plt.grid(ls="--", zorder=1)
-plt.legend(framealpha=0, loc=(0.01, 1.01), ncol=4, prop={'size': 8})
+plt.legend(framealpha=0, loc=(-0.1, 1.01), ncol=4,  # prop={'size': 8}
+           )
 
 plt.savefig("/home/yjn/Downloads/sec6_mem.pdf")
 
-print(AS_overheads)
-print(AS_http_overheads)
-print(Faasm_overhead)
-print(Unikraft_overhead)
+# print(AS_overheads)
+# print(AS_http_overheads)
+# print(Faasm_overhead)
+# print(Unikraft_overhead)
 
-plt.show()
+# plt.show()
