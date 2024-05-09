@@ -14,11 +14,11 @@ mpl.rcParams['hatch.linewidth'] = linewidth
 fig = plt.figure(figsize=(9.3, 5), dpi=150)
 
 # 数据
-categories = ['1KB', '64KB', '128KB']
-vm_socket = [1747.2, 2116.4, 2258.4]
-proc_sock = [218.5, 249.1, 257.3]
-mmap = [146.7, 156.5, 182.6]
-func_call = [0.2, 6.4, 13.1]
+categories = ['1KB' , '64KB', '128KB']
+vm_socket  = [1747.2, 2116.4, 2258.4 ]
+proc_sock  = [218.5 , 249.1 , 257.3  ]
+mmap       = [146.7 , 156.5 , 182.6  ]
+func_call  = [0.2   , 6.4   , 13.1   ]
 
 # 绘制柱状图
 bar_width = 0.2

@@ -35,9 +35,10 @@ def generate_data():
 
 def mono(_):
     review = generate_data()
-
+    print("gen review =", review)
     start = time.time()
-    requests.post("http://127.0.0.1:32331/function/media-service", review).text
+    requests.post(
+        "http://127.0.0.1:32331/function/media-service-faastlane", review).text
 
     return int((time.time()-start)*1000)
 
@@ -55,4 +56,5 @@ def batch_invoke():
 
 
 if __name__ == '__main__':
-    batch_invoke()
+    # batch_invoke()
+    print("mono mode, cost", mono(()))

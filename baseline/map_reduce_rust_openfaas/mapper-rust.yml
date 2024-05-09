@@ -7,4 +7,8 @@ functions:
     lang: rust
     handler: ./mapper-rust
     image: antientropy/mapper-rust:latest
-
+    constraints:
+     - "kubernetes.io/hostname=kube-node-7"
+    labels:
+      "com.openfaas.scale.max": "5"
+      "com.openfaas.scale.min": "5"

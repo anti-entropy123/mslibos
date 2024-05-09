@@ -61,6 +61,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
         data_buffers.push(DataBuffer::with_slot(format!("{}-{}", my_id, reducer)));
     }
 
+    ms_std::println!("the counter nums is {}", counter.len());
     for (word, count) in counter {
         let shuffle_idx = {
             let mut hasher = hashbrown::hash_map::DefaultHashBuilder::default().build_hasher();

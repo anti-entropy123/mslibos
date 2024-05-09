@@ -1,0 +1,65 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "file_reader",
+      "libfile_reader.so"
+    ],
+    [
+      "mapper",
+      "libmapper.so"
+    ],
+    [
+      "reducer",
+      "libreducer.so"
+    ]
+  ],
+  "fs_image": "fs_images/fatfs_large.img",
+  "groups": [
+    {
+      "list": [
+        {
+          "name": "file_reader",
+          "args": {
+            "slot_name": "part-0",
+            "input_file": "fake_data_0.txt"
+          }
+        }
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "mapper"
+      ],
+      "args": {
+        "reducer_num": "1"
+      }
+    },
+    {
+      "list": [
+        "reducer"
+      ],
+      "args": {
+        "mapper_num": "1"
+      }
+    }
+  ]
+}
