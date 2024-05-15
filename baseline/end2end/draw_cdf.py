@@ -68,7 +68,9 @@ def main():
             print(len(data), data)
             CDF(axs[idx], data, line_labels[i], colors[i % 3],
                 linestype[0 if i < 3 else 1])
-            axs[idx].set_xlabel(f"{datasize}MB, Latency (ms)", labelpad=15)
+            title = f"{datasize}MB, Latency (ms)"
+            print(f"WC: {title}: {sum(data)/len(data)}")
+            axs[idx].set_xlabel(title, labelpad=15)
 
     # plt.xscale('log')  # 对 x 轴进行对数转换
     # plt.legend()
@@ -83,10 +85,12 @@ def main():
         
         for i in range(len(filenames)):
             data = read_data("ps", filenames[i])
-            print(len(data), data)
+            # print(len(data), data)
             CDF(axs[idx], data, line_labels[i], colors[i % 3],
                 linestype[0 if i < 3 else 1])
-            axs[idx].set_xlabel(f"{datasize}MB, Latency (ms)", labelpad=15)
+            title = f"{datasize}MB, Latency (ms)"
+            print(f"{filenames[i]}: {sum(data)/len(data)}")
+            axs[idx].set_xlabel(f"title", labelpad=15)
             # axs[idx].set_xscale("log")
 
     axs[3].set_ylabel("PS CDF (%)")

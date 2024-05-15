@@ -11,7 +11,7 @@ plt.rcParams.update({'font.size': 18})
 # 线宽
 linewidth = 0.8
 mpl.rcParams['hatch.linewidth'] = linewidth
-fig = plt.figure(figsize=(7, 4), dpi=300)
+fig = plt.figure(figsize=(7, 4.5), dpi=300)
 
 # 数据
 categories = ['AlloyStack', "AS-load-all", "Faastlane", "Faastlane-T", 'Wasmer', 'Wasmer-T', "Faasm", "Unikraft"]
@@ -48,7 +48,11 @@ plt.ylim([0.5, 1500])
 plt.xticks(index, categories, rotation=35)
 plt.yscale('log')  # 设置纵坐标为对数坐标轴
 # plt.legend(framealpha=0.5, loc=(0.15, 1.01), ncol=2)
-plt.tight_layout()
+# plt.tight_layout()
 plt.grid(ls="--", zorder=1)
+
+plt.subplots_adjust(hspace=0.05, wspace=None, top=0.85,
+                    bottom=0.25, left=0.15, right=0.92)
+
 plt.savefig('/home/yjn/Downloads/sec6_startup.pdf')
-plt.show()
+# plt.show()

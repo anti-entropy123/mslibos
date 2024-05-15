@@ -12,7 +12,7 @@ plt.rcParams.update({'font.size': 16})
 fig = plt.figure(figsize=(7, 4), dpi=300)
 
 plt.subplots_adjust(hspace=0.05, wspace=None, top=0.82,
-                    bottom=0.15, left=0.12, right=0.98)
+                    bottom=0.15, left=0.12, right=0.92)
 
 AS_overheads = [4029.333333, 6472, 8569.333333, 10645.33333,
                 12702.66667, 14752, 16797.33333, 18864, 20928, 22974.66667, 25016]
