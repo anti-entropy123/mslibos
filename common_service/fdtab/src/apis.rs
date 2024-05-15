@@ -154,7 +154,7 @@ pub fn accept(listened_sockfd: SockFd) -> FdtabResult<SockFd> {
 
             if let DataSource::Net(sockfd) = old_sock.src {
                 // old file is still listened socket, with new socket handle.
-                old_sock.src = DataSource::Net(libos!(smol_accept(listened_sockfd))?);
+                old_sock.src = DataSource::Net(libos!(smol_accept(sockfd))?);
                 // println!("sockfd is {}", sockfd);
                 Ok(sockfd)
             } else {
