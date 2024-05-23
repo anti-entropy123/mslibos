@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use axum::{extract::Query, response::IntoResponse, routing::get, Router};
 use libmsvisor::{
     isolation::{config::IsolationConfig, Isolation},
@@ -51,12 +53,18 @@ async fn trige_workflow_handler(
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     logger::init();
+    let start = SystemTime::now();
+
     let app = Router::new().route("/workflow", get(trige_workflow_handler));
 
     let addr = "0.0.0.0:8000";
     let server = axum::Server::bind(&addr.parse().unwrap()).serve(app.into_make_service());
 
-    log::info!("listenning on: {}", addr);
+    log::info!(
+        "listenning on: {}, init time: {}us",
+        addr,
+        SystemTime::now().duration_since(start).unwrap().as_micros()
+    );
     server.await.unwrap();
 
     Ok(())

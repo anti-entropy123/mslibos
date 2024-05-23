@@ -94,15 +94,23 @@ impl MetricBucket {
         match opt {
             MetricOpt::None => return,
             MetricOpt::All => {
-                result["isolation"] = inner.to_json();
+                // let mut total_run_dur = 0.;
                 result["services"] = {
                     let svc_metrics: Vec<Value> = inner
                         .svc_metrics
                         .iter()
                         .map(|metric| metric.to_json())
                         .collect();
+                    // for metric in &svc_metrics {
+                    //     if let Some(avg) = metric["avg_run_dur(ms)"].as_f64() {
+                    //         total_run_dur += avg
+                    //     }
+                    // }
                     serde_json::json!(svc_metrics)
                 };
+                let isol = inner.to_json();
+                // isol["other(ms)"] = json!(isol["total_dur(ms)"].as_f64().unwrap() - total_run_dur);
+                result["isolation"] = isol;
             }
             MetricOpt::Mem => result["mem_metrics"] = json!(inner.mem_metrics),
             MetricOpt::TotalDur => {
@@ -133,13 +141,20 @@ struct SvcMetricBucketInner {
 
 impl SvcMetricBucketInner {
     fn to_json(&self) -> Value {
-        let mut val = json!({ "init_t": self.init_t });
+        let mut val = json!({"init_t": self.init_t});
+        let mut run_dur_list = vec![];
 
         for (idx, (run, end)) in zip(&self.run_t, &self.end_t).enumerate() {
             if *end > 0 {
+                let run_dur = end - run;
+                run_dur_list.push(run_dur);
                 val[&format!("thread_{}", idx)] =
-                    json!({"run_dur(ms)": end - run, "init_dur(ms)": run - self.init_t})
+                    json!({"run_dur(ms)": run_dur, "init_dur(ms)": run - self.init_t})
             };
+        }
+        if !run_dur_list.is_empty() {
+            let avg_run_dur = run_dur_list.iter().sum::<u128>() as f64 / run_dur_list.len() as f64;
+            val["avg_run_dur(ms)"] = json!(avg_run_dur);
         }
 
         val

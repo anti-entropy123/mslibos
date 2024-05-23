@@ -4,10 +4,10 @@ import numpy as np
 import math
 import matplotlib.font_manager
 
-matplotlib.rcParams["font.family"] = 'Helvetica'
+matplotlib.rcParams["font.family"] = 'Arial'
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
-plt.rcParams.update({'font.size': 18})
+plt.rcParams.update({'font.size': 19})
 # 线宽
 linewidth = 0.8
 mpl.rcParams['hatch.linewidth'] = linewidth
@@ -38,7 +38,7 @@ plt.bar(index, startup_time, bar_width,
 
 # 在柱子中心位置显示数据
 for i in index:
-    plt.text(i, 10 ** (math.log10(startup_time[i])+0.05),
+    plt.text(i, 10 ** (math.log10(startup_time[i])+0.1),
              str(round(startup_time[i],1)), ha='center', rotation=0)
 
 # plt.xlabel('Data Size')

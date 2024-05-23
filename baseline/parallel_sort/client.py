@@ -105,7 +105,33 @@ def display_breakdown(resps: list):
 if __name__ == "__main__":
     start = time.time()
     sorter_res, splitter_res, merger_res = workflow()
-    print(f"total cost time: { 1000*(time.time()-start) }ms")
+    sorter_res = [json.loads(item['body']) for item in sorter_res]
+    splitter_res = [json.loads(item['body']) for item in splitter_res]
+    merger_res = [json.loads(item['body']) for item in merger_res]
+
+    total = 1000*(time.time()-start)
+
+    # sorter: [{'body': '{"comp_time":145,"read_time":37,"store_time":955}'}, {'body': '{"comp_time":166,"read_time":33,"store_time":468}'}, {'body': '{"comp_time":143,"read_time":38,"store_time":935}'}]
+    # splitter: [{'body': '{"comp_time":57,"read_time":36,"store_time":856}'}, {'body': '{"comp_time":45,"read_time":41,"store_time":901}'}, {'body': '{"comp_time":42,"read_time":37,"store_time":543}'}]
+    # merger: [{'body': '{"comp_time":66,"read_time":42,"store_time":419}'}, {'body': '{"comp_time":75,"read_time":44,"store_time":963}'}, {'body': '{"comp_time":72,"read_time":43,"store_time":996}'}]
+    
+    read_input_time = sum([item["read_time"] for item in sorter_res])/len(sorter_res)
+    comp_time = 0
+    im_data_time = 0
+    for i in range(len(sorter_res)):
+        comp_time += sorter_res[i]["comp_time"] + splitter_res[i]["comp_time"] + merger_res[i]["comp_time"] 
+        im_data_time += sorter_res[i]["store_time"] + splitter_res[i]["read_time"] + splitter_res[i]["store_time"]  + merger_res[i]["read_time"] + merger_res[i]["store_time"]
+
+    comp_time /= len(sorter_res)
+    im_data_time /= len(sorter_res)
+
+    print(f"total cost time: { total }ms")
+    print(f"read input data: {read_input_time}ms")
+    print(
+        f"intermediate data transfer: {im_data_time}ms")
+    print(f"comp: {comp_time}ms")
+    print(f"other: {total - read_input_time - im_data_time - comp_time}ms", )
+    
     print(sorter_res)
     print(splitter_res)
     print(merger_res)

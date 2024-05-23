@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager
 import matplotlib as mpl
 
-matplotlib.rcParams["font.family"] = 'Helvetica'
+matplotlib.rcParams["font.family"] = 'Arial'
 matplotlib.rcParams['pdf.fonttype'] = 42
 # matplotlib.rcParams['pdf.use14corefonts'] = True
 matplotlib.rcParams['ps.fonttype'] = 42
