@@ -174,7 +174,7 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
             filename.to_str().unwrap()
         ));
     }
-    let lib = {
+    let lib: Library = {
         #[cfg(feature = "namespace")]
         // libloading do not supply any method like `from_raw(handle: *mut c_void)`.
         unsafe {
