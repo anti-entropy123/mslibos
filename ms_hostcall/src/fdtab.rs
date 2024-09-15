@@ -37,4 +37,6 @@ pub enum FdtabError {
     SocketError(#[from] SmoltcpError),
     #[error("undefine {op} to {fd_type}, fd={fd}")]
     UndefinedOperation { op: String, fd: Fd, fd_type: String },
+    #[error("unknown")]
+    Unknown,
 }

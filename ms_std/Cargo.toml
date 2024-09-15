@@ -21,7 +21,7 @@ ms_hostcall = { workspace = true, features = [
 ms_std_proc_macro = { path = "../ms_std_proc_macro" }
 
 # buddy_system_allocator = "0.9"
-unwinding = { version = "0.2.0", features = [
+unwinding = { version = "=0.2.0", features = [
     "panic-handler",
     "personality",
 ], optional = true }

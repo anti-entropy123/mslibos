@@ -1,6 +1,6 @@
 #![no_std]
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String};
+use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
 use ms_std::{fs::File, io::Read, prelude::*};
 use ms_std_proc_macro::FaasData;
 
