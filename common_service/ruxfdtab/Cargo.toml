@@ -1,0 +1,29 @@
+[package]
+name = "ruxfdtab"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[features]
+default = []
+
+[dependencies]
+ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
+ms_hostcall = { path = "../../ms_hostcall", features = ["fatfs"] }
+
+axerrno = { git = "https://github.com/anti-entropy123/ruxos/" }
+axio = { git = "https://github.com/anti-entropy123/ruxos/" }
+ruxfdtable = { git = "https://github.com/anti-entropy123/ruxos/" }
+# ruxfs = { path = "/home/yjn/rust_project/ruxos/modules/ruxfs", features = [
+#     "use-ramdisk",
+# ] }
+ruxfs = { git = "https://github.com/anti-entropy123/ruxos/", features = [
+    "use-ramdisk",
+] }
+ruxdriver = { git = "https://github.com/anti-entropy123/ruxos/", features = [
+    "ramdisk",
+] }
+spin = "0.9.8"
+lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
