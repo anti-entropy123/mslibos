@@ -95,6 +95,10 @@ pub enum CommonHostCall {
     Mmap,
     #[display(fmt = "libos_munmap")]
     Munmap,
+    #[display(fmt = "heap_alloc")]
+    HeapAlloc,
+    #[display(fmt = "heap_dealloc")]
+    HeapDealloc,
 
     #[display(fmt = "register_file_backend")]
     RegisterFileBackend,
@@ -155,7 +159,9 @@ impl HostCallID {
                 | CommonHostCall::AccessBuffer
                 | CommonHostCall::BufferDealloc
                 | CommonHostCall::Mmap
-                | CommonHostCall::Munmap => "mm".to_owned(),
+                | CommonHostCall::Munmap
+                | CommonHostCall::HeapAlloc
+                | CommonHostCall::HeapDealloc => "mm".to_owned(),
 
                 CommonHostCall::RegisterFileBackend
                 | CommonHostCall::FilePageFaultHandler

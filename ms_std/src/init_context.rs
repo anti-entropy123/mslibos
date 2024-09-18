@@ -33,12 +33,6 @@ pub extern "C" fn set_handler_addr(ctx: &IsolationContext) -> HCResult {
     };
     *isol_ctx = ctx.clone();
 
-    #[cfg(feature = "alloc_def")]
-    {
-        use crate::heap_alloc::init_heap;
-        init_heap(ctx.heap_range.0);
-    }
-
     Ok(())
 }
 

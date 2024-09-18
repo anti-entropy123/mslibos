@@ -52,6 +52,8 @@ pub struct UserHostCall {
     dealloc_buffer_addr: Option<usize>,
     mmap_addr: Option<usize>,
     munmap_addr: Option<usize>,
+    heap_alloc_addr: Option<usize>,
+    heap_dealloc_addr: Option<usize>,
 
     pf_handler_addr: Option<usize>,
     register_file_backend_addr: Option<usize>,
@@ -108,6 +110,8 @@ impl UserHostCall {
             CommonHostCall::BufferDealloc => &mut self.dealloc_buffer_addr,
             CommonHostCall::Mmap => &mut self.mmap_addr,
             CommonHostCall::Munmap => &mut self.munmap_addr,
+            CommonHostCall::HeapAlloc => &mut self.heap_alloc_addr,
+            CommonHostCall::HeapDealloc => &mut self.heap_dealloc_addr,
 
             CommonHostCall::RegisterFileBackend => &mut self.register_file_backend_addr,
             CommonHostCall::UnregisterFileBackend => &mut self.unregister_file_backend_addr,

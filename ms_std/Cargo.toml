@@ -11,6 +11,8 @@ crate-type = ["rlib"]
 panic_def = []
 alloc_def = []
 
+default = []
+
 [dependencies]
 ms_hostcall = { workspace = true, features = [
     "socket",

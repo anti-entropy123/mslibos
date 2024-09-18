@@ -147,14 +147,19 @@ enum ServiceInitError {
 pub struct WithLibOSService {
     elf: ElfService,
 
-    heap: Box<MaybeUninit<ServiceHeap>>,
+    heap: Option<Box<MaybeUninit<ServiceHeap>>>,
 }
 
 impl WithLibOSService {
     pub fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
+        let heap = if name == "mm" {
+            Some(Box::new_uninit())
+        } else {
+            None
+        };
         Self {
             elf: ElfService::new(name, lib, metric),
-            heap: Box::new_uninit(),
+            heap,
         }
     }
 
@@ -168,16 +173,6 @@ impl WithLibOSService {
     }
 
     pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
-        let heap_start = self.heap.as_ptr() as usize;
-        let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
-        logger::debug!(
-            "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
-            self.elf.name,
-            isol_id,
-            find_host_call as usize,
-            heap_range
-        );
-
         // If this is a common_service that does not dependent on IsolationContext,
         // then directly return. Because it is not a no_std elf, and not have
         // symbols `set_handler_addr` and `get_handler_addr`.
@@ -185,13 +180,24 @@ impl WithLibOSService {
             return Ok(());
         };
 
-        let isol_ctx = IsolationContext {
+        let mut isol_ctx = IsolationContext {
             isol_id,
             find_handler: find_host_call as usize,
             panic_handler: panic_handler as usize,
-            heap_range,
+            heap_range: (0, 0),
         };
-
+        if let Some(heap) = &self.heap {
+            let heap_start = heap.as_ptr() as usize;
+            let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
+            isol_ctx.heap_range = heap_range
+        }
+        logger::debug!(
+            "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
+            self.elf.name,
+            isol_id,
+            find_host_call as usize,
+            isol_ctx.heap_range
+        );
         let set_handler: SetHandlerFuncSybmol = self
             .symbol("set_handler_addr")
             .ok_or(ServiceInitError::MissingSetCtx)?;

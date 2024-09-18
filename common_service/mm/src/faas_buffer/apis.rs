@@ -3,12 +3,15 @@ use core::alloc::Layout;
 use alloc::borrow::ToOwned;
 use ms_hostcall::mm::MMResult;
 
+use crate::MUST_EXEC;
+
 use super::{BUFFER_REGISTER, DEFAULT_BUFFER_ENTRY};
 
 extern crate alloc;
 
 #[no_mangle]
 pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> {
+    let _ = *MUST_EXEC;
     // println!(
     //     "buffer_alloc: expect size={}, align={}",
     //     l.size(),
@@ -41,6 +44,7 @@ pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> 
 
 #[no_mangle]
 pub fn access_buffer(slot: &str) -> Option<(usize, u64)> {
+    let _ = *MUST_EXEC;
     // *RAW_P.lock().take()
     if slot.is_empty() {
         DEFAULT_BUFFER_ENTRY.lock().take()
@@ -51,5 +55,6 @@ pub fn access_buffer(slot: &str) -> Option<(usize, u64)> {
 
 #[no_mangle]
 pub fn buffer_dealloc(addr: usize, l: Layout) {
+    let _ = *MUST_EXEC;
     unsafe { alloc::alloc::dealloc(addr as *mut u8, l) }
 }

@@ -19,9 +19,11 @@ pub type BufferAllocFunc = fn(&str, Layout, u64) -> MMResult<usize>;
 pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
 pub type BufferDeallocFunc = fn(usize, Layout);
 pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> MMResult<usize>;
-pub type MemunmapFunc = fn(&mut [u8]) -> MMResult<()>;
+pub type MemunmapFunc = fn(&mut [u8]) -> MMResult;
+pub type HeapAllocFunc = fn(Layout) -> MMResult<*mut u8>;
+pub type HeapDeallocFunc = fn(*mut u8, Layout) -> MMResult;
 
-pub type MMResult<T> = Result<T, MMError>;
+pub type MMResult<T = ()> = Result<T, MMError>;
 
 #[derive(Debug, Error)]
 pub enum MMError {
@@ -33,4 +35,6 @@ pub enum MMError {
     FileBackendErr(#[from] MmapFileErr),
     #[error("libc api error: {0}")]
     LibcErr(String),
+    #[error("unknown")]
+    Unknown,
 }
