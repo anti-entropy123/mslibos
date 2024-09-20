@@ -264,7 +264,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5bd86161724f7497e45124c52ed6f889aee571d10e33295b19a16fa26854190"
 
 [[package]]
-name = "tinywasm_u"
+name = "tinywasm_write"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
