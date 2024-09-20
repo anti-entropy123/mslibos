@@ -248,6 +248,7 @@ impl ElfService {
                     "mov r8, [rsp+40]",
                     "mov r9, [rsp+48]",
                     "mov r10, [rsp+56]",
+                    "mov r11, [rsp+64]",
                     "add rsp, 0x90",
                 );
             };
@@ -264,9 +265,9 @@ impl ElfService {
                 in("rdi") args,
                 rust_main = in(reg) rust_main,
             );
+            // 复原 rsp 寄存器的值
+            unsafe { asm!("mov rsp, [rsp+8]") };
         };
-        // 复原 rsp 寄存器的值
-        unsafe { asm!("mov rsp, [rsp+8]") };
 
         logger::info!("{} complete.", self.name);
         // result.map_err(|e| {
