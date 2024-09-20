@@ -1,4 +1,5 @@
 use crate::libos::USER_HOST_CALL;
+use core::arch::asm;
 
 pub macro func_type {
     (metric) => (ms_hostcall::types::MetricFunc),
@@ -79,12 +80,37 @@ pub macro hostcall_id {
 pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
+            use crate::mpk;
+            let pkru = mpk::pkey_read();
+            let is_user_level = (pkru & 0b11 != 0);
+            if is_user_level {
+                unsafe{
+                    asm!(
+                        "mov eax, 0x55555550",
+                        "xor rcx, rcx",
+                        "mov rdx, rcx",
+                        "wrpkru"
+                    );
+                }
+            }
+
             fn binding() -> func_type!($name){
                 let mut table = USER_HOST_CALL.lock();
                 unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
             }
             let $name = binding();
-            $name($($arg_name),*)
+            let res = $name($($arg_name),*);
+            if is_user_level {
+                unsafe{
+                    asm!(
+                        "mov eax, 0x55555553",
+                        "xor rcx, rcx",
+                        "mov rdx, rcx",
+                        "wrpkru"
+                    );
+                }
+            }
+            res
         }
     }
 }

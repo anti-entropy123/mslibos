@@ -200,6 +200,7 @@ impl IsolationContext {
 }
 
 pub const SERVICE_HEAP_SIZE: usize = 4 * 1024 * 1024 * 1024;
+pub const SERVICE_STACK_SIZE: usize = 8 * 1024 * 1024;
 
 pub trait Verify {
     fn __fingerprint() -> u64;

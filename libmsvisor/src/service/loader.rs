@@ -12,7 +12,7 @@ use nix::libc::Lmid_t;
 
 use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
-use super::Service;
+use super::{elf_service::ServiceStack, Service};
 
 #[derive(Default)]
 pub struct Namespace(Lmid_t);
@@ -59,7 +59,7 @@ impl ServiceLoader {
         self
     }
 
-    fn load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
+    fn load(&self, name: &ServiceName, is_app: bool) -> Result<Arc<Service>, anyhow::Error> {
         let lib_path = self
             .registered
             .get(name)
@@ -88,8 +88,12 @@ impl ServiceLoader {
             )
             .map_err(|e| anyhow!("load_dynlib faile: {e}"))?,
         );
-
-        let service = Service::new(name, lib, metric, self.with_libos);
+        let stack = if is_app {
+            Some(ServiceStack::new())
+        } else {
+            None
+        };
+        let service = Service::new(name, lib, stack, metric, self.with_libos);
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id)?;
@@ -97,12 +101,12 @@ impl ServiceLoader {
     }
 
     pub fn load_app(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
-        self.load(name)
+        self.load(name, true)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.metric.mark(MetricEvent::LoadService);
-        self.load(name)
+        self.load(name, false)
     }
 }
 
@@ -204,6 +208,7 @@ fn service_drop_test() {
     let socket = WithLibOSService::new(
         "socket",
         lib,
+        None,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),
     );
 

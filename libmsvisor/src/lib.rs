@@ -14,6 +14,8 @@ pub mod service;
 pub mod utils;
 use std::sync::Arc;
 
+pub mod mpk;
+
 pub use metric::MetricOpt;
 
 pub use hostcalls::{GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol};

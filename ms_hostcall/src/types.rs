@@ -34,7 +34,7 @@ pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
 pub type DropHandlerFunc = unsafe fn();
 
 // app main
-pub type RustMainFunc = unsafe fn(&BTreeMap<String, String>) -> Result<(), String>;
+pub type RustMainFunc = unsafe fn(&BTreeMap<String, String>)/* -> Result<(), String>*/;
 
 // fdtab
 bitflags! {

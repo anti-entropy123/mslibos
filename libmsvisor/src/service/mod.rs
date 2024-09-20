@@ -13,7 +13,7 @@ use ms_hostcall::types::{IsolationID, ServiceName};
 
 use crate::{logger, metric::SvcMetricBucket, service::elf_service::ElfService};
 
-use self::loader::Namespace;
+use self::{elf_service::ServiceStack, loader::Namespace};
 
 pub enum Service {
     ELFService(elf_service::ElfService),
@@ -23,12 +23,18 @@ pub enum Service {
 }
 
 impl Service {
-    fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>, with_libos: bool) -> Self {
-        logger::debug!("Service::new, name={name}");
+    fn new(
+        name: &str,
+        lib: Arc<Library>,
+        stack: Option<ServiceStack>,
+        metric: Arc<SvcMetricBucket>,
+        with_libos: bool,
+    ) -> Self {
+        logger::debug!("Service::new, name={name}, has_stack={}", stack.is_some());
         if with_libos {
-            Self::WithLibOSService(WithLibOSService::new(name, lib, metric))
+            Self::WithLibOSService(WithLibOSService::new(name, lib, stack, metric))
         } else {
-            Self::ELFService(ElfService::new(name, lib, metric))
+            Self::ELFService(ElfService::new(name, lib, stack, metric))
         }
     }
     fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
@@ -67,6 +73,14 @@ impl Service {
         match self {
             Service::ELFService(svc) => svc.namespace(),
             Service::WithLibOSService(svc) => svc.namespace(),
+            #[cfg(feature = "serviceV2")]
+            Service::RustService(_) => todo!(),
+        }
+    }
+    pub fn mprotect(&self) -> Result<(), ()> {
+        match self {
+            Service::ELFService(svc) => svc.mprotect(),
+            Service::WithLibOSService(svc) => svc.mprotect(),
             #[cfg(feature = "serviceV2")]
             Service::RustService(_) => todo!(),
         }

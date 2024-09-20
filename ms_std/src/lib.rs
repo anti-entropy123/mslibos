@@ -11,6 +11,7 @@
 
 use agent::FaaSFuncResult;
 use alloc::{collections::BTreeMap, string::String};
+use core::arch::asm;
 
 pub mod agent;
 pub mod console;
@@ -19,6 +20,7 @@ pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
+pub mod mpk;
 pub mod net;
 pub mod prelude;
 pub mod sym_patch;
@@ -57,35 +59,44 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<()> {
+pub fn main() -> FaaSFuncResult<()> {
     panic!("need real main");
 }
 
 #[no_mangle]
-pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
+pub extern "C" fn rust_main() /* -> Result<(), String>*/
+{
+    // let _ = main();
     #[cfg(feature = "unwinding")]
     {
-        let result = unwinding::panic::catch_unwind(|| main(args));
+        let result = unwinding::panic::catch_unwind(|| main());
 
         match result {
             Ok(func_res) => {
                 if let Err(e) = func_res {
-                    Err(alloc::format!("function exec error: {}", e.msg()))?;
+                    // Err(alloc::format!("function exec error: {}", e.msg()));
                 }
             }
             Err(e) => {
                 core::mem::forget(e);
-                Err(alloc::format!("catch user function panic."))?;
+                // Err(alloc::format!("catch user function panic."))?;
             }
         }
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        let result = main(args);
+        // println!("rust_main success");
+        let result = main();
 
-        if let Err(e) = result {
-            Err(alloc::format!("function exec error: {}", e.msg()))?
-        };
+        if let Err(e) = result {}
     }
-    Ok(())
+    unsafe {
+        asm!(
+            "wrpkru",
+            in("rax") 0x55555550,
+            in("rcx") 0,
+            in("rdx") 0,
+        );
+    }
+    // Ok(())
 }
