@@ -12,7 +12,7 @@ use nix::libc::Lmid_t;
 
 use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
-use super::{elf_service::ServiceStack, Service};
+use super::{elf_service::UserStack, Service};
 
 #[derive(Default)]
 pub struct Namespace(Lmid_t);
@@ -88,12 +88,15 @@ impl ServiceLoader {
             )
             .map_err(|e| anyhow!("load_dynlib faile: {e}"))?,
         );
-        let stack = if is_app {
-            Some(ServiceStack::new())
-        } else {
-            None
-        };
-        let service = Service::new(name, lib, stack, metric, self.with_libos);
+        let stack = if is_app { Some(UserStack::new()) } else { None };
+        let service = Service::new(
+            name,
+            lib_path.to_str().unwrap(),
+            lib,
+            stack,
+            metric,
+            self.with_libos,
+        );
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id)?;
@@ -207,6 +210,7 @@ fn service_drop_test() {
 
     let socket = WithLibOSService::new(
         "socket",
+        path.to_str().unwrap(),
         lib,
         None,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),

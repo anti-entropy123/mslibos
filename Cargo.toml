@@ -16,7 +16,7 @@ resolver = "2"
 
 [workspace.dependencies]
 libmsvisor = { path = "libmsvisor", default-features = false, features = [
-    "enable_mpk",
+    # "enable_mpk",
 ] }
 
 ms_hostcall = { path = "ms_hostcall" }
