@@ -198,29 +198,53 @@ impl ElfService {
             // 开启函数分区的权限
             mpk::pkey_set(0x1, 0).unwrap();
             logger::info!("pkey value : {:x}", mpk::pkey_read());
+
             // mpk::pkey_set(0, 0).unwrap();
             // logger::info!("pkey value : {:x}", mpk::pkey_read());
 
             unsafe {
                 // sleep(1000);
-                // 把旧栈的 rsp 压入新栈，并修改 rsp 的值到新栈
                 asm!(
-                    "mov r11, {rust_main}",
-                    "mov [{user_rsp}+8], rsp",
-                    "mov rsp, {user_rsp}",
+                    // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+                    "sub rsp, 0x90",
+                    "mov [rsp], rax",
+                    "mov [rsp+8], rcx",
+                    "mov [rsp+16], rdx",
+                    "mov [rsp+24], rsi",
+                    "mov [rsp+32], rdi",
+                    "mov [rsp+40], r8",
+                    "mov [rsp+48], r9",
+                    "mov [rsp+56], r10",
+                    "mov [rsp+64], r11",
+                    // 跳板
+                    "mov r11, r13",
+                    "mov [r12+8], rsp",
+                    "mov rsp, r12",
                     "mov eax, 0x55555553",
                     "xor rcx, rcx",
                     "mov rdx, rcx",
                     "wrpkru",
                     "call r11",
-                    user_rsp = in(reg) (user_stack_top-16),
-                    in("rdi") args,
-                    rust_main = in(reg) rust_main,
+                    in("r12") (user_stack_top-16),
+                    in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
+                    in("r13") rust_main,
                 );
+
 
                 // 复原 rsp 寄存器的值
                 asm!("mov rsp, [rsp+8]");
-                // 释放 protect
+                // 恢复寄存器
+                asm!(
+                    "mov rax, [rsp]",
+                    "mov rcx, [rsp+8]",
+                    "mov rdx, [rsp+16]",
+                    "mov rsi, [rsp+24]",
+                    "mov rdi, [rsp+32]",
+                    "mov r8, [rsp+40]",
+                    "mov r9, [rsp+48]",
+                    "mov r10, [rsp+56]",
+                    "add rsp, 0x90",
+                );
             };
         }
 
