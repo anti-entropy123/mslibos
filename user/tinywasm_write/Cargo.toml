@@ -11,12 +11,15 @@ crate-type = ["dylib"]
 [dependencies]
 ms_std = { path = "../../ms_std", features = [
     "alloc_def",
-    "panic_def",
+    "unwinding",
 ], optional = true }
 ms_hostcall = { path = "../../ms_hostcall", optional = true }
 
 cfg-if = "1.0.0"
-tinywasm = { version = "=0.7.0", default-features = false, features = ["parser"] }
+tinywasm = { version = "=0.7.0", default-features = false, features = [
+    "parser",
+] }
+unwinding = { version = "=0.2.0", features = ["panic-handler", "personality"] }
 # wat = { version = "=1.0.88" }
 
 
