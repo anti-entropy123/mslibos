@@ -48,8 +48,7 @@ struct Args {
     metrics: MetricOpt,
 }
 
-async fn msvisor_start() {
-    let args: Args = Args::parse();
+fn build_all_isol(args: &Args) -> Vec<Arc<Isolation>> {
     let configs: Vec<_> = if !args.files.is_empty() {
         args.files
             .iter()
@@ -69,7 +68,6 @@ async fn msvisor_start() {
 
     // info!("preload?:{}", args.preload);
     let isols: Vec<_> = configs.iter().map(Isolation::new).collect();
-    let isol_handles = isols.iter().map(|isol| isol.id);
 
     if args.preload {
         for (idx, isol) in isols.iter().enumerate() {
@@ -78,15 +76,24 @@ async fn msvisor_start() {
         }
     }
 
-    let mut join_handles: Vec<_> = isol_handles
-        .map(|isol_handle| {
-            let isol_start_with_thread = move || {
-                let isol = get_isol(isol_handle).expect("isol don't exist?");
+    isols
+}
 
-                if let Err(e) = isol.run() {
-                    log::error!("isol{} run failed. err={e:?}", isol.id)
-                }
-            };
+fn msvisor_start(isol: &Arc<Isolation>) {
+    let isol = get_isol(isol.id).expect("isol don't exist?");
+
+    if let Err(e) = isol.run() {
+        log::error!("isol{} run failed. err={e:?}", isol.id)
+    }
+}
+
+#[cfg(feature = "multi_workflow")]
+async fn async_msvisor_start(isols: &[Arc<Isolation>]) {
+    let mut join_handles: Vec<_> = isols
+        .iter()
+        .map(|isol| {
+            let isol = Arc::clone(isol);
+            let isol_start_with_thread = move || msvisor_start(&isol);
 
             Some(tokio::task::spawn_blocking(move || {
                 isol_start_with_thread()
@@ -94,12 +101,34 @@ async fn msvisor_start() {
         })
         .collect();
 
-    for (isol_idx, join_handle) in join_handles.iter_mut().enumerate() {
+    for join_handle in join_handles.iter_mut() {
         let join_handle = join_handle.take().unwrap();
         join_handle.await.expect("join failed");
+    }
+}
 
-        let isol = isols.get(isol_idx).unwrap();
+fn main() {
+    logger::init();
+    let args = Args::parse();
+    let isols = build_all_isol(&args);
 
+    #[cfg(feature = "multi_workflow")]
+    {
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .thread_stack_size(8 * 1024 * 1024)
+            .build()
+            .expect("build tokio runtime failed?");
+        runtime.block_on(async_msvisor_start(&isols))
+    }
+    #[cfg(not(feature = "multi_workflow"))]
+    {
+        if isols.len() > 1 {
+            panic!("enable feature 'multi_workflow' to support multi --files")
+        }
+        msvisor_start(&isols[0])
+    }
+
+    for isol in &isols {
         log::debug!(
             "isol{} has strong count={}",
             isol.id,
@@ -110,13 +139,4 @@ async fn msvisor_start() {
             isol.metric.analyze(&args.metrics.to_analyze());
         }
     }
-}
-fn main() {
-    logger::init();
-
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .thread_stack_size(8 * 1024 * 1024)
-        .build()
-        .expect("build tokio runtime failed?");
-    runtime.block_on(msvisor_start())
 }
