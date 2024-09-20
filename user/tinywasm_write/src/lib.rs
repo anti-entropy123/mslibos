@@ -47,10 +47,10 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
             Ok((0))
         }))?;
     let instance = module.instantiate(&mut store, Some(imports))?;
-    let main = instance.exported_func::<(), ())>(&store, "_start")?;
+    let main = instance.exported_func::<(), ()>(&store, "_start")?;
     // assert_eq!(add.call(&mut store, (20))?, 3);
     // println!("fib(20)={}", fib.call(&mut store, 20)?);
-    main.call(&mut store);
+    main.call(&mut store, ());
 
     Ok(().into())
 }
