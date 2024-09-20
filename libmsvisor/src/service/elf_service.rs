@@ -93,6 +93,7 @@ impl Default for UserStack {
 
 pub struct ElfService {
     pub name: String,
+    #[allow(dead_code)]
     path: String,
     lib: Arc<Library>,
     metric: Arc<SvcMetricBucket>,
