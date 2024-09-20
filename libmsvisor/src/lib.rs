@@ -14,6 +14,7 @@ pub mod service;
 pub mod utils;
 use std::sync::Arc;
 
+#[cfg(feature = "enable_mpk")]
 pub mod mpk;
 
 pub use metric::MetricOpt;

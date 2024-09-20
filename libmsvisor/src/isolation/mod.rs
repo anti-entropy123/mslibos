@@ -18,6 +18,8 @@ use ms_hostcall::types::{
     ServiceName,
 };
 
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
 use crate::{
     logger,
     metric::MetricBucket,
@@ -71,6 +73,8 @@ pub struct Isolation {
     app_names: Vec<ServiceName>,
     groups: Vec<Vec<App>>,
     fs_image: Option<String>,
+    #[cfg(feature = "enable_mpk")]
+    _pkey: i32,
 
     inner: Mutex<IsolationInner>,
 }
@@ -102,6 +106,8 @@ impl Isolation {
                 .map(|group| group.to_isolation())
                 .collect(),
             fs_image: config.fs_image.clone(),
+            #[cfg(feature = "enable_mpk")]
+            _pkey: mpk::pkey_alloc(),
 
             inner: Mutex::new(IsolationInner::default()),
         });
@@ -148,6 +154,7 @@ impl Isolation {
                 app
             }
         };
+
         #[cfg(feature = "enable_mpk")]
         app.mprotect()
             .map_err(|_e| anyhow::Error::msg("mpk protect failed"))?;

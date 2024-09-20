@@ -13,7 +13,7 @@ use ms_hostcall::types::{IsolationID, ServiceName};
 
 use crate::{logger, metric::SvcMetricBucket, service::elf_service::ElfService};
 
-use self::{elf_service::ServiceStack, loader::Namespace};
+use self::{elf_service::UserStack, loader::Namespace};
 
 pub enum Service {
     ELFService(elf_service::ElfService),
@@ -25,16 +25,17 @@ pub enum Service {
 impl Service {
     fn new(
         name: &str,
+        path: &str,
         lib: Arc<Library>,
-        stack: Option<ServiceStack>,
+        stack: Option<UserStack>,
         metric: Arc<SvcMetricBucket>,
         with_libos: bool,
     ) -> Self {
         logger::debug!("Service::new, name={name}, has_stack={}", stack.is_some());
         if with_libos {
-            Self::WithLibOSService(WithLibOSService::new(name, lib, stack, metric))
+            Self::WithLibOSService(WithLibOSService::new(name, path, lib, stack, metric))
         } else {
-            Self::ELFService(ElfService::new(name, lib, stack, metric))
+            Self::ELFService(ElfService::new(name, path, lib, stack, metric))
         }
     }
     fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
@@ -77,6 +78,8 @@ impl Service {
             Service::RustService(_) => todo!(),
         }
     }
+
+    #[cfg(feature = "enable_mpk")]
     pub fn mprotect(&self) -> Result<(), ()> {
         match self {
             Service::ELFService(svc) => svc.mprotect(),
