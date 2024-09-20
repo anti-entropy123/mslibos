@@ -14,9 +14,13 @@ clap = { version = "4.3.21", features = ["derive"] }
 derive_more = "0.99.17"
 thiserror-no-std = "2.0.2"
 anyhow = { version = "1.0.82" }
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.32.0", features = [
+    "macros",
+    "rt-multi-thread",
+], optional = true }
 
 [features]
 namespace = ["libmsvisor/namespace"]
+multi_workflow = ["tokio", "namespace"]
 
 default = ["namespace"]
