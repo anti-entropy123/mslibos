@@ -80,17 +80,19 @@ pub macro hostcall_id {
 pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
-            use crate::mpk;
-            let pkru = mpk::pkey_read();
-            let is_user_level = (pkru & 0b11 != 0);
-            if is_user_level {
-                unsafe{
-                    asm!(
-                        "mov eax, 0x55555550",
-                        "xor rcx, rcx",
-                        "mov rdx, rcx",
-                        "wrpkru"
-                    );
+            #[cfg(feature = "mpk")] {
+                use crate::mpk;
+                let pkru = mpk::pkey_read();
+                let is_user_level = (pkru & 0b11 != 0);
+                if is_user_level {
+                    unsafe{
+                        asm!(
+                            "mov eax, 0x55555550",
+                            "xor rcx, rcx",
+                            "mov rdx, rcx",
+                            "wrpkru"
+                        );
+                    }
                 }
             }
 
@@ -100,14 +102,17 @@ pub macro libos {
             }
             let $name = binding();
             let res = $name($($arg_name),*);
-            if is_user_level {
-                unsafe{
-                    asm!(
-                        "mov eax, 0x55555553",
-                        "xor rcx, rcx",
-                        "mov rdx, rcx",
-                        "wrpkru"
-                    );
+
+            #[cfg(feature = "mpk")] {
+                if is_user_level {
+                    unsafe{
+                        asm!(
+                            "mov eax, 0x55555553",
+                            "xor rcx, rcx",
+                            "mov rdx, rcx",
+                            "wrpkru"
+                        );
+                    }
                 }
             }
             res
