@@ -20,6 +20,7 @@ pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
+#[cfg(feature = "mpk")]
 pub mod mpk;
 pub mod net;
 pub mod prelude;
@@ -90,6 +91,7 @@ pub extern "C" fn rust_main() /* -> Result<(), String>*/
 
         if let Err(e) = result {}
     }
+    #[cfg(feature = "mpk")]
     unsafe {
         asm!(
             "wrpkru",
