@@ -24,7 +24,6 @@ use thiserror::Error;
 #[cfg(feature = "enable_mpk")]
 use crate::mpk;
 use crate::{
-    hostcalls::SetArgsFuncSybmol,
     isolation::handler::{find_host_call, panic_handler},
     logger,
     metric::SvcMetricBucket,
@@ -369,8 +368,6 @@ enum ServiceInitError {
     MissingSetCtx,
     #[error("missing get_handler_addr?")]
     MissingGetCtx,
-    #[error("missing set_args_item?")]
-    MissingSetArgs,
     #[error("check isol ctx failed.")]
     CtxCheckFailed,
 }
@@ -453,13 +450,6 @@ impl WithLibOSService {
     }
 
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        let set_args_handler: SetArgsFuncSybmol = self
-            .symbol("set_args_item")
-            .ok_or(ServiceInitError::MissingSetArgs.to_string())?;
-
-        for (k, v) in args.iter() {
-            set_args_handler(k, v)
-        }
         self.elf.run(args)
     }
 

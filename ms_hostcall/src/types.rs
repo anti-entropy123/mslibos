@@ -29,7 +29,6 @@ pub type FindHostCallFunc = unsafe extern "C" fn(IsolationID, HostCallID) -> usi
 pub type SetHandlerFunc = unsafe extern "C" fn(&IsolationContext) -> HostCallResult;
 pub type GetHandlerFunc = unsafe extern "C" fn() -> usize;
 pub type PanicHandlerFunc = unsafe extern "C" fn() -> !;
-pub type SetArgsFunc = extern "C" fn(&str, &str);
 
 // service drop
 pub type DropHandlerFunc = unsafe fn();

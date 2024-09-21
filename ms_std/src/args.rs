@@ -1,21 +1,8 @@
-use core::str::FromStr;
-
 #[derive(Debug)]
 pub(crate) struct ArgsItem {
     pub(crate) key: heapless::String<32>,
     pub(crate) val: heapless::String<32>,
 }
-
-impl ArgsItem {
-    pub(crate) fn from_kv(k: &str, v: &str) -> Self {
-        Self {
-            key: heapless::String::from_str(k).unwrap(),
-            val: heapless::String::from_str(v).unwrap(),
-        }
-    }
-}
-
-pub(crate) static mut ARGS_LIST: heapless::Vec<ArgsItem, 16> = heapless::Vec::new();
 
 pub fn get(name: &str) -> Option<&'static str> {
     let mut args_base_addr: usize;

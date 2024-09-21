@@ -11,7 +11,7 @@
 #![feature(const_mut_refs)]
 
 use agent::FaaSFuncResult;
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
 use core::arch::asm;
 
 pub mod agent;

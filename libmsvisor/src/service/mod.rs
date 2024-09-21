@@ -13,7 +13,7 @@ use ms_hostcall::types::{IsolationID, ServiceName};
 
 use crate::{logger, metric::SvcMetricBucket, service::elf_service::ElfService};
 
-use self::{elf_service::UserStack, loader::Namespace};
+use self::loader::Namespace;
 
 pub enum Service {
     ELFService(elf_service::ElfService),

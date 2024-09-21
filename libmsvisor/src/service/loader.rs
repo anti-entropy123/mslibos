@@ -12,7 +12,7 @@ use nix::libc::Lmid_t;
 
 use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
-use super::{elf_service::UserStack, Service};
+use super::Service;
 
 #[derive(Default)]
 pub struct Namespace(Lmid_t);
@@ -59,7 +59,7 @@ impl ServiceLoader {
         self
     }
 
-    fn load(&self, name: &ServiceName, is_app: bool) -> Result<Arc<Service>, anyhow::Error> {
+    fn load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         let lib_path = self
             .registered
             .get(name)
@@ -102,12 +102,12 @@ impl ServiceLoader {
     }
 
     pub fn load_app(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
-        self.load(name, true)
+        self.load(name)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.metric.mark(MetricEvent::LoadService);
-        self.load(name, false)
+        self.load(name)
     }
 }
 
