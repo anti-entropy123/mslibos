@@ -6,6 +6,7 @@ use std::{
     ffi::c_void,
     mem::{transmute, MaybeUninit},
     ptr::NonNull,
+    str::FromStr,
     sync::Arc,
 };
 
@@ -23,9 +24,11 @@ use thiserror::Error;
 #[cfg(feature = "enable_mpk")]
 use crate::mpk;
 use crate::{
+    hostcalls::SetArgsFuncSybmol,
     isolation::handler::{find_host_call, panic_handler},
     logger,
     metric::SvcMetricBucket,
+    utils::PAGE_SIZE,
     GetHandlerFuncSybmol, RustMainFuncSybmol, SetHandlerFuncSybmol,
 };
 
@@ -66,74 +69,47 @@ impl ServiceHeap {
     fn new() -> Self {
         Self(Box::new_uninit())
     }
+
     fn c_ptr(&self) -> NonNull<c_void> {
         NonNull::new(self.0.as_ptr() as usize as *mut std::ffi::c_void).unwrap()
+    }
+}
+
+#[derive(Debug)]
+struct ArgsItem {
+    _key: heapless::String<32>,
+    _val: heapless::String<32>,
+}
+
+impl ArgsItem {
+    fn from_kv(k: &str, v: &str) -> Self {
+        Self {
+            _key: heapless::String::from_str(k).unwrap(),
+            _val: heapless::String::from_str(v).unwrap(),
+        }
     }
 }
 
 pub struct UserStack(Box<MaybeUninit<MemoryRegion<SERVICE_STACK_SIZE>>>);
 
 impl UserStack {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let stack = Box::new_uninit();
         log::debug!("stack: 0x{:x}", stack.as_ptr() as usize);
         Self(stack)
     }
 
     fn c_ptr(&self) -> NonNull<c_void> {
-        NonNull::new(self.0.as_ptr() as usize as *mut std::ffi::c_void).unwrap()
-    }
-}
-
-impl Default for UserStack {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub struct ElfService {
-    pub name: String,
-    #[allow(dead_code)]
-    path: String,
-    lib: Arc<Library>,
-    metric: Arc<SvcMetricBucket>,
-    stack: Option<UserStack>,
-}
-
-impl ElfService {
-    pub fn new(
-        name: &str,
-        path: &str,
-        lib: Arc<Library>,
-        stack: Option<UserStack>,
-        metric: Arc<SvcMetricBucket>,
-    ) -> Self {
-        metric.mark(MetricEvent::SvcInit);
-        logger::debug!(
-            "ELFService::new, name={name}, has_stack={}",
-            stack.is_some()
-        );
-        Self {
-            name: name.to_owned(),
-            path: path.to_owned(),
-            lib,
-            metric,
-            stack,
-        }
+        NonNull::new((self.0.as_ptr() as usize) as *mut std::ffi::c_void).unwrap()
     }
 
-    pub fn symbol<T>(&self, symbol: &str) -> Option<Symbol<T>> {
-        unsafe { self.lib.get(symbol.as_bytes()) }.ok()
-    }
-
-    pub fn init(&self, _isol_id: IsolationID) -> anyhow::Result<()> {
-        Ok(())
+    fn top(&self) -> usize {
+        self.0.as_ptr() as usize + SERVICE_STACK_SIZE - PAGE_SIZE
     }
 
     #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> Result<(), ()> {
-        // 关联栈内存和 mpk_pkey.
-        let user_stack = self.stack.as_ref().unwrap().c_ptr();
+    fn mprotect(&self) -> anyhow::Result<()> {
+        let user_stack = self.c_ptr();
         let user_stack_top = unsafe { user_stack.as_ptr().add(SERVICE_STACK_SIZE) as usize };
 
         mpk::pkey_mprotect(
@@ -150,6 +126,56 @@ impl ElfService {
             nix::libc::PROT_READ | nix::libc::PROT_WRITE
         );
 
+        Ok(())
+    }
+
+    fn write_args(&self, args: &BTreeMap<String, String>) {
+        let args_base_addr = self.top();
+        let args_list = unsafe { &mut *(args_base_addr as *mut heapless::Vec<ArgsItem, 16>) };
+        *args_list = heapless::Vec::new();
+
+        for (k, v) in args.iter() {
+            args_list.push(ArgsItem::from_kv(k, v)).unwrap()
+        }
+    }
+}
+
+impl Default for UserStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub struct ElfService {
+    pub name: String,
+    #[allow(dead_code)]
+    path: String,
+    lib: Arc<Library>,
+    metric: Arc<SvcMetricBucket>,
+}
+
+impl ElfService {
+    pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
+        metric.mark(MetricEvent::SvcInit);
+        logger::debug!("ELFService::new, name={name}");
+        Self {
+            name: name.to_owned(),
+            path: path.to_owned(),
+            lib,
+            metric,
+        }
+    }
+
+    pub fn symbol<T>(&self, symbol: &str) -> Option<Symbol<T>> {
+        unsafe { self.lib.get(symbol.as_bytes()) }.ok()
+    }
+
+    pub fn init(&self, _isol_id: IsolationID) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    #[cfg(feature = "enable_mpk")]
+    pub fn mprotect(&self) -> anyhow::Result<()> {
         let maps_str = std::fs::read_to_string("/proc/self/maps").unwrap();
         let segments = crate::utils::parse_memory_segments(&maps_str).unwrap();
 
@@ -182,24 +208,17 @@ impl ElfService {
         Ok(())
     }
 
-    fn invoke_elf_symbol(
-        &self,
-        rust_main: RustMainFuncSybmol,
-        args: &BTreeMap<String, String>,
-    ) -> Result<(), String> {
+    fn invoke_elf_symbol(&self, rust_main: RustMainFunc, stack: UserStack) -> Result<(), String> {
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
             self.name,
-            (*rust_main) as usize,
+            rust_main as usize,
             std::thread::current().name().unwrap()
         );
-        let rust_main: RustMainFunc = unsafe { transmute(*rust_main as usize) };
-
-        let user_stack = self.stack.as_ref().unwrap().c_ptr();
-        let user_stack_top = unsafe { user_stack.as_ptr().add(SERVICE_STACK_SIZE) as usize };
+        let user_stack_top = stack.top();
 
         #[cfg(feature = "enable_mpk")]
-        unsafe {
+        {
             // 开启函数分区的权限
             mpk::pkey_set(0x1, 0).unwrap();
             logger::info!("pkey value : {:x}", mpk::pkey_read());
@@ -231,10 +250,9 @@ impl ElfService {
                     "wrpkru",
                     "call r11",
                     in("r12") (user_stack_top-16),
-                    in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
+                    // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
                     in("r13") rust_main,
                 );
-
 
                 // 复原 rsp 寄存器的值
                 asm!("mov rsp, [rsp+8]");
@@ -273,7 +291,7 @@ impl ElfService {
                 "mov rsp, r12",
                 "call r11",
                 in("r12") (user_stack_top-16),
-                in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
+                // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
                 in("r13") rust_main,
             );
 
@@ -308,7 +326,14 @@ impl ElfService {
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
         self.metric.mark(MetricEvent::SvcRun);
         let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing main?")?;
-        let ret = self.invoke_elf_symbol(rust_main, args);
+        let rust_main = unsafe { transmute(*rust_main as usize) };
+
+        let stack = UserStack::new();
+        #[cfg(feature = "enable_mpk")]
+        stack.mprotect().map_err(|err| err.to_string())?;
+        stack.write_args(args);
+
+        let ret = self.invoke_elf_symbol(rust_main, stack);
         self.metric.mark(MetricEvent::SvcEnd);
 
         ret
@@ -344,6 +369,8 @@ enum ServiceInitError {
     MissingSetCtx,
     #[error("missing get_handler_addr?")]
     MissingGetCtx,
+    #[error("missing set_args_item?")]
+    MissingSetArgs,
     #[error("check isol ctx failed.")]
     CtxCheckFailed,
 }
@@ -355,15 +382,9 @@ pub struct WithLibOSService {
 }
 
 impl WithLibOSService {
-    pub fn new(
-        name: &str,
-        path: &str,
-        lib: Arc<Library>,
-        stack: Option<UserStack>,
-        metric: Arc<SvcMetricBucket>,
-    ) -> Self {
+    pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         Self {
-            elf: ElfService::new(name, path, lib, stack, metric),
+            elf: ElfService::new(name, path, lib, metric),
             heap: ServiceHeap::new(),
         }
     }
@@ -432,8 +453,14 @@ impl WithLibOSService {
     }
 
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
-        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").ok_or("missing rust_main?")?;
-        self.elf.invoke_elf_symbol(rust_main, args)
+        let set_args_handler: SetArgsFuncSybmol = self
+            .symbol("set_args_item")
+            .ok_or(ServiceInitError::MissingSetArgs.to_string())?;
+
+        for (k, v) in args.iter() {
+            set_args_handler(k, v)
+        }
+        self.elf.run(args)
     }
 
     pub fn namespace(&self) -> Namespace {
@@ -441,7 +468,7 @@ impl WithLibOSService {
     }
 
     #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> Result<(), ()> {
+    pub fn mprotect(&self) -> anyhow::Result<()> {
         self.elf.mprotect()?;
         let heap_start = self.heap.c_ptr().as_ptr() as usize;
         /* unsafe { libc::syscall(SYS_pkey_alloc, 0, 0); }; */

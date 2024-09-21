@@ -47,13 +47,6 @@
             "slot_name": "part-1",
             "input_file": "fake_data_1.txt"
           }
-        },
-        {
-          "name": "file_reader",
-          "args": {
-            "slot_name": "part-2",
-            "input_file": "fake_data_2.txt"
-          }
         }
       ],
       "args": {}
@@ -61,22 +54,19 @@
     {
       "list": [
         "mapper",
-        "mapper",
         "mapper"
       ],
       "args": {
-        "reducer_num": "4"
+        "reducer_num": "2"
       }
     },
     {
       "list": [
         "reducer",
-        "reducer",
-        "reducer",
         "reducer"
       ],
       "args": {
-        "mapper_num": "3"
+        "mapper_num": "2"
       }
     }
   ]

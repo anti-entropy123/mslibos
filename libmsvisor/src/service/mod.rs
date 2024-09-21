@@ -27,15 +27,14 @@ impl Service {
         name: &str,
         path: &str,
         lib: Arc<Library>,
-        stack: Option<UserStack>,
         metric: Arc<SvcMetricBucket>,
         with_libos: bool,
     ) -> Self {
-        logger::debug!("Service::new, name={name}, has_stack={}", stack.is_some());
+        logger::debug!("Service::new, name={name}");
         if with_libos {
-            Self::WithLibOSService(WithLibOSService::new(name, path, lib, stack, metric))
+            Self::WithLibOSService(WithLibOSService::new(name, path, lib, metric))
         } else {
-            Self::ELFService(ElfService::new(name, path, lib, stack, metric))
+            Self::ELFService(ElfService::new(name, path, lib, metric))
         }
     }
     fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
@@ -80,7 +79,7 @@ impl Service {
     }
 
     #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> Result<(), ()> {
+    pub fn mprotect(&self) -> anyhow::Result<()> {
         match self {
             Service::ELFService(svc) => svc.mprotect(),
             Service::WithLibOSService(svc) => svc.mprotect(),

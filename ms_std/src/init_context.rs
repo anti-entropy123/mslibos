@@ -8,6 +8,8 @@ use ms_hostcall::{types::HostCallResult as HCResult, IsolationContext};
 
 use spin::Mutex;
 
+use crate::args::{ArgsItem, ARGS_LIST};
+
 pub static ISOLATION_CTX: Mutex<IsolationContext> = Mutex::new(IsolationContext::uninit());
 
 /// This is a non-pub function because it should not be init in other file.
@@ -47,4 +49,10 @@ pub extern "C" fn get_handler_addr() -> usize {
     let isol_ctx = isolation_ctx();
 
     isol_ctx.find_handler
+}
+
+#[allow(improper_ctypes_definitions)]
+#[no_mangle]
+pub extern "C" fn set_args_item(k: &str, v: &str) {
+    unsafe { ARGS_LIST.push(ArgsItem::from_kv(k, v)).unwrap() };
 }

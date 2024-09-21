@@ -88,12 +88,10 @@ impl ServiceLoader {
             )
             .map_err(|e| anyhow!("load_dynlib faile: {e}"))?,
         );
-        let stack = if is_app { Some(UserStack::new()) } else { None };
         let service = Service::new(
             name,
             lib_path.to_str().unwrap(),
             lib,
-            stack,
             metric,
             self.with_libos,
         );
@@ -212,7 +210,6 @@ fn service_drop_test() {
         "socket",
         path.to_str().unwrap(),
         lib,
-        None,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),
     );
 

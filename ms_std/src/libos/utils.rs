@@ -1,5 +1,4 @@
 use crate::libos::USER_HOST_CALL;
-use core::arch::asm;
 
 pub macro func_type {
     (metric) => (ms_hostcall::types::MetricFunc),
