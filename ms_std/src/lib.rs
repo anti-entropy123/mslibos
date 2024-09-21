@@ -8,12 +8,14 @@
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 #![feature(const_maybe_uninit_zeroed)]
+#![feature(const_mut_refs)]
 
 use agent::FaaSFuncResult;
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
 use core::arch::asm;
 
 pub mod agent;
+pub mod args;
 pub mod console;
 pub mod fs;
 pub mod init_context;
