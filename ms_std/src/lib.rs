@@ -12,7 +12,7 @@
 
 use agent::FaaSFuncResult;
 use alloc::string::String;
-use core::arch::asm;
+use core::{arch::asm, result};
 
 pub mod agent;
 pub mod args;
@@ -67,9 +67,9 @@ pub fn main() -> FaaSFuncResult<()> {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_main() /* -> Result<(), String>*/
+pub extern "C" fn rust_main() -> u64 
 {
-    // let _ = main();
+    let mut return_value: Result<(), String> = Ok(());
     #[cfg(feature = "unwinding")]
     {
         let result = unwinding::panic::catch_unwind(|| main());
@@ -77,21 +77,26 @@ pub extern "C" fn rust_main() /* -> Result<(), String>*/
         match result {
             Ok(func_res) => {
                 if let Err(e) = func_res {
-                    // Err(alloc::format!("function exec error: {}", e.msg()));
+                    return_value = Err(alloc::format!("function exec error: {}", e.msg()));
+                    return &return_value as *const _ as u64;
                 }
             }
             Err(e) => {
                 core::mem::forget(e);
-                // Err(alloc::format!("catch user function panic."))?;
+                return_value = Err(alloc::format!("catch user function panic."));
+                return &return_value as *const _ as u64;
             }
         }
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        // println!("rust_main success");
         let result = main();
 
-        if let Err(e) = result {}
+        if let Err(e) = result {
+            // Err(alloc::format!("function exec error: {}", e.msg()))?
+            return_value = Err(alloc::format!("function exec error: {}", e.msg()));
+            return &return_value as *const _ as u64;
+        }
     }
     #[cfg(feature = "mpk")]
     unsafe {
@@ -102,5 +107,6 @@ pub extern "C" fn rust_main() /* -> Result<(), String>*/
             in("rdx") 0,
         );
     }
-    // Ok(())
+    // return result to pointer
+    &return_value as *const _ as u64
 }

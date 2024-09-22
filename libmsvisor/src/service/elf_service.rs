@@ -255,6 +255,13 @@ impl ElfService {
 
                 // 复原 rsp 寄存器的值
                 asm!("mov rsp, [rsp+8]");
+
+                // 获取返回值
+                let return_value_addr: u64;
+                asm!("mov {}, rax", out(reg) return_value_addr);
+                let result: Result<(), String> = (*(return_value_addr as *const Result<(), String>)).clone();
+                println!("result: {:?}", result);
+
                 // 恢复寄存器
                 asm!(
                     "mov rax, [rsp]",
