@@ -324,7 +324,7 @@ impl ElfService {
 
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
         self.metric.mark(MetricEvent::SvcRun);
-        let rust_main: RustMainFuncSybmol = self.symbol("main").ok_or("missing main?")?;
+        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").ok_or("missing main?")?;
         let rust_main = unsafe { transmute(*rust_main as usize) };
 
         let stack = UserStack::new();

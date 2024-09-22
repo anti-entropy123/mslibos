@@ -11,7 +11,7 @@ pub fn get(name: &str) -> Option<&'static str> {
             "mov {}, rsp", out(reg) args_base_addr
         )
     };
-    let page_size = 4096;
+    let page_size = 0x1000;
     let args_base_addr = (args_base_addr + page_size - 1) & (!page_size + 1);
     let args_list = unsafe { &mut *(args_base_addr as *mut heapless::Vec<ArgsItem, 16>) };
 

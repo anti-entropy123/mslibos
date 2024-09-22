@@ -79,19 +79,33 @@ pub macro hostcall_id {
 pub macro libos {
     ($name:ident($($arg_name:expr),*)) => {
         {
-            #[cfg(feature = "mpk")] {
-                use crate::mpk;
-                let pkru = mpk::pkey_read();
-                let is_user_level = (pkru & 0b11 != 0);
-                if is_user_level {
-                    unsafe{
-                        asm!(
-                            "mov eax, 0x55555550",
-                            "xor rcx, rcx",
-                            "mov rdx, rcx",
-                            "wrpkru"
-                        );
-                    }
+            fn binding() -> func_type!($name){
+                let mut table = USER_HOST_CALL.lock();
+                unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
+            }
+            let $name = binding();
+            let res = $name($($arg_name),*);
+            res
+        }
+    }
+}
+
+#[cfg(feature = "mpk")]
+pub macro libos_with_switch_mpk {
+    ($name:ident($($arg_name:expr),*)) => {
+        {
+            use core::arch::asm;
+            use crate::mpk;
+            let pkru = mpk::pkey_read();
+            let is_user_level = (pkru & 0b11 != 0);
+            if is_user_level {
+                unsafe{
+                    asm!(
+                        "mov eax, 0x55555550",
+                        "xor rcx, rcx",
+                        "mov rdx, rcx",
+                        "wrpkru"
+                    );
                 }
             }
 
@@ -99,21 +113,20 @@ pub macro libos {
                 let mut table = USER_HOST_CALL.lock();
                 unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
             }
-            let $name = binding();
+            let $name = binding();    
             let res = $name($($arg_name),*);
 
-            #[cfg(feature = "mpk")] {
-                if is_user_level {
-                    unsafe{
-                        asm!(
-                            "mov eax, 0x55555553",
-                            "xor rcx, rcx",
-                            "mov rdx, rcx",
-                            "wrpkru"
-                        );
-                    }
+            if is_user_level {
+                unsafe{
+                    asm!(
+                        "mov eax, 0x55555553",
+                        "xor rcx, rcx",
+                        "mov rdx, rcx",
+                        "wrpkru"
+                    );
                 }
             }
+
             res
         }
     }

@@ -12,6 +12,8 @@ panic_def = []
 alloc_def = []
 mpk = []
 
+default = ["mpk"]
+
 [dependencies]
 ms_hostcall = { workspace = true, features = [
     "socket",
