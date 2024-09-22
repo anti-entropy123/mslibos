@@ -4,7 +4,10 @@ use core::hash::{BuildHasher, Hash, Hasher};
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
 use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
-use ms_std::agent::{DataBuffer, FaaSFuncResult as Result};
+use ms_std::{
+    agent::{DataBuffer, FaaSFuncResult as Result},
+    args,
+};
 use ms_std_proc_macro::FaasData;
 
 extern crate alloc;
@@ -29,13 +32,12 @@ impl Default for Mapper2Reducer {
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
-    let my_id = &args["id"];
-    let reducer_num: u64 = args
-        .get("reducer_num")
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
+    let reducer_num: u64 = args::get("reducer_num")
         .expect("missing arg reducer_num")
         .parse()
-        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args["reducer_num"]));
+        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
 
     let reader: DataBuffer<Reader2Mapper> =
         DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");

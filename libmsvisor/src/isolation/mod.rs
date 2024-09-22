@@ -120,7 +120,11 @@ impl Isolation {
     pub fn preload(&self, config: &IsolationConfig) -> Result<(), anyhow::Error> {
         for service in config.all_modules() {
             let svc_name = &service.0;
-            self.service_or_load(svc_name)?;
+            if self.app_names.contains(svc_name) {
+                self.app_or_load(svc_name)?;
+            } else {
+                self.service_or_load(svc_name)?;
+            }
         }
 
         Ok(())

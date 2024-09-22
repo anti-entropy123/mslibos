@@ -188,6 +188,7 @@ pub struct IsolationContext {
     pub panic_handler: usize,
     pub heap_range: (usize, usize),
 }
+
 impl IsolationContext {
     pub const fn uninit() -> Self {
         Self {

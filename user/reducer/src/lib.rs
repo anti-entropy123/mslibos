@@ -9,7 +9,7 @@ use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
-    println,
+    args, println,
 };
 use ms_std_proc_macro::FaasData;
 
@@ -22,15 +22,14 @@ struct Mapper2Reducer {
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
-    let my_id = &args["id"];
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
     let reducer_id: usize = my_id.parse().expect("wrong id.");
 
-    let mapper_num: u64 = args
-        .get("mapper_num")
+    let mapper_num: u64 = args::get("mapper_num")
         .expect("missing arg mapper_num")
         .parse()
-        .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args["mapper_num"]));
+        .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args::get("mapper_num").unwrap()));
 
     let mut counter: HashMap<String, u32> = HashMap::new();
     for i in 0..mapper_num {

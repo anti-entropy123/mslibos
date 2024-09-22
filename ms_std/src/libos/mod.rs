@@ -9,7 +9,11 @@ use ms_hostcall::{
     CommonHostCall, HostCallID,
 };
 mod utils;
+
+#[cfg(not(feature = "mpk"))]
 pub use utils::libos;
+#[cfg(feature = "mpk")]
+pub use utils::libos_with_switch_mpk as libos;
 
 pub static USER_HOST_CALL: Mutex<UserHostCall> = Mutex::new(UserHostCall::new());
 
