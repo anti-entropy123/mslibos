@@ -60,9 +60,9 @@ fn test_should_not_set_context() {
 }
 
 #[repr(C, align(4096))]
-struct MemoryRegion<const SIZE: usize>([u8; SIZE]);
+struct PageAlignedRegion<const SIZE: usize>([u8; SIZE]);
 
-struct ServiceHeap(Box<MaybeUninit<MemoryRegion<SERVICE_HEAP_SIZE>>>);
+struct ServiceHeap(Box<MaybeUninit<PageAlignedRegion<SERVICE_HEAP_SIZE>>>);
 
 impl ServiceHeap {
     fn new() -> Self {
@@ -89,7 +89,7 @@ impl ArgsItem {
     }
 }
 
-pub struct UserStack(Box<MaybeUninit<MemoryRegion<SERVICE_STACK_SIZE>>>);
+pub struct UserStack(Box<MaybeUninit<PageAlignedRegion<SERVICE_STACK_SIZE>>>);
 
 impl UserStack {
     fn new() -> Self {
@@ -116,8 +116,8 @@ impl UserStack {
             8 * 1024 * 1024,
             nix::libc::PROT_READ | nix::libc::PROT_WRITE,
             0x1,
-        )
-        .unwrap();
+        )?;
+
         logger::info!(
             "user stack (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
             user_stack.as_ptr() as usize,
@@ -181,9 +181,7 @@ impl ElfService {
         let user_app_name = self.path.split('/').last().unwrap();
         for segment in segments {
             if let Some(seg) = &segment.path {
-                log::debug!("seg: {}", seg);
                 let name = seg.split('/').last().unwrap();
-                log::debug!("name: {}", name);
                 if name != user_app_name {
                     continue;
                 }
@@ -192,8 +190,8 @@ impl ElfService {
                     segment.length,
                     segment.perm,
                     0x1,
-                )
-                .unwrap();
+                )?;
+
                 logger::info!(
                     "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
                     segment.path.unwrap(),
@@ -216,17 +214,13 @@ impl ElfService {
         );
         let user_stack_top = stack.top();
 
-        #[cfg(feature = "enable_mpk")]
-        {
-            // 开启函数分区的权限
-            mpk::pkey_set(0x1, 0).unwrap();
-            logger::info!("pkey value : {:x}", mpk::pkey_read());
+        unsafe {
+            #[cfg(feature = "enable_mpk")]
+            {
+                // 开启函数分区的权限
+                mpk::pkey_set(0x1, 0).unwrap();
+                logger::info!("pkey value : {:x}", mpk::pkey_read());
 
-            // mpk::pkey_set(0, 0).unwrap();
-            // logger::info!("pkey value : {:x}", mpk::pkey_read());
-
-            unsafe {
-                // sleep(1000);
                 asm!(
                     // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
                     "sub rsp, 0x90",
@@ -252,47 +246,31 @@ impl ElfService {
                     // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
                     in("r13") rust_main,
                 );
-
-                // 复原 rsp 寄存器的值
-                asm!("mov rsp, [rsp+8]");
-                // 恢复寄存器
+            }
+            #[cfg(not(feature = "enable_mpk"))]
+            {
                 asm!(
-                    "mov rax, [rsp]",
-                    "mov rcx, [rsp+8]",
-                    "mov rdx, [rsp+16]",
-                    "mov rsi, [rsp+24]",
-                    "mov rdi, [rsp+32]",
-                    "mov r8, [rsp+40]",
-                    "mov r9, [rsp+48]",
-                    "mov r10, [rsp+56]",
-                    "mov r11, [rsp+64]",
-                    "add rsp, 0x90",
+                    // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+                    "sub rsp, 0x90",
+                    "mov [rsp], rax",
+                    "mov [rsp+8], rcx",
+                    "mov [rsp+16], rdx",
+                    "mov [rsp+24], rsi",
+                    "mov [rsp+32], rdi",
+                    "mov [rsp+40], r8",
+                    "mov [rsp+48], r9",
+                    "mov [rsp+56], r10",
+                    "mov [rsp+64], r11",
+                    // 跳板
+                    "mov r11, r13",
+                    "mov [r12+8], rsp",
+                    "mov rsp, r12",
+                    "call r11",
+                    in("r12") (user_stack_top-16),
+                    // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
+                    in("r13") rust_main,
                 );
             };
-        }
-        #[cfg(not(feature = "enable_mpk"))]
-        unsafe {
-            asm!(
-                // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
-                "sub rsp, 0x90",
-                "mov [rsp], rax",
-                "mov [rsp+8], rcx",
-                "mov [rsp+16], rdx",
-                "mov [rsp+24], rsi",
-                "mov [rsp+32], rdi",
-                "mov [rsp+40], r8",
-                "mov [rsp+48], r9",
-                "mov [rsp+56], r10",
-                "mov [rsp+64], r11",
-                // 跳板
-                "mov r11, r13",
-                "mov [r12+8], rsp",
-                "mov rsp, r12",
-                "call r11",
-                in("r12") (user_stack_top-16),
-                // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
-                in("r13") rust_main,
-            );
 
             // 复原 rsp 寄存器的值
             asm!("mov rsp, [rsp+8]");
@@ -309,7 +287,7 @@ impl ElfService {
                 "mov r11, [rsp+64]",
                 "add rsp, 0x90",
             );
-        };
+        }
 
         logger::info!("{} complete.", self.name);
         // result.map_err(|e| {
@@ -396,8 +374,31 @@ impl WithLibOSService {
     }
 
     pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+        info!("init name={}", self.name());
         let heap_start = self.heap.c_ptr().as_ptr() as usize;
-        let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
+        let mut heap_size = SERVICE_HEAP_SIZE;
+
+        if self.name() == "mm" {
+            heap_size /= 2;
+            info!("set buffer alloc region");
+            #[cfg(feature = "enable_mpk")]
+            {
+                mpk::pkey_mprotect(
+                    (heap_start + heap_size) as *mut c_void,
+                    heap_size,
+                    nix::libc::PROT_READ | nix::libc::PROT_WRITE,
+                    1,
+                )?;
+
+                logger::info!(
+                    "buffer alloc region segement (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
+                    heap_start + heap_size,
+                    heap_start + SERVICE_HEAP_SIZE,
+                    nix::libc::PROT_READ | nix::libc::PROT_WRITE
+                );
+            }
+        }
+        let heap_range = (heap_start, heap_start + heap_size);
         logger::debug!(
             "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
             self.elf.name,
@@ -460,19 +461,19 @@ impl WithLibOSService {
     #[cfg(feature = "enable_mpk")]
     pub fn mprotect(&self) -> anyhow::Result<()> {
         self.elf.mprotect()?;
+
         let heap_start = self.heap.c_ptr().as_ptr() as usize;
-        /* unsafe { libc::syscall(SYS_pkey_alloc, 0, 0); }; */
         mpk::pkey_mprotect(
             heap_start as *mut c_void,
             SERVICE_HEAP_SIZE,
             nix::libc::PROT_READ | nix::libc::PROT_WRITE,
             1,
-        )
-        .unwrap();
+        )?;
+
         logger::info!(
             "heap segement (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
             heap_start,
-            heap_start + SERVICE_HEAP_SIZE,
+            SERVICE_HEAP_SIZE,
             nix::libc::PROT_READ | nix::libc::PROT_WRITE
         );
 

@@ -126,6 +126,7 @@ dependencies = [
  "hashbrown",
  "lazy_static",
  "libc",
+ "linked_list_allocator",
  "ms_hostcall",
  "ms_std",
  "spin 0.9.8",

@@ -22,13 +22,14 @@ pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
-#[cfg(feature = "mpk")]
-pub mod mpk;
 pub mod net;
 pub mod prelude;
 pub mod sym_patch;
 pub mod sync;
 pub mod time;
+
+#[cfg(feature = "mpk")]
+pub mod mpk;
 
 extern crate alloc;
 
