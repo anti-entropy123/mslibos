@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::{borrow::ToOwned, string::String};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
+    println,
     time::SystemTime,
 };
 use ms_std_proc_macro::FaasData;
@@ -24,8 +25,8 @@ impl Default for MyComplexData {
     fn default() -> Self {
         Self {
             // current_time: SystemTime::now(),
-            year: Default::default(),
-            name: Default::default(),
+            year: 0,
+            name: "".to_owned(),
             big_data: [0; 4096 * DATA_SIZE],
         }
     }
@@ -34,7 +35,6 @@ impl Default for MyComplexData {
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
 pub fn main() -> Result<MyComplexData> {
-    // println!("Hello, world!");
     let mut d = DataBuffer::<MyComplexData>::with_slot("Conference".to_owned());
     d.year = 2025;
     d.name = "Euro".to_owned();

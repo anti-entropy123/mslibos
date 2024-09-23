@@ -31,7 +31,7 @@ pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> 
         .lock()
         .insert(slot.to_owned(), (addr, fingerprint));
 
-    println!("buffer_alloc addr=0x{:x}", addr);
+    println!("buffer_alloc layout={:?}, addr=0x{:x}", l, addr);
 
     Ok(addr)
 }

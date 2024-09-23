@@ -6,7 +6,7 @@ use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
-    args,
+    args, println,
 };
 use ms_std_proc_macro::FaasData;
 
@@ -38,6 +38,7 @@ pub fn main() -> Result<()> {
         .expect("missing arg reducer_num")
         .parse()
         .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
+    println!("mapper: func_id={}, reducer_num={}", my_id, reducer_num);
 
     let reader: DataBuffer<Reader2Mapper> =
         DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
@@ -60,20 +61,27 @@ pub fn main() -> Result<()> {
         Vec::with_capacity(reducer_num as usize);
 
     for reducer in 0..reducer_num {
-        data_buffers.push(DataBuffer::with_slot(format!("{}-{}", my_id, reducer)));
+        let mut buffer: DataBuffer<Mapper2Reducer> =
+            DataBuffer::with_slot(format!("{}-{}", my_id, reducer));
+        buffer.shuffle = Default::default();
+        data_buffers.push(buffer);
     }
 
     ms_std::println!("the counter nums is {}", counter.len());
     for (word, count) in counter {
-        let shuffle_idx = {
-            let mut hasher = hashbrown::hash_map::DefaultHashBuilder::default().build_hasher();
-            word.hash(&mut hasher);
-            hasher.finish() % reducer_num
-        };
+        // let shuffle_idx = {
+        //     let mut hasher = hashbrown::hash_map::DefaultHashBuilder::default().build_hasher();
+        //     word.hash(&mut hasher);
+        //     hasher.finish() % reducer_num
+        // };
+        let shuffle_idx = 0;
 
         data_buffers
             .get_mut(shuffle_idx as usize)
-            .unwrap()
+            .unwrap_or_else(|| {
+                println!("vec get_mut failed, idx={}", shuffle_idx);
+                panic!()
+            })
             .shuffle
             .insert(word.to_owned(), count);
     }

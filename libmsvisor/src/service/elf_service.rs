@@ -175,30 +175,67 @@ impl ElfService {
 
     #[cfg(feature = "enable_mpk")]
     pub fn mprotect(&self) -> anyhow::Result<()> {
+        use log::debug;
+
+        use crate::utils::MemorySegment;
+
         let maps_str = std::fs::read_to_string("/proc/self/maps").unwrap();
         let segments = crate::utils::parse_memory_segments(&maps_str).unwrap();
 
         let user_app_name = self.path.split('/').last().unwrap();
-        for segment in segments {
-            if let Some(seg) = &segment.path {
-                let name = seg.split('/').last().unwrap();
-                if name != user_app_name {
-                    continue;
-                }
-                mpk::pkey_mprotect(
-                    segment.start_addr as *mut c_void,
-                    segment.length,
-                    segment.perm,
-                    0x1,
-                )?;
 
-                logger::info!(
-                    "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-                    segment.path.unwrap(),
-                    segment.start_addr,
-                    segment.start_addr + segment.length,
-                    segment.perm
+        fn do_mpk_mprotect(segment: &MemorySegment) -> anyhow::Result<()> {
+            mpk::pkey_mprotect(
+                segment.start_addr as *mut c_void,
+                segment.length,
+                segment.perm,
+                0x1,
+            )?;
+            logger::info!(
+                "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
+                segment.path.as_ref().unwrap_or(&String::new()),
+                segment.start_addr,
+                segment.start_addr + segment.length,
+                segment.perm
+            );
+            Ok(())
+        }
+        if self.name == "libc" {
+            let mut begin_idx = 0;
+            for (idx, segment) in segments.iter().enumerate() {
+                if let Some(seg) = &segment.path {
+                    let name = seg.split('/').last().unwrap();
+                    if name != user_app_name {
+                        continue;
+                    }
+                    begin_idx = idx;
+                    break;
+                }
+            }
+            loop {
+                let segment = segments.get(begin_idx).unwrap();
+                if let Some(seg) = &segment.path {
+                    let name = seg.split('/').last().unwrap();
+                    if name != user_app_name {
+                        break;
+                    }
+                }
+                debug!(
+                    "additional mpk right for libc_ext, idx={}, segment={:x?}",
+                    begin_idx, segment
                 );
+                do_mpk_mprotect(segment)?;
+                begin_idx += 1;
+            }
+        } else {
+            for segment in &segments {
+                if let Some(seg) = &segment.path {
+                    let name = seg.split('/').last().unwrap();
+                    if name != user_app_name {
+                        continue;
+                    }
+                    do_mpk_mprotect(segment)?
+                }
             }
         }
 
@@ -398,6 +435,12 @@ impl WithLibOSService {
                 );
             }
         }
+
+        #[cfg(feature = "enable_mpk")]
+        if self.name() == "libc" {
+            self.mprotect()?
+        }
+
         let heap_range = (heap_start, heap_start + heap_size);
         logger::debug!(
             "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
@@ -473,7 +516,7 @@ impl WithLibOSService {
         logger::info!(
             "heap segement (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
             heap_start,
-            SERVICE_HEAP_SIZE,
+            heap_start + SERVICE_HEAP_SIZE,
             nix::libc::PROT_READ | nix::libc::PROT_WRITE
         );
 
