@@ -1,0 +1,36 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ]
+  ],
+  "apps": [
+    [
+      "mapper",
+      "libtinywasm_mapper.so"
+    ],
+    [
+      "reducer",
+      "libtinywasm_reducer.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "mapper"
+      ],
+      "args": {}
+    },
+    {
+      "list": [
+        "reducer"
+      ],
+      "args": {}
+    }
+  ]
+}

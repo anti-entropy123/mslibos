@@ -40,8 +40,8 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
             let mem = ctx.exported_memory("memory")?;
 
             for i in 0..iovs_len {
-                let offset = ptr + i * core::mem::size_of::<u32>();
-                let addr: &[u8] = mem.load(offset, core::mem::size_of::<u32>())?;
+                let offset = ptr + i * core::mem::size_of::<WasiCiovec>();
+                let addr: &[u8] = mem.load(offset, core::mem::size_of::<WasiCiovec>())?;
                 let addr: &WasiCiovec = unsafe { &*(addr.as_ptr() as *const WasiCiovec) };
                 // let wasi_ciovec = mem.load(addr, std::mem::size_of::<WasiCiovec>())? as WasiCiovec;
                 let buf = mem.load(addr.buf as usize, addr.buf_len as usize)? as &[u8];
