@@ -11,15 +11,10 @@ cfg_if::cfg_if! {
     }
 }
 
-use core::slice;
-
 use alloc::format;
-use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::libos::libos;
 use ms_std::println;
 
-use tinywasm::{Extern, MemoryStringExt};
-use tinywasm::{FuncContext, Imports, Module, Store};
+use tinywasm::{Module, Store};
 use wasi_api::tinywasm;
 
 const WASM: &[u8] = include_bytes!("../mapper.wasm");
