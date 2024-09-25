@@ -1,0 +1,26 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "time",
+      "libtime.so"
+    ]
+  ],
+  "apps": [
+    [
+      "func_a",
+      "libtinywasm_pass_str.so"
+    ]
+  ]
+}
