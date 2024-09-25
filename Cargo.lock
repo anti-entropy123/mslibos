@@ -1012,10 +1012,9 @@ dependencies = [
 [[package]]
 name = "tinywasm"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb17fb757014cb29b31df0c7adc59a00d78cbeb1479e90dad7521dc379c379f7"
 dependencies = [
  "libm",
+ "ms_std",
  "tinywasm-parser",
  "tinywasm-types",
 ]

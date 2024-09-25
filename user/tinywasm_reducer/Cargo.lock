@@ -254,6 +254,7 @@ name = "tinywasm"
 version = "0.7.0"
 dependencies = [
  "libm",
+ "ms_std",
  "tinywasm-parser",
  "tinywasm-types",
 ]
@@ -281,8 +282,8 @@ dependencies = [
  "cfg-if",
  "ms_hostcall",
  "ms_std",
- "tinywasm",
  "unwinding",
+ "wasi_api",
 ]
 
 [[package]]
@@ -306,6 +307,16 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "wasi_api"
+version = "0.1.0"
+dependencies = [
+ "ms_hostcall",
+ "ms_std",
+ "ms_std_proc_macro",
+ "tinywasm",
+]
 
 [[package]]
 name = "wasmparser"
