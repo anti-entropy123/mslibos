@@ -21,6 +21,13 @@ pub fn buffer_register(
     let slot_name = memory
         .load_string(slot_name_base as usize, slot_name_size as usize)
         .unwrap();
+    println!("slot_name={}", slot_name);
+
+    let content = memory
+        .load_string(buffer_base as usize, buffer_size as usize)
+        .unwrap();
+    println!("content={}", content);
+
     let mut wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::with_slot(slot_name);
     wasm_buffer.0 = buffer_base as usize as *mut _;
     wasm_buffer.1 = buffer_size as usize;

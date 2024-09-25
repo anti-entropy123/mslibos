@@ -44,7 +44,7 @@ pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
 }
 
 pub fn fd_fdstat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_fdstat_get\n");
+    println!("[Debug] Invoke into fd_fdstat_get");
     println!("args: {:?}, {:?}", args.0, args.1);
 
     let fd = args.0 as u32;
@@ -174,7 +174,7 @@ pub fn fd_seek(mut ctx: FuncContext<'_>, args: (i32, i64, i32, i32)) -> tinywasm
 }
 
 pub fn fd_write(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_write\n");
+    println!("[Debug] Invoke into fd_write");
     println!(
         "args: {:?}, {:?}, {:?}, {:?}",
         args.0, args.1, args.2, args.3
@@ -237,7 +237,7 @@ pub fn path_open(
 }
 
 pub fn proc_exit(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<()> {
-    println!("[Debug] Invoke into proc_exit\n");
+    println!("[Debug] Invoke into proc_exit");
 
-    panic!("normally exit");
+    panic!("normally exit")
 }

@@ -315,6 +315,7 @@ dependencies = [
  "ms_std",
  "ms_std_proc_macro",
  "tinywasm",
+ "unwinding",
 ]
 
 [[package]]

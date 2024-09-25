@@ -14,7 +14,7 @@ ms_std = { path = "../../ms_std", features = [
     # "panic_def",
 ], optional = true }
 ms_hostcall = { path = "../../ms_hostcall", optional = true }
-wasi_api = { path = "../../wasi_api" }
+wasi_api = { path = "../../wasi_api", features = ["log"] }
 
 cfg-if = "1.0.0"
 unwinding = { version = "=0.2.0", features = ["panic-handler", "personality"] }

@@ -11,30 +11,12 @@ cfg_if::cfg_if! {
     }
 }
 
-use core::slice;
-
 use alloc::format;
-use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::libos::libos;
 use ms_std::println;
 
-use wasi_api::tinywasm::{self, Extern, FuncContext, Imports, MemoryStringExt, Module, Store};
+use wasi_api::tinywasm::{Module, Store};
 
 const WASM: &[u8] = include_bytes!("../write.wasm");
-
-#[repr(C)]
-struct WasiCiovec {
-    buf: u32,
-    buf_len: u32,
-}
-
-#[repr(C)]
-struct WasiFdstat {
-    fs_filetype: u8,
-    fs_flags: u16,
-    fs_rights_base: u64,
-    fs_rights_inheriting: u64,
-}
 
 #[no_mangle]
 pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
