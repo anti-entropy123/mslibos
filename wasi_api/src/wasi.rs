@@ -20,7 +20,7 @@ struct WasiFdstat {
 
 #[repr(C)]
 struct WasiPrestatDir {
-    dirname_len: u64,
+    dirname_len: u32,
 }
 
 #[repr(C)]
@@ -34,210 +34,255 @@ struct WasiPrestatT {
     u: WasiPrestatUt,
 }
 
-pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_close\n");
+let fd_fdstat_get = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_fdstat_get");
+        println!("args: fd: {:?}, retptr: {:?}", args.0, args.1);
 
-    let fd = _args as u32;
-    libos!(close(fd)).unwrap();
+        let fd = args.0 as u32;
+        let retptr = args.1 as usize;
+        let mut mem = ctx.exported_memory_mut("memory")?;
 
-    Ok(0)
-}
+        let mut fdstat: WasiFdstat = WasiFdstat {fs_filetype: 0, fs_flags: 0, fs_rights_base: 0, fs_rights_inheriting: 0 };
+        match fd {
+            0 => { // stdin
+                fdstat.fs_filetype = 2; // CharacterDevice
+                fdstat.fs_flags = 0;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            1 => { // stdout
+                fdstat.fs_filetype = 2;
+                fdstat.fs_flags = 1;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            2 => { // stderr
+                fdstat.fs_filetype = 2;
+                fdstat.fs_flags = 1;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            3 => { // root inode
+                fdstat.fs_filetype = 3; // Directory
+                fdstat.fs_flags = 0;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0xFFFFFFFFFFFFFFFF;
+            }
+            _ => (),
+        }
+        
+        // Todo: 从表中寻找fd
+        // let FdStruct = table.find(fd);
+        // fdstat.fs_filetype = match FdStruct.kind {
+        //     0 => 4, // 0 代表File，4代表RegularFile
+        //     1 => 3  // 1 代表Dir，3代表Directory
+        // };
+        // fdstat.fs_flags = FdStruct.flags;
+        // fdstat.fs_rights_base = FdStruct.fs_rights_base;
+        // fdstat.fs_rights_inheriting = FdStruct.fs_rights_inheriting;
 
-pub fn fd_fdstat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_fdstat_get\n");
-    println!("args: {:?}, {:?}", args.0, args.1);
+        let ret = (&fdstat) as *const _ as usize;
+        let ret = unsafe { core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<WasiFdstat>()) } ;
+        mem.store(retptr,core::mem::size_of::<WasiFdstat>(), ret)?;
 
-    let fd = args.0 as u32;
-    let addr = args.1 as usize;
-    let mut mem = ctx.exported_memory_mut("memory")?;
+        Ok(0)
+    },
+);
 
-    /* fake implementation */
+let fd_fdstat_set_flags = Extern::typed_func(
+    |_: FuncContext<'_>, args: (i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_fdstat_set_flags");
 
-    let mut fdstat = WasiFdstat {
-        fs_filetype: 0b00010000,
-        fs_flags: 0b00000,
-        fs_rights_base: 0xFFFFFFFFFFFFFFFF,
-        fs_rights_inheriting: 0xFFFFFFFFFFFFFFFF,
-    };
+        let fd = args.0 as u32;
+        let flag = args.1 as u16;
 
-    if fd == 1 || fd == 2 {
-        fdstat.fs_flags = 1;
-        fdstat.fs_filetype = 0b00000100;
-    }
+        Ok(0)
+    },
+);
 
-    let ret = (&fdstat) as *const _ as usize;
-    let ret = unsafe {
-        core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<WasiFdstat>())
-    };
-    mem.store(addr, core::mem::size_of::<WasiFdstat>(), ret)?;
+let fd_prestat_get = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_prestat_get");
+        println!("args: fd: {:?}, retptr: {:?}", args.0, args.1);
 
-    Ok(0)
-}
+        let fd = args.0 as u32;
+        let retptr = args.1 as usize;
+        let mut mem = ctx.exported_memory_mut("memory")?;
 
-pub fn fd_fdstat_set_flags(ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_fdstat_set_flags\n");
+        match fd {
+            3 => { // root inode
+                let prestat = WasiPrestatT {
+                    tag: 0, // tag 应为 0，表示这是一个目录，非0表示unknown
+                    u: WasiPrestatUt {
+                        dir: WasiPrestatDir {
+                            // dirname_len: "/".len() as u32 + 1, // +1以防止递归错误
+                            dirname_len: "/".len() as u32,
+                        },
+                    },
+                };
 
-    let fd = args.0 as u32;
-    let flag = args.1 as u16;
+                let ret = (&prestat) as *const _ as usize;
+                let ret = unsafe { core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<WasiPrestatT>()) } ;
+                mem.store(retptr, core::mem::size_of::<WasiPrestatT>(), ret )?;
 
-    Ok(0)
-}
+                Ok(0) // Success
+            }
+            // Todo: libos需要维护一个表，从表中找fd，找不到就返回Badf
+            _ => Ok(8), // Badf
+        }
 
-pub fn fd_prestat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_prestat_get\n");
-    println!("args: fd: {:?}, ptr: {:?}", args.0, args.1);
+    },
+);
 
-    let mut mem = ctx.exported_memory_mut("memory")?;
+let fd_prestat_dir_name = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_prestat_dir_name");
+        println!("args: fd: {:?}, path_addr: {:?}, path_len: {:?}", args.0, args.1, args.2);
 
-    let prestat = WasiPrestatT {
-        tag: 0, // 假设 tag 为 0，表示这是一个目录
-        u: WasiPrestatUt {
-            dir: WasiPrestatDir {
-                dirname_len: 15, // 示例长度
-            },
-        },
-    };
+        let fd = args.0 as u32;
+        let path = args.1 as u32;
+        let path_len = args.2 as u32;
+        let mut mem = ctx.exported_memory_mut("memory")?;
 
-    let ret = (&prestat) as *const _ as usize;
-    let ret = unsafe {
-        core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<WasiPrestatT>())
-    };
-    // mem.store(args.1 as usize, core::mem::size_of::<WasiPrestatT>(), ret )?;
+        // Todo: 从表中寻找fd
+        if fd == 3 {
+            let name = "/";
+            mem.store(path as usize, path_len as usize, name.as_bytes())?;
 
-    // Badf
-    Ok(8)
-}
+            Ok(0)
+        } else {
 
-pub fn fd_prestat_dir_name(
-    mut ctx: FuncContext<'_>,
-    args: (i32, i32, i32),
-) -> tinywasm::Result<i32> {
-    // should not enter
-    println!("[Debug] Invoke into fd_prestat_dir_name\n");
-    println!(
-        "args: fd: {:?}, path_addr: {:?}, path_len: {:?}",
-        args.0, args.1, args.2
-    );
+            Ok(61) // Overflow
+        }
+    },
+);
 
-    let mut mem = ctx.exported_memory_mut("memory")?;
+let fd_read = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_read");
+        println!("args: fd: {:?}, iovs_ptr: {:?}, iovs_len: {:?}, retptr: {:?}", args.0, args.1, args.2, args.3);
 
-    Ok(0)
-}
+        let fd = args.0 as u32;
+        let iovs_ptr = args.1 as usize;
+        let iovs_len = args.2 as usize;
+        let retptr = args.3 as usize;
 
-pub fn fd_read(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_read\n");
+        let mut mem = ctx.exported_memory_mut("memory")?;
+        let mut read_size: usize = 0;
 
-    let fd = args.0 as u32;
-    let ptr = args.1 as usize;
-    let iovs_len = args.2 as usize;
-    let mut mem = ctx.exported_memory_mut("memory")?;
-    let mut read_size: usize = 0;
+        for i in 0..iovs_len {
+            let offset = iovs_ptr + i * core::mem::size_of::<WasiCiovec>();
+            let iovs: &[u8] = mem.load(offset, core::mem::size_of::<WasiCiovec>())?;
+            let iovs: &WasiCiovec = unsafe { &*(iovs.as_ptr() as *const WasiCiovec) };
+            let buf: &[u8] = mem.load(iovs.buf as usize, iovs.buf_len as usize)?;
+            let buf: &mut [u8] = unsafe { slice::from_raw_parts_mut(buf.as_ptr() as usize as *mut u8, iovs.buf_len as usize) };
+            read_size += libos!(read(fd, buf)).unwrap();
+        }
 
-    for i in 0..iovs_len {
-        let offset = ptr + i * core::mem::size_of::<WasiCiovec>();
-        let addr: &[u8] = mem.load(offset, core::mem::size_of::<WasiCiovec>())?;
-        let addr: &WasiCiovec = unsafe { &*(addr.as_ptr() as *const WasiCiovec) };
-        let buf: &[u8] = mem.load(addr.buf as usize, addr.buf_len as usize)?;
-        let buf: &mut [u8] = unsafe {
-            slice::from_raw_parts_mut(buf.as_ptr() as usize as *mut u8, addr.buf_len as usize)
-        };
-        read_size += libos!(read(fd, buf)).unwrap();
-    }
+        println!("read_size: {:?}", read_size);
+        mem.store(retptr, core::mem::size_of::<u32>(), &read_size.to_ne_bytes() )?;
 
-    mem.store(
-        args.3 as usize,
-        core::mem::size_of::<u32>(),
-        &read_size.to_ne_bytes(),
-    )?;
+        Ok(0)
+    },
+);
 
-    Ok(0)
-}
+let fd_seek = Extern::typed_func(
+    |_: FuncContext<'_>, args: (i32, i64, i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_seek");
 
-pub fn fd_seek(mut ctx: FuncContext<'_>, args: (i32, i64, i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_seek\n");
+        let fd = args.0 as u32;
+        let offset = args.1;
+        let whence = args.2;
+        let pos = offset as u32;
+        // if whence == 0 {
+            
+        // } else if whence == 1 {
+            
+        // } else if whence == 2{
+            
+        // }
 
-    let fd = args.0 as u32;
-    let offset = args.1;
-    let whence = args.2;
-    let pos = offset as u32;
-    // if whence == 0 {
+        libos!(lseek(fd, pos)).unwrap();
+        
+        Ok(0)
+    },
+);
 
-    // } else if whence == 1 {
+let fd_write = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_write");
+        println!("args: fd: {:?}, iovs_ptr: {:?}, iovs_len: {:?}, retptr: {:?}", args.0, args.1, args.2, args.3);
 
-    // } else if whence == 2{
+        let fd = args.0 as u32;
+        let iovs_ptr = args.1 as usize;
+        let iovs_len = args.2 as usize;
+        let retptr = args.3 as usize;
 
-    // }
+        let mut mem = ctx.exported_memory_mut("memory")?;
+        let mut write_size: usize = 0;
 
-    libos!(lseek(fd, pos)).unwrap();
+        for i in 0..iovs_len {
+            let offset = iovs_ptr + i * core::mem::size_of::<WasiCiovec>();
+            let iovs: &[u8] = mem.load(offset, core::mem::size_of::<WasiCiovec>())?;
+            let iovs: &WasiCiovec = unsafe { &*(iovs.as_ptr() as *const WasiCiovec) };
+            let buf = mem.load(iovs.buf as usize, iovs.buf_len as usize)? as &[u8];
+            write_size += libos!(write(fd, buf)).unwrap();
+        }
 
-    Ok(0)
-}
+        println!("write_size: {:?}", write_size);
+        mem.store(retptr, core::mem::size_of::<usize>(), &write_size.to_ne_bytes())?;
+        Ok(0)
+    },
+);
 
-pub fn fd_write(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_write\n");
-    println!(
-        "args: {:?}, {:?}, {:?}, {:?}",
-        args.0, args.1, args.2, args.3
-    );
+let path_open = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32, i32, i64, i64, i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into path_open");
+        println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6, args.7, args.8);
 
-    let fd = args.0 as u32;
-    let ptr = args.1 as usize;
-    let iovs_len = args.2 as usize;
-    let mem = ctx.exported_memory("memory")?;
+        let mut mem = ctx.exported_memory_mut("memory")?;
+        let fd = args.0 as u32;
+        let dirflags = args.1 as u32;
+        let path_addr = args.2 as u32;
+        let path_len = args.3 as u32;
+        let oflags = args.4 as u16;
+        
+        let fs_rights_base = args.5 as u64;
+        let fs_rights_inheriting = args.6 as u64;
+        let fdflags = args.7 as u16;
+        let retptr = args.8 as usize;
 
-    for i in 0..iovs_len {
-        let offset = ptr + i * core::mem::size_of::<WasiCiovec>();
-        let iovs: &[u8] = mem.load(offset, core::mem::size_of::<WasiCiovec>())?;
-        let iovs: &WasiCiovec = unsafe { &*(iovs.as_ptr() as *const WasiCiovec) };
-        let buf = mem.load(iovs.buf as usize, iovs.buf_len as usize)? as &[u8];
-        libos!(write(fd, buf)).unwrap();
-    }
+        let path = mem.load_string(path_addr as usize, path_len as usize)?;
+        println!("path: {:?}", path);
 
-    Ok(0)
-}
 
-pub fn path_open(
-    mut ctx: FuncContext<'_>,
-    args: (i32, i32, i32, i32, i32, i64, i64, i32, i32),
-) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into path_open\n");
+        let mut flags: OpenFlags = OpenFlags::empty();
+        if ((fdflags >> 0) & 1) == 1 {
+            flags |= OpenFlags::O_APPEND;
+        }
+        if ((oflags >> 0) & 1) == 1 {
+            flags |= OpenFlags::O_CREAT;
+        }
 
-    let mem = ctx.exported_memory("memory")?;
-    let fd = args.0 as u32;
-    let dirflags = args.1 as u32;
-    let path_addr = args.2 as u32;
-    let path_len = args.3 as u32;
-    let path = mem.load_string(path_addr as usize, path_len as usize)?;
-    let oflags = args.4 as u16;
+        let mut mode: OpenMode = OpenMode::empty();
+        if ((fs_rights_base >> 1) & 1) == 1 {
+            mode |= OpenMode::RD;
+        }
+        if ((fs_rights_base >> 6) & 1) == 1 {
+            mode |= OpenMode::WR;
+        }
 
-    let fs_rights_base = args.5 as u64;
-    let fs_rights_inheriting = args.6 as u64;
-    let fdflags = args.7 as u16;
+        let ret_fd = libos!(open(&path, flags, mode)).unwrap() as i32;
+        println!("ret_fd: {:?}", ret_fd);
+        mem.store(retptr, core::mem::size_of::<i32>(), &ret_fd.to_ne_bytes())?;
+        Ok(ret_fd)
+    },
+);
 
-    let mut flags = OpenFlags::empty();
-    if (fdflags & (1 << 0)) == 1 {
-        flags |= OpenFlags::O_APPEND;
-    }
-    if (oflags & (1 << 0)) == 1 {
-        flags |= OpenFlags::O_CREAT;
-    }
-
-    let mut mode = OpenMode::empty();
-    #[allow(clippy::bad_bit_mask)]
-    if (fs_rights_base & (1 << 1)) == 1 {
-        mode |= OpenMode::RD;
-    }
-    #[allow(clippy::bad_bit_mask)]
-    if (fs_rights_base & (1 << 6)) == 1 {
-        mode |= OpenMode::WR;
-    }
-
-    let ret_fd = libos!(open(&path, flags, mode)).unwrap() as i32;
-    Ok(ret_fd)
-}
-
-pub fn proc_exit(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<()> {
-    println!("[Debug] Invoke into proc_exit\n");
+let proc_exit = Extern::typed_func(|_: FuncContext<'_>, _args: i32| -> tinywasm::Result<()> {
+    println!("[Debug] Invoke into proc_exit");
 
     panic!("normally exit");
-}
+    Ok(())
+});
