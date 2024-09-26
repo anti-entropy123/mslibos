@@ -34,14 +34,53 @@ struct WasiPrestatT {
     u: WasiPrestatUt,
 }
 
-pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
-    println!("[Debug] Invoke into fd_close\n");
+let fd_fdstat_get = Extern::typed_func(
+    |mut ctx: FuncContext<'_>, args: (i32, i32)| -> tinywasm::Result<i32> {
+        println!("[Debug] Invoke into fd_fdstat_get");
+        println!("args: fd: {:?}, retptr: {:?}", args.0, args.1);
 
-    let fd = _args as u32;
-    libos!(close(fd)).unwrap();
+        let fd = args.0 as u32;
+        let retptr = args.1 as usize;
+        let mut mem = ctx.exported_memory_mut("memory")?;
 
-    Ok(0)
-}
+        let mut fdstat: WasiFdstat = WasiFdstat {fs_filetype: 0, fs_flags: 0, fs_rights_base: 0, fs_rights_inheriting: 0 };
+        match fd {
+            0 => { // stdin
+                fdstat.fs_filetype = 2; // CharacterDevice
+                fdstat.fs_flags = 0;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            1 => { // stdout
+                fdstat.fs_filetype = 2;
+                fdstat.fs_flags = 1;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            2 => { // stderr
+                fdstat.fs_filetype = 2;
+                fdstat.fs_flags = 1;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0;
+            }
+            3 => { // root inode
+                fdstat.fs_filetype = 3; // Directory
+                fdstat.fs_flags = 0;
+                fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+                fdstat.fs_rights_inheriting = 0xFFFFFFFFFFFFFFFF;
+            }
+            _ => (),
+        }
+        
+        // Todo: 从表中寻找fd
+        // let FdStruct = table.find(fd);
+        // fdstat.fs_filetype = match FdStruct.kind {
+        //     0 => 4, // 0 代表File，4代表RegularFile
+        //     1 => 3  // 1 代表Dir，3代表Directory
+        // };
+        // fdstat.fs_flags = FdStruct.flags;
+        // fdstat.fs_rights_base = FdStruct.fs_rights_base;
+        // fdstat.fs_rights_inheriting = FdStruct.fs_rights_inheriting;
 
 let fd_fdstat_get = Extern::typed_func(
     |mut ctx: FuncContext<'_>, args: (i32, i32)| -> tinywasm::Result<i32> {
