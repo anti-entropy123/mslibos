@@ -1,5 +1,5 @@
 [package]
-name = "tinywasm_pass_str"
+name = "tinywasm_recv_str"
 version = "0.1.0"
 edition = "2021"
 build = "../../build_user.rs"

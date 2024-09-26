@@ -14,8 +14,8 @@ pub fn main() -> Result<()> {
 
     let instance = module.instantiate(&mut store, Some(imports))?;
     // assert_eq!(add.call(&mut store, (20))?, 3);
-    let result = instance.start(&mut store);
-    // println!("{:?}", unwinding::panic::catch_unwind(|| result));
+    let result = unwinding::panic::catch_unwind(|| instance.start(&mut store));
+    // println!("{:?}", result);
 
     Ok(().into())
 }

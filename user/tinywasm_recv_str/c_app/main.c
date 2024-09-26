@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-__attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
+__attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 
 int main()
 {
@@ -20,23 +20,21 @@ int main()
     }
 
     printf("内存分配成功\n");
-    // 对缓冲区进行一些操作，例如填充数据
-    for (int i = 0; i < bufferSize; i++)
-    {
-        buffer[i] = 'A' + i;
-    }
-
     char *slot_name = "slot_1";
-
-    buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
-
-    // // 打印缓冲区的内容
-    // printf("缓冲区内容: ");
+    access_buffer(slot_name, strlen(slot_name), buffer, bufferSize);
+    // 对缓冲区进行一些操作，例如填充数据
     // for (int i = 0; i < bufferSize; i++)
     // {
-    //     printf("%c ", buffer[i]);
+    //     buffer[i] = 'A' + i;
     // }
-    // printf("\n");
+
+    // // 打印缓冲区的内容
+    printf("缓冲区内容: ");
+    for (int i = 0; i < bufferSize; i++)
+    {
+        printf("%c ", buffer[i]);
+    }
+    printf("\n");
 
     // // 使用free释放内存
     // free(buffer);
