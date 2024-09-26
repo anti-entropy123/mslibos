@@ -252,9 +252,9 @@ dependencies = [
 [[package]]
 name = "tinywasm"
 version = "0.7.0"
+source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
 dependencies = [
  "libm",
- "ms_std",
  "tinywasm-parser",
  "tinywasm-types",
 ]
@@ -262,8 +262,7 @@ dependencies = [
 [[package]]
 name = "tinywasm-parser"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b57836fdb313f731e8f27af86ac1f731c0c25d845c0b98c4510a1b3bcdba47ad"
+source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
 dependencies = [
  "tinywasm-types",
  "wasmparser",
@@ -272,8 +271,7 @@ dependencies = [
 [[package]]
 name = "tinywasm-types"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5bd86161724f7497e45124c52ed6f889aee571d10e33295b19a16fa26854190"
+source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
 
 [[package]]
 name = "tinywasm_py"

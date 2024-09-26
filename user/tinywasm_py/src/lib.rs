@@ -57,7 +57,7 @@ impl LCG {
     }
 }
 
-const WASM: &[u8] = include_bytes!("../rustpython_hello.wasm");
+const WASM: &[u8] = include_bytes!("../rustpython.wasm");
 
 #[no_mangle]
 pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
