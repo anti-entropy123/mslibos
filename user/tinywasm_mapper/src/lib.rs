@@ -12,6 +12,8 @@ cfg_if::cfg_if! {
 
 use alloc::format;
 use ms_std::println;
+use ms_std::libos::libos;
+use ms_hostcall::types::{OpenFlags, OpenMode};
 
 use tinywasm::{Module, Store};
 use wasi_api::tinywasm;
@@ -20,6 +22,11 @@ const WASM: &[u8] = include_bytes!("../mapper.wasm");
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    libos!(open("/", OpenFlags::empty(), OpenMode::RD))?;
+    let data_fd = libos!(open("fake_data_1.txt", OpenFlags::O_CREAT, OpenMode::RDWR))? as u32;
+    libos!(write(data_fd, b"hello hello hello hello name name name name world world world world"))?;
+    libos!(close(data_fd))?;
+
     let module = Module::parse_bytes(WASM)?;
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;
