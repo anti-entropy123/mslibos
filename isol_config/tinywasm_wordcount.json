@@ -2,11 +2,15 @@
   "services": [
     [
       "fdtab",
-      "libfdtab.so"
+      "libruxfdtab.so"
     ],
     [
       "stdio",
       "libstdio.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
     ]
   ],
   "apps": [

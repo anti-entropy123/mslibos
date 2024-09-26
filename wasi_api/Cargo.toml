@@ -11,12 +11,14 @@ ms_hostcall = { path = "../ms_hostcall", default-features = false }
 ms_std_proc_macro = { path = "../ms_std_proc_macro" }
 # unwinding = { version = "=0.2.0", features = ["panic-handler", "personality"] }
 
-# tinywasm = { git = "https://github.com/anti-entropy123/tinywasm", branch = "master", default-features = false, features = [
-#     "parser",
-# ] }
-tinywasm = { path = "/home/yjn/rust_project/tinywasm-lym", default-features = false, features = [
+tinywasm = { git = "https://github.com/anti-entropy123/tinywasm", branch = "master", default-features = false, features = [
     "parser",
 ] }
+#tinywasm = { path = "/home/yjn/rust_project/tinywasm-lym", default-features = false, features = [
+#    "parser",
+#] }
 
 [features]
-log = ["tinywasm/log"]
+log = []
+
+# default = ["log"]
