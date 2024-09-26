@@ -419,7 +419,7 @@ pub fn path_filestat_set_times(_: FuncContext<'_>, args: (i32, i32, i32, i32, i6
 pub fn path_link(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32, i32, i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature="log")] {
         println!("[Debug] Invoke into path_link");
-        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5,, args.6);
+        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6);
     }
     Ok(0)
 }
@@ -488,7 +488,7 @@ pub fn path_remove_directory(mut ctx: FuncContext<'_>, args: (i32, i32, i32)) ->
 pub fn path_rename(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32, i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature="log")] {
         println!("[Debug] Invoke into path_rename");
-        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, arg.5);
+        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5);
     }
 
     Ok(0)
