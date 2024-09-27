@@ -78,15 +78,6 @@ impl Service {
         }
     }
 
-    #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> anyhow::Result<()> {
-        match self {
-            Service::ELFService(svc) => svc.mprotect(),
-            Service::WithLibOSService(svc) => svc.mprotect(),
-            #[cfg(feature = "serviceV2")]
-            Service::RustService(_) => todo!(),
-        }
-    }
 }
 
 // impl Drop for Service {

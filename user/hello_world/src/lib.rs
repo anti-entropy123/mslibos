@@ -18,14 +18,14 @@ static TEXT: &str = include_str!("../fake_data_0.txt");
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    let id = args::get("id").unwrap();
-    println!("Hello, world! id: {}", id);
+    // let id = args::get("id").unwrap();
+    // println!("Hello, world! id: {}", id);
 
-    // let mut hasher: hashbrown::HashMap<String, u32> = hashbrown::HashMap::new();
+    let mut hasher: hashbrown::HashMap<String, u32> = hashbrown::HashMap::new();
 
     for word in TEXT.split_whitespace() {
-        println!("{}", word)
-        // hasher.insert(word.to_owned(), hasher.get(word).unwrap_or(&0) + 1);
+        // println!("{}", word)
+        hasher.insert(word.to_owned(), hasher.get(word).unwrap_or(&0) + 1);
     }
     println!("hash insert ok");
 

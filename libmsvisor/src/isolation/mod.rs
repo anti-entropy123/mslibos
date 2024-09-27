@@ -139,7 +139,7 @@ impl Isolation {
         match isol_inner.modules.get(name) {
             Some(svc) => Ok(Arc::clone(svc)),
             None => {
-                info!("first load {}.", name);
+                info!("[service] first load {}.", name);
                 let svc = self.loader.load_service(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&svc));
                 Ok(svc)
@@ -152,16 +152,12 @@ impl Isolation {
         let app = match isol_inner.modules.get(name) {
             Some(app) => Arc::clone(app),
             None => {
-                info!("first load {}.", name);
+                info!("[app] first load {}.", name);
                 let app = self.loader.load_app(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&app));
                 app
             }
         };
-
-        #[cfg(feature = "enable_mpk")]
-        app.mprotect()
-            .map_err(|_e| anyhow::Error::msg("mpk protect failed"))?;
 
         Ok(app)
     }

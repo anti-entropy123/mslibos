@@ -94,14 +94,14 @@ pub extern "C" fn rust_main() /* -> Result<(), String>*/
 
         if let Err(e) = result {}
     }
-    #[cfg(feature = "mpk")]
-    unsafe {
-        asm!(
-            "wrpkru",
-            in("rax") 0x55555550,
-            in("rcx") 0,
-            in("rdx") 0,
-        );
-    }
+    // #[cfg(feature = "mpk")]
+    // unsafe {
+    //     asm!(
+    //         "wrpkru",
+    //         in("rax") 0x55555550,
+    //         in("rcx") 0,
+    //         in("rdx") 0,
+    //     );
+    // }
     // Ok(())
 }
