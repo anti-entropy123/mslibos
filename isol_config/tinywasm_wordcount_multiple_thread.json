@@ -1,0 +1,38 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libruxfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "mapper",
+      "libtinywasm_mapper_multiple_thread.so"
+    ],
+    [
+      "reducer",
+      "libtinywasm_reducer_multiple_thread.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "mapper",
+        "mapper",
+        "mapper"
+      ],
+      "args": {
+        "reducer_num": "4"
+      }
+    }
+  ]
+}

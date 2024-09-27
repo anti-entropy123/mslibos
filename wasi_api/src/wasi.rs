@@ -1,5 +1,9 @@
 use core::slice;
 
+extern crate alloc;
+use alloc::{format, string::String, vec::Vec};
+use spin::Mutex;
+
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::libos::libos;
 #[cfg(feature = "log")]
@@ -34,6 +38,57 @@ struct WasiPrestatUt {
 struct WasiPrestatT {
     tag: u8,
     u: WasiPrestatUt,
+}
+
+#[derive(Clone)]
+pub struct WasiState {
+    pub args: Vec<String>
+}
+
+pub static WASI_STATE: Mutex<WasiState> = Mutex::new(WasiState { args: Vec::new() });
+
+// This is a non-pub function because it should not be init in other file.
+fn wasi_state_mut() -> spin::MutexGuard<'static, WasiState> {
+    WASI_STATE.lock()
+}
+
+pub fn set_wasi_state(_args: Vec<String>) {
+    let mut wasi_state = wasi_state_mut();
+    let _wasi_state: WasiState = WasiState{args: _args};
+    *wasi_state = (&_wasi_state).clone();
+
+    let argc_val = wasi_state.args.len();
+    let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
+    println!("argc={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
+}
+
+pub fn args_get(_: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature="log")] {
+        println!("[Debug] Invoke into args_get");
+        println!("args: argv: {:?}, argv_buf: {:?}", args.0, args.1);
+    }
+
+    let argv = args.0 as usize;
+    let argv_buf = args.1 as usize;
+
+    Ok(0)
+}
+
+pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature="log")] {
+        println!("[Debug] Invoke into args_sizes_get");
+        println!("args: argc: {:?}, argv_buf_size: {:?}", args.0, args.1);
+    }
+
+    let argc_ptr = args.0 as usize;
+    let argv_buf_size_ptr = args.1 as usize;
+    let argc = 0 as i32;
+    let argv_buf_size = 0 as i32;
+    let mut mem = ctx.exported_memory_mut("memory")?;
+    mem.store(argc_ptr, core::mem::size_of::<i32>(), &argc.to_ne_bytes())?;
+    mem.store(argv_buf_size_ptr, core::mem::size_of::<i32>(), &argv_buf_size.to_ne_bytes())?;
+
+    Ok(0)
 }
 
 pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
@@ -106,13 +161,13 @@ pub fn fd_fdstat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Re
     // fdstat.fs_flags = FdStruct.flags;
     // fdstat.fs_rights_base = FdStruct.fs_rights_base;
     // fdstat.fs_rights_inheriting = FdStruct.fs_rights_inheriting;
-    if fd == 4 || fd == 5 || fd == 6 || fd == 7 || fd == 8 {
-        // 假设前面几个都打开的文件
-        fdstat.fs_filetype = 4;
+    // if fd == 4 || fd == 5 || fd == 6 || fd == 7 || fd == 8 {
+        // 假设现在都打开的文件
+        fdstat.fs_filetype = 4; // RegularFile
         fdstat.fs_flags = 0;
         fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
         fdstat.fs_rights_inheriting = 0xFFFFFFFFFFFFFFFF;
-    }
+    // }
 
     let ret = (&fdstat) as *const _ as usize;
     let ret = unsafe {
@@ -309,7 +364,7 @@ pub fn path_open(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_open");
-        // println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
+        println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
     }
     let mut mem = ctx.exported_memory_mut("memory")?;
     let fd = args.0 as u32;

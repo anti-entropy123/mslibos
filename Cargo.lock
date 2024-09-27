@@ -1164,6 +1164,7 @@ dependencies = [
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",
+ "spin",
  "tinywasm",
 ]
 

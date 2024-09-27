@@ -274,7 +274,7 @@ version = "0.7.0"
 source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
 
 [[package]]
-name = "tinywasm_mapper"
+name = "tinywasm_mapper_multiple_thread"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
@@ -313,6 +313,7 @@ dependencies = [
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",
+ "spin",
  "tinywasm",
 ]
 
