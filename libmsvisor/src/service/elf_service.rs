@@ -163,10 +163,6 @@ impl ElfService {
         unsafe {
             #[cfg(feature = "enable_mpk")]
             {
-                // 关闭对黑名单的权限
-                // mpk::pkey_set(0x1, 3).unwrap();
-                logger::info!("pkey value : {:x}", mpk::pkey_read());
-
                 asm!(
                     // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
                     "sub rsp, 0x90",
@@ -183,10 +179,10 @@ impl ElfService {
                     "mov r11, r13",
                     "mov [r12+8], rsp",
                     "mov rsp, r12",
-                    "mov eax, 0x55555553",
+                    "mov eax, 0x5555555c",
                     "xor rcx, rcx",
                     "mov rdx, rcx",
-                    // "wrpkru",
+                    "wrpkru",
                     "call r11",
                     in("r12") (user_stack_top-16),
                     // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
