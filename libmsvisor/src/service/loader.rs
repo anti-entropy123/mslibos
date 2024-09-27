@@ -62,7 +62,6 @@ impl ServiceLoader {
     }
 
     fn load(&self, name: &ServiceName, pkey: i32) -> Result<Arc<Service>, anyhow::Error> {
-        println!("load service {} with pkey {}", name, pkey);
         let lib_path = self
             .registered
             .get(name)
