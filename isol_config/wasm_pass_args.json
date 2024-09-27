@@ -21,6 +21,10 @@
     [
       "func_a",
       "libtinywasm_pass_str.so"
+    ],
+    [
+      "func_b",
+      "libtinywasm_recv_str.so"
     ]
   ]
 }

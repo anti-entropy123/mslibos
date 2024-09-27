@@ -1,0 +1,26 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ]
+  ],
+  "apps": [
+    [
+      "tinywasm",
+      "libtinywasm_c_printf.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "tinywasm"
+      ],
+      "args": {}
+    }
+  ]
+}

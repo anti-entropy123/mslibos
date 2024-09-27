@@ -14,9 +14,9 @@ ms_std = { path = "../../ms_std", features = [
     "panic_def",
 ], optional = true }
 ms_hostcall = { path = "../../ms_hostcall", optional = true }
+wasi_api = { path = "../../wasi_api" }
 
 cfg-if = "1.0.0"
-tinywasm = { version = "=0.7.0", default-features = false, features = ["parser"] }
 # wat = { version = "=1.0.88" }
 
 
