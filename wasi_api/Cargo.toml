@@ -21,4 +21,4 @@ tinywasm = { git = "https://github.com/anti-entropy123/tinywasm", branch = "mast
 [features]
 log = []
 
-# default = ["log"]
+default = ["log"]
