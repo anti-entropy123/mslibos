@@ -26,8 +26,6 @@
   "groups": [
     {
       "list": [
-        "mapper",
-        "mapper",
         "mapper"
       ],
       "args": {

@@ -43,21 +43,25 @@ pub struct WasiState {
     pub args: Vec<String>
 }
 
-pub static WASI_STATE: Mutex<WasiState> = Mutex::new(WasiState { args: Vec::new() });
+pub static WASI_STATE: Mutex<WasiState> = Mutex::new( WasiState { args: Vec::new() } );
 
 // This is a non-pub function because it should not be init in other file.
-fn wasi_state_mut() -> spin::MutexGuard<'static, WasiState> {
+fn get_wasi_state_mut() -> spin::MutexGuard<'static, WasiState> {
     WASI_STATE.lock()
 }
 
+fn get_wasi_state() -> spin::MutexGuard<'static, WasiState> {
+    let wasi_state = WASI_STATE.lock();
+    if wasi_state.args.len() == 0 {
+        panic!("WASI_STATE uninit")
+    }
+    wasi_state
+}
+
 pub fn set_wasi_state(_args: Vec<String>) {
-    let mut wasi_state = wasi_state_mut();
+    let mut wasi_state = get_wasi_state_mut();
     let _wasi_state: WasiState = WasiState{args: _args};
     *wasi_state = (&_wasi_state).clone();
-
-    let argc_val = wasi_state.args.len();
-    let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
-    println!("argc={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
 }
 
 struct LCG {
@@ -96,6 +100,31 @@ pub fn args_get(_: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
     let argv = args.0 as usize;
     let argv_buf = args.1 as usize;
 
+    let wasi_state = get_wasi_state();
+    let args: Vec<Vec<u8>> = wasi_state.args
+        .iter()
+        .map(|a| a.as_bytes().to_vec())
+        .collect::<Vec<_>>();
+
+    // for ((i, sub_buffer), ptr) in args.iter().enumerate().zip(ptrs.iter()) {
+    //     let mut buf_offset = buffer.offset();
+    //     buf_offset += wasi_try!(to_offset::<M>(current_buffer_offset));
+    //     let new_ptr = WasmPtr::new(buf_offset);
+    //     wasi_try_mem!(ptr.write(new_ptr));
+
+    //     let data =
+    //         wasi_try_mem!(new_ptr.slice(memory, wasi_try!(to_offset::<M>(sub_buffer.len()))));
+    //     wasi_try_mem!(data.write_slice(sub_buffer));
+    //     wasi_try_mem!(wasi_try_mem!(
+    //         new_ptr.add_offset(wasi_try!(to_offset::<M>(sub_buffer.len())))
+    //     )
+    //     .write(memory, 0));
+
+    //     current_buffer_offset += sub_buffer.len() + 1;
+    // }
+
+
+
     Ok(0)
 }
 
@@ -107,11 +136,17 @@ pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Resul
 
     let argc_ptr = args.0 as usize;
     let argv_buf_size_ptr = args.1 as usize;
-    let argc = 0 as i32;
-    let argv_buf_size = 0 as i32;
     let mut mem = ctx.exported_memory_mut("memory")?;
-    mem.store(argc_ptr, core::mem::size_of::<i32>(), &argc.to_ne_bytes())?;
-    mem.store(argv_buf_size_ptr, core::mem::size_of::<i32>(), &argv_buf_size.to_ne_bytes())?;
+
+    let wasi_state = get_wasi_state();
+    let argc_val = wasi_state.args.len();
+    let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
+
+    #[cfg(feature="log")]
+    println!("argc_val={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
+
+    mem.store(argc_ptr, core::mem::size_of::<usize>(), &argc_val.to_ne_bytes())?;
+    mem.store(argv_buf_size_ptr, core::mem::size_of::<usize>(), &argv_buf_size_val.to_ne_bytes())?;
 
     Ok(0)
 }
@@ -121,9 +156,6 @@ pub fn clock_time_get(mut ctx: FuncContext, args: (i32, i64, i32)) -> tinywasm::
         println!("[Debug] Invoke into clock_time_get");
         println!("args: clock_id: {:?}, precision: {:?}, time: {:?}", args.0, args.1, args.2);
     }
-
-    println!("[Debug] Invoke into clock_time_get");
-    println!("args: clock_id: {:?}, precision: {:?}, time: {:?}", args.0, args.1, args.2);
 
     let time_ptr = args.2 as usize;
     let mut mem = ctx.exported_memory_mut("memory")?;

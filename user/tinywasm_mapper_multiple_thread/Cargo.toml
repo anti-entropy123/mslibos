@@ -16,6 +16,7 @@ ms_std = { path = "../../ms_std", features = [
 ms_hostcall = { path = "../../ms_hostcall", optional = true }
 wasi_api = { path = "../../wasi_api" }
 
+lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 cfg-if = "1.0.0"
 unwinding = { version = "=0.2.0", features = ["panic-handler", "personality"] }
 # wat = { version = "=1.0.88" }

@@ -20,6 +20,13 @@ use wasi_api::tinywasm;
 
 const WASM: &[u8] = include_bytes!("../mapper.wasm");
 
+lazy_static::lazy_static! {
+    static ref MUST_OPEN_ROOT: bool = {
+        libos!(open("/", OpenFlags::empty(), OpenMode::RD)).unwrap();
+        true
+    };
+}
+
 #[no_mangle]
 pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     let my_id = &args["id"];
@@ -33,25 +40,27 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     wasi_args.push(reducer_num.to_string());
     wasi_api::set_wasi_args(wasi_args);
 
-    // libos!(open("/", OpenFlags::empty(), OpenMode::RD))?;
-    // let data_fd = libos!(open(&format!("fake_data_{}.txt", my_id), OpenFlags::O_CREAT, OpenMode::RDWR))? as u32;
-    // libos!(write(data_fd, b"hello hello hello hello name name name name world world world world\n"))?;
-    // libos!(close(data_fd))?;
+    let _open_root = *MUST_OPEN_ROOT;
 
-    // let module = Module::parse_bytes(WASM)?;
-    // let mut store = Store::default();
-    // let imports = wasi_api::import_all()?;
+    let data_fd = libos!(open(&format!("fake_data_{}.txt", my_id), OpenFlags::O_CREAT, OpenMode::RDWR))? as u32;
+    println!("mapper_{}: datd_fd: {}", my_id, data_fd);
+    libos!(write(data_fd, b"hello hello hello hello name name name name world world world world\n"))?;
+    libos!(close(data_fd))?;
 
-    // let instance = module.instantiate(&mut store, Some(imports))?;
-    // let main = instance.exported_func::<(), ()>(&store, "_start")?;
+    let module = Module::parse_bytes(WASM)?;
+    let mut store = Store::default();
+    let imports = wasi_api::import_all()?;
 
-    // if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {
-    //     let msg = format!("{:?}", e);
-    //     println!("err msg: {}", msg);
-    //     if msg != "normally exit" {
-    //         // return Err();
-    //     }
-    // };
+    let instance = module.instantiate(&mut store, Some(imports))?;
+    let main = instance.exported_func::<(), ()>(&store, "_start")?;
+
+    if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {
+        let msg = format!("{:?}", e);
+        println!("err msg: {}", msg);
+        if msg != "normally exit" {
+            // return Err();
+        }
+    };
 
     Ok(().into())
 }

@@ -45,9 +45,9 @@ pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
     }
 
     let file = ruxfs::fops::File::open(path, &options).map_err(|_| FdtabError::Unknown)?;
-    // println!("open successful, result={:?}", result);
+    // ms_std::println!("open successful, result={:?}", result);
     // for item in ruxfs::api::read_dir("/").unwrap().flatten() {
-    //     println!("item: {}", item.file_name())
+    //     ms_std::println!("item: {}", item.file_name())
     // }
     fs::File::new(file).add_to_fd_table()
 }
