@@ -120,7 +120,7 @@ pub macro libos_with_switch_mpk {
                         "mov eax, 0x5555555c",
                         "xor rcx, rcx",
                         "mov rdx, rcx",
-                        // "wrpkru"
+                        "wrpkru"
                     );
                 }
             }

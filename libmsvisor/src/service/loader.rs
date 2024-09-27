@@ -3,8 +3,6 @@ use std::{
     fmt::Display,
     path::PathBuf,
     sync::{Arc, OnceLock},
-    fs,
-    ffi::c_void,
 };
 
 use anyhow::anyhow;
@@ -12,7 +10,7 @@ use libloading::Library;
 use ms_hostcall::types::{IsolationID, MetricEvent, ServiceName};
 use nix::libc::Lmid_t;
 
-use crate::{isolation::config::IsolationConfig, logger, mpk, metric::MetricBucket, utils};
+use crate::{isolation::config::IsolationConfig, metric::MetricBucket, utils};
 
 use super::Service;
 
@@ -61,7 +59,7 @@ impl ServiceLoader {
         self
     }
 
-    fn load(&self, name: &ServiceName, pkey: i32) -> Result<Arc<Service>, anyhow::Error> {
+    fn load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         let lib_path = self
             .registered
             .get(name)
@@ -97,28 +95,6 @@ impl ServiceLoader {
             metric,
             self.with_libos,
         );
-        #[cfg(feature = "enable_mpk")] {
-            if pkey > 0 {
-                let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
-                let segments = utils::parse_memory_segments(&maps_str).unwrap();
-                let black_list = [lib_path.to_str().unwrap().to_owned(),
-                                               "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
-                                               "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".to_owned(),
-                                               "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1".to_owned(),
-                                               "[heap]".to_owned(),
-                                               "[stack]".to_owned(),
-                                               "[vdso]".to_owned(),
-                                               "[vvar]".to_owned(),];
-                for segment in segments {
-                    if let Some(path) = segment.clone().path {
-                        if black_list.iter().any(|need| path.contains(need)) {
-                            mpk::pkey_mprotect(segment.start_addr as *mut c_void, segment.length, segment.perm, pkey).unwrap();
-                            logger::info!("{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.", segment.path.unwrap(), segment.start_addr, segment.start_addr + segment.length, segment.perm);
-                        }
-                    }
-                }
-            }
-        }
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id)?;
@@ -126,12 +102,12 @@ impl ServiceLoader {
     }
 
     pub fn load_app(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
-        self.load(name, 0)
+        self.load(name)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.metric.mark(MetricEvent::LoadService);
-        self.load(name, 1)
+        self.load(name)
     }
 }
 

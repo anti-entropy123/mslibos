@@ -6,6 +6,8 @@ use std::{
     iter::zip,
     sync::{Arc, Mutex, MutexGuard, Weak},
     thread,
+    fs,
+    ffi::c_void,
 };
 
 use anyhow::{anyhow, Ok};
@@ -25,6 +27,7 @@ use crate::{
     metric::MetricBucket,
     service::{Service, ServiceLoader},
     utils::gen_new_id,
+    utils,
 };
 use config::IsolationConfig;
 
@@ -210,7 +213,25 @@ impl Isolation {
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
         self.metric.mark(Mem);
-
+        #[cfg(feature = "enable_mpk")] {
+            let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
+            let segments = utils::parse_memory_segments(&maps_str).unwrap();
+            let black_list = [ "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
+                                            "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".to_owned(),
+                                            "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1".to_owned(),
+                                            "[heap]".to_owned(),
+                                            "[stack]".to_owned(),
+                                            "[vdso]".to_owned(),
+                                            "[vvar]".to_owned(),];
+            for segment in segments {
+                if let Some(path) = segment.clone().path {
+                    if black_list.iter().any(|need| path.contains(need)) {
+                        mpk::pkey_mprotect(segment.start_addr as *mut c_void, segment.length, segment.perm, 0x1).unwrap();
+                        logger::info!("{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.", segment.path.unwrap(), segment.start_addr, segment.start_addr + segment.length, segment.perm);
+                    }
+                }
+            }
+        }
         #[cfg(feature = "namespace")]
         self.service_or_load(&"libc".to_owned())
             .map_err(|e| anyhow!("namespace feature, load libc failed: {e}"))?;

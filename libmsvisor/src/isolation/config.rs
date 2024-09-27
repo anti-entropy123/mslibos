@@ -114,7 +114,7 @@ impl IsolationConfig {
             0,
             LoadableUnit(
                 "libc".to_owned(),
-                PathBuf::from("./target/libc.so.6"),
+                PathBuf::from("/usr/lib/x86_64-linux-gnu/libc.so.6"),
             ),
         );
 
