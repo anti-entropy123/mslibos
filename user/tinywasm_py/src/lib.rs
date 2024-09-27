@@ -30,33 +30,6 @@ struct WasiCiovec {
     buf_len: u32,
 }
 
-struct LCG {
-    state: u64,
-}
-
-impl LCG {
-    fn new(seed: u64) -> Self {
-        LCG { state: seed }
-    }
-
-    fn next_u8(&mut self) -> u8 {
-        // LCG的参数
-        const A: u64 = 1664525;
-        const C: u64 = 1013904223;
-        const MOD: u64 = 1 << 32;
-
-        // 更新状态
-        self.state = (A.wrapping_mul(self.state).wrapping_add(C)) % MOD;
-
-        // 返回一个0到255之间的随机u8
-        (self.state % 256) as u8
-    }
-
-    fn generate_random_u8_slice(&mut self, length: usize) -> Vec<u8> {
-        (0..length).map(|_| self.next_u8()).collect()
-    }
-}
-
 const WASM: &[u8] = include_bytes!("../rustpython.wasm");
 
 #[no_mangle]
