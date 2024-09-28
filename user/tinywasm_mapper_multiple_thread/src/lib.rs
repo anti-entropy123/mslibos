@@ -43,11 +43,11 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
 
     let _open_root = *MUST_OPEN_ROOT;
 
-    let data_fd = libos!(open(&format!("little_fake_data_{}.txt", my_id), OpenFlags::O_CREAT, OpenMode::RDWR))? as u32;
-    println!("mapper_{} data_fd: {}", my_id, data_fd);
-    libos!(write(data_fd, b"hello hello hello hello name name name name world world world world\n"))?;
-    libos!(write(data_fd, b"you you you you like like like like potato potato potato potato\n"))?;
-    libos!(close(data_fd))?;
+    // let data_fd = libos!(open(&format!("little_fake_data_{}.txt", my_id), OpenFlags::O_CREAT, OpenMode::RDWR))? as u32;
+    // println!("mapper_{} data_fd: {}", my_id, data_fd);
+    // libos!(write(data_fd, b"hello hello hello hello name name name name world world world world\n"))?;
+    // libos!(write(data_fd, b"you you you you like like like like potato potato potato potato\n"))?;
+    // libos!(close(data_fd))?;
 
     let module = Module::parse_bytes(WASM)?;
     let mut store = Store::default();

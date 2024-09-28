@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #define MAX_WORD_LENGTH 100
-#define MAX_WORDS 1000
+#define MAX_WORDS 8000
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower(str[i]);
@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     printf("mapper.c recieve: id: %d, reducer_num: %d\n", id, reducer_num);
 
     char input_file[30];
-    sprintf(input_file, "little_fake_data_%d.txt", id);
+    sprintf(input_file, "fake_data_%d.txt", id);
     FILE *file = fopen(input_file, "r");
     if (!file) {
         perror("Failed to open input file\n");
