@@ -11,14 +11,16 @@ void to_lowercase(char *str) {
 }
 int main(int argc, char* argv[]) {
     int id = atoi(argv[1]);
-    int reducer_num = atoi(argv[2]);
+    int mapper_num = atoi(argv[2]);
+    printf("reducer.c recieve: id: %d, mapper_num: %d\n", id, mapper_num);
+
     int count[MAX_WORDS] = {0};
     char *words[MAX_WORDS];
     char word[MAX_WORD_LENGTH];
     int word_index = 0;
-    for (int i = 0; i < reducer_num; ++i) {
+    for (int i = 0; i < mapper_num; ++i) {
         char input_file[30];
-        sprintf(input_file, "buffer_%d_%d.txt", i, id);
+        sprintf(input_file, "buffer_%d_%d.txt", id, i);
         FILE *file = fopen(input_file, "r");
         if (!file) {
             perror("Failed to open input file\n");
@@ -61,6 +63,5 @@ int main(int argc, char* argv[]) {
     fclose(output);
     
     printf("reducer_%d finished!\n", id);
-    
     return 0;
 }

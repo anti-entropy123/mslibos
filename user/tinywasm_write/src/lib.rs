@@ -13,7 +13,7 @@ cfg_if::cfg_if! {
 use ms_std::{agent::FaaSFuncError, println};
 
 use tinywasm::{Module, Store};
-use wasi_api::tinywasm;
+use wasi_api::tinywasm::{self, ModuleInstance};
 
 const WASM: &[u8] = include_bytes!("../write.wasm");
 
@@ -22,7 +22,7 @@ pub fn run_wasm_app(wasm: &[u8]) -> core::result::Result<(), FaaSFuncError> {
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;
 
-    let instance = module.instantiate(&mut store, Some(imports))?;
+    let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
     main.call(&mut store, ())?;
 

@@ -24,6 +24,9 @@ int main() {
             perror("Failed to open input file");
             exit(EXIT_FAILURE);
         }
+
+        printf("reducer input file: %s\n", input_file);
+
         int num;
         while (fscanf(file, "%s %d", word, &num) != EOF) {
             to_lowercase(word);
@@ -43,7 +46,11 @@ int main() {
                 word_index++;
             }
         }
+        fclose(file);
     }
+
+    printf("reducer read success!\n");
+
     char output_file[30];
     sprintf(output_file, "reducer_%d.txt", id);
     FILE *output = fopen(output_file, "w");
@@ -51,4 +58,8 @@ int main() {
         fprintf(output, "%s %d\n", words[i], count[i]);
         free(words[i]);
     }
+    fclose(output);
+
+    printf("reducer finished!\n");
+    return 0;
 }

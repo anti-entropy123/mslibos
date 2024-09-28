@@ -20,7 +20,7 @@ use ms_std::{
 };
 use wasi_api::tinywasm;
 use tinywasm::Extern;
-use tinywasm::{FuncContext, Imports, Module, Store};
+use tinywasm::{FuncContext, Imports, Module, Store, ModuleInstance};
 
 // use ms_std::libos::libos;
 
@@ -65,7 +65,7 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;
 
-    let instance = module.instantiate(&mut store, Some(imports))?;
+    let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
     
     let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();

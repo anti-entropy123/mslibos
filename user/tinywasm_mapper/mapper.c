@@ -13,15 +13,16 @@ void to_lowercase(char *str) {
 int main() {
     int id = 1;
     int reducer_num = 3;
-    char input_file[20] = "fake_data_1.txt";
-    // sprintf(input_file, "fake_data_%d.txt", id);
-    // printf("input file: %s\n", input_file);
-    // write(1, "input file: fake_data_1.txt\n", sizeof("input file: fake_data_1.txt\n"));
+    char input_file[30];
+    sprintf(input_file, "little_fake_data_%d.txt", id);
     FILE *file = fopen(input_file, "r");
     if (!file) {
         perror("Failed to open input file");
         exit(EXIT_FAILURE);
     }
+
+    printf("mapper input file: %s\n", input_file);
+
     int count[MAX_WORDS] = {0};
     char *words[MAX_WORDS];
     char word[MAX_WORD_LENGTH];
@@ -46,9 +47,9 @@ int main() {
     }
     fclose(file);
 
-    write(1, "map read success!\n", sizeof("map read success!\n"));
+    printf("map read success!\n");
 
-    char output_file[20];
+    char output_file[30];
     for (int i = 0; i < word_index; i++) {
         int partition_index = i % reducer_num;
         sprintf(output_file, "buffer_%d_%d.txt", partition_index, id);
@@ -59,4 +60,7 @@ int main() {
         
         free(words[i]);
     }
+
+    printf("mapper finished!\n");
+    return 0;
 }

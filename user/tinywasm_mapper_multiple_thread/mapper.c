@@ -12,8 +12,10 @@ void to_lowercase(char *str) {
 int main(int argc, char* argv[]) {
     int id = atoi(argv[1]);
     int reducer_num = atoi(argv[2]);
-    char input_file[20];
-    sprintf(input_file, "fake_data_%d.txt", id);
+    printf("mapper.c recieve: id: %d, reducer_num: %d\n", id, reducer_num);
+
+    char input_file[30];
+    sprintf(input_file, "little_fake_data_%d.txt", id);
     FILE *file = fopen(input_file, "r");
     if (!file) {
         perror("Failed to open input file\n");
@@ -48,7 +50,7 @@ int main(int argc, char* argv[]) {
 
     printf("mapper_%d read success!\n", id);
 
-    char output_file[20];
+    char output_file[30];
     for (int i = 0; i < word_index; i++) {
         int partition_index = i % reducer_num;
         sprintf(output_file, "buffer_%d_%d.txt", partition_index, id);

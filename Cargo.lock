@@ -496,6 +496,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin 0.5.2",
+]
 
 [[package]]
 name = "libc"
@@ -622,7 +625,7 @@ dependencies = [
  "linked_list_allocator",
  "ms_hostcall",
  "ms_std_proc_macro",
- "spin",
+ "spin 0.9.8",
  "thiserror-no-std",
  "unwinding",
 ]
@@ -910,6 +913,12 @@ dependencies = [
 
 [[package]]
 name = "spin"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
@@ -1161,10 +1170,12 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 name = "wasi_api"
 version = "0.1.0"
 dependencies = [
+ "hashbrown",
+ "lazy_static",
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",
- "spin",
+ "spin 0.9.8",
  "tinywasm",
 ]
 

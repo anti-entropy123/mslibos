@@ -16,7 +16,7 @@ use ms_std::println;
 use ms_std::libos::libos;
 use ms_hostcall::types::{OpenFlags, OpenMode};
 
-use tinywasm::{Module, Store};
+use tinywasm::{Module, Store, ModuleInstance};
 use wasi_api::tinywasm;
 
 const WASM: &[u8] = include_bytes!("../reducer.wasm");
@@ -28,7 +28,7 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;
 
-    let instance = module.instantiate(&mut store, Some(imports))?;
+    let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
 
     if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {

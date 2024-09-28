@@ -3,7 +3,7 @@
 use alloc::format;
 use ms_std::{agent::FaaSFuncResult as Result, println};
 extern crate alloc;
-use wasi_api::tinywasm::{Module, Store};
+use wasi_api::tinywasm::{Module, Store, ModuleInstance};
 
 #[no_mangle]
 pub fn main() -> Result<()> {
@@ -12,7 +12,7 @@ pub fn main() -> Result<()> {
     let mut store = Store::default();
     let imports = wasi_api::import_all().map_err(|e| format!("import func err: {e}"))?;
 
-    let instance = module.instantiate(&mut store, Some(imports))?;
+    let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     // assert_eq!(add.call(&mut store, (20))?, 3);
     let result = instance.start(&mut store);
     // println!("{:?}", unwinding::panic::catch_unwind(|| result));

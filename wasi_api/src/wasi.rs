@@ -2,7 +2,8 @@ use core::slice;
 
 extern crate alloc;
 use alloc::{format, string::String, vec::Vec};
-use spin::Mutex;
+use spin::{Mutex, MutexGuard};
+use hashbrown::HashMap;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{libos::libos, println, time::{SystemTime, UNIX_EPOCH}};
@@ -43,25 +44,27 @@ pub struct WasiState {
     pub args: Vec<String>
 }
 
-pub static WASI_STATE: Mutex<WasiState> = Mutex::new( WasiState { args: Vec::new() } );
+lazy_static::lazy_static! {
+    static ref WASI_STATE: Mutex<HashMap<usize, WasiState>> = Mutex::new( HashMap::new() );
+}
 
 // This is a non-pub function because it should not be init in other file.
-fn get_wasi_state_mut() -> spin::MutexGuard<'static, WasiState> {
+fn get_hashmap_wasi_state_mut() -> spin::MutexGuard<'static, HashMap<usize, WasiState>> {
     WASI_STATE.lock()
 }
 
-fn get_wasi_state() -> spin::MutexGuard<'static, WasiState> {
-    let wasi_state = WASI_STATE.lock();
+fn get_wasi_state<'a>(id: usize, map: &'a spin::MutexGuard<'static, HashMap<usize, WasiState>>) -> &'a WasiState {
+    let wasi_state =  map.get(&id).unwrap();
     if wasi_state.args.len() == 0 {
         panic!("WASI_STATE uninit")
     }
     wasi_state
 }
 
-pub fn set_wasi_state(_args: Vec<String>) {
-    let mut wasi_state = get_wasi_state_mut();
-    let _wasi_state: WasiState = WasiState{args: _args};
-    *wasi_state = (&_wasi_state).clone();
+pub fn set_wasi_state(id: usize, _args: Vec<String>) {
+    let mut map = get_hashmap_wasi_state_mut();
+    let wasi_state: WasiState = WasiState{args: _args};
+    map.insert(id, (&wasi_state).clone());
 }
 
 struct LCG {
@@ -91,39 +94,42 @@ impl LCG {
     }
 }
 
-pub fn args_get(_: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
+pub fn args_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature="log")] {
         println!("[Debug] Invoke into args_get");
         println!("args: argv: {:?}, argv_buf: {:?}", args.0, args.1);
     }
 
+    // argv是每个arg在argv_buf中的起始地址的数组的起始地址
+    // argv_buf是存arg的buf的起始地址
+    // 在buf中存入arg，并以\0结尾 (len需要+1)
     let argv = args.0 as usize;
     let argv_buf = args.1 as usize;
 
-    let wasi_state = get_wasi_state();
-    let args: Vec<Vec<u8>> = wasi_state.args
+    let ctx_id = ctx.store().id();
+    let map = WASI_STATE.lock();
+    let wasi_state = get_wasi_state(ctx_id, &map);
+    let args: Vec<&[u8]> = wasi_state.args
         .iter()
-        .map(|a| a.as_bytes().to_vec())
+        .map(|a| a.as_bytes())
         .collect::<Vec<_>>();
+    let mut offset: usize = 0;
 
-    // for ((i, sub_buffer), ptr) in args.iter().enumerate().zip(ptrs.iter()) {
-    //     let mut buf_offset = buffer.offset();
-    //     buf_offset += wasi_try!(to_offset::<M>(current_buffer_offset));
-    //     let new_ptr = WasmPtr::new(buf_offset);
-    //     wasi_try_mem!(ptr.write(new_ptr));
+    let mut mem = ctx.exported_memory_mut("memory")?;
 
-    //     let data =
-    //         wasi_try_mem!(new_ptr.slice(memory, wasi_try!(to_offset::<M>(sub_buffer.len()))));
-    //     wasi_try_mem!(data.write_slice(sub_buffer));
-    //     wasi_try_mem!(wasi_try_mem!(
-    //         new_ptr.add_offset(wasi_try!(to_offset::<M>(sub_buffer.len())))
-    //     )
-    //     .write(memory, 0));
+    #[cfg(feature="log")]
+    println!("arg_vec len: {}", args.len());
+    for (i, arg) in args.iter().enumerate() {
+        #[cfg(feature="log")]
+        println!("i: {:?}, offset: {:?}, arg: {:?}, arg_len: {:?}", i, offset, arg, arg.len());
+        let arg_addr = argv_buf + offset;
 
-    //     current_buffer_offset += sub_buffer.len() + 1;
-    // }
+        mem.store(argv + i * core::mem::size_of::<u32>(), core::mem::size_of::<u32>(), &(arg_addr as u32).to_ne_bytes())?;
+        mem.store(arg_addr, arg.len(), arg)?;
+        mem.store(arg_addr + arg.len(), core::mem::size_of::<u8>(), "\0".as_bytes())?;
 
-
+        offset += arg.len() + 1;
+    }
 
     Ok(0)
 }
@@ -136,17 +142,20 @@ pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Resul
 
     let argc_ptr = args.0 as usize;
     let argv_buf_size_ptr = args.1 as usize;
-    let mut mem = ctx.exported_memory_mut("memory")?;
 
-    let wasi_state = get_wasi_state();
+    let ctx_id = ctx.store().id();
+    let map = WASI_STATE.lock();
+    let wasi_state = get_wasi_state(ctx_id, &map);
     let argc_val = wasi_state.args.len();
     let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
 
     #[cfg(feature="log")]
     println!("argc_val={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
 
-    mem.store(argc_ptr, core::mem::size_of::<usize>(), &argc_val.to_ne_bytes())?;
-    mem.store(argv_buf_size_ptr, core::mem::size_of::<usize>(), &argv_buf_size_val.to_ne_bytes())?;
+    let mut mem = ctx.exported_memory_mut("memory")?;
+
+    mem.store(argc_ptr, core::mem::size_of::<u32>(), &(argc_val as u32).to_ne_bytes())?;
+    mem.store(argv_buf_size_ptr, core::mem::size_of::<u32>(), &(argv_buf_size_val as u32).to_ne_bytes())?;
 
     Ok(0)
 }
@@ -373,8 +382,7 @@ pub fn fd_read(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywasm
 
     #[cfg(feature="log")]
     println!("read_size: {:?}", read_size);
-    mem.store(retptr, core::mem::size_of::<usize>(), &read_size.to_ne_bytes() )?;
-
+    mem.store(retptr, core::mem::size_of::<u32>(), &(read_size as u32).to_ne_bytes() )?;
     Ok(0)
 }
 
@@ -442,7 +450,7 @@ pub fn fd_write(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywas
 
     #[cfg(feature="log")]
     println!("write_size: {:?}", write_size);
-    mem.store(retptr, core::mem::size_of::<usize>(), &write_size.to_ne_bytes())?;
+    mem.store(retptr, core::mem::size_of::<u32>(), &(write_size as u32).to_ne_bytes())?;
     Ok(0)
 }
 
