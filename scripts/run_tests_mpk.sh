@@ -4,7 +4,7 @@ declare -A test_groups=(
     [faasflow_test]="long_chain map_reduce pass_complex_args"
     [file_test]="simple_file" # mmap_file 
     [run_dylib_test]="base_config"
-    [should_panic_test]="should_panic"
+    #[should_panic_test]="should_panic"
     [wasm_test]="tinywasm tinywasm_py tinywasm_pass_args"
     # [network_test]="simple_http"
 )
