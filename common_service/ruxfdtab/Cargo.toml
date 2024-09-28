@@ -7,6 +7,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [features]
+mpk = ["ms_std/mpk"]
 log = []
 
 default = []
@@ -39,8 +40,3 @@ ruxdriver = { git = "https://github.com/anti-entropy123/ruxos/", features = [
 
 spin = "0.9.8"
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
-
-
-[features]
-mpk = ["ms_std/mpk"]
-default = []
