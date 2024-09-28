@@ -10,3 +10,8 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_hostcall = { path = "../../ms_hostcall" }
+
+
+[features]
+mpk = []
+default = []

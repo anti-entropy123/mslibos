@@ -24,4 +24,4 @@ namespace = ["libmsvisor/namespace"]
 multi_workflow = ["tokio", "namespace"]
 mpk = ["libmsvisor/enable_mpk"]
 
-default = ["namespace", "mpk"]
+default = ["namespace"] 

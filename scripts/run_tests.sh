@@ -39,3 +39,9 @@ for name in "${!results[@]}"; do
 done
 
 total_tests=${#results[@]}
+
+# 检查通过计数与总测试数量是否相等
+if [ "$passed_count" -ne "$total_tests" ]; then
+    echo "Error: Not all tests passed!"
+    exit 1  # 返回失败状态
+fi

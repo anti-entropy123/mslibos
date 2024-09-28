@@ -10,3 +10,8 @@ crate-type = ["dylib"]
 
 [dependencies]
 nix = { version = "0.27.1", features = ["time"] }
+
+
+[features]
+mpk = []
+default = []

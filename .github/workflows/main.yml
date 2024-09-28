@@ -37,4 +37,4 @@ jobs:
       - name: Build
         run: cargo build --workspace && ./scripts/build_all_common.sh && ./scripts/build_user.sh
       - name: Test
-        run: ./scripts/run_tests_nodefault.sh
+        run: ./scripts/run_tests.sh

@@ -16,7 +16,7 @@ for group in "${!test_groups[@]}"; do
     names=${test_groups[$group]}
     
     for name in $names; do
-        if cargo run --no-default-features -- --files "isol_config/$name.json"; then
+        if cargo run --features mpk -- --files "isol_config/$name.json"; then
             # 如果命令正常退出，记录通过结果
             results[$name]="passed"
             ((passed_count++)) # 增加通过计数
@@ -39,3 +39,9 @@ for name in "${!results[@]}"; do
 done
 
 total_tests=${#results[@]}
+
+# 检查通过计数与总测试数量是否相等
+if [ "$passed_count" -ne "$total_tests" ]; then
+    echo "Error: Not all tests passed!"
+    exit 1  # 返回失败状态
+fi

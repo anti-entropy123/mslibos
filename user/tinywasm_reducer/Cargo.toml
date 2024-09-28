@@ -24,5 +24,6 @@ unwinding = { version = "=0.2.0", features = ["panic-handler", "personality"] }
 [features]
 with_libos = ["ms_std", "ms_hostcall"]
 measure_mem = ["with_libos"]
+mpk = ["ms_std/mpk"]
 
 default = ["with_libos"]

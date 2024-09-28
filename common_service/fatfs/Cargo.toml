@@ -13,3 +13,7 @@ ms_hostcall = { path = "../../ms_hostcall", features = ["fatfs"] }
 
 fatfs = "0.3.6"
 fscommon = "0.1.1"
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []
