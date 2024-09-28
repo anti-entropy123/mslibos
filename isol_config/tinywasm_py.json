@@ -1,0 +1,30 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libfdtab.so"
+    ],
+    [
+      "time",
+      "libtime.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ]
+  ],
+  "apps": [
+    [
+      "tinywasm",
+      "libtinywasm_py.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "tinywasm"
+      ],
+      "args": {}
+    }
+  ]
+}

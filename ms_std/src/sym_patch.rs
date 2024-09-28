@@ -15,3 +15,9 @@ pub fn _Unwind_Resume() {
 pub fn fmodf() {
     crate::println!("libos: fmodf")
 }
+
+#[linkage = "weak"]
+#[no_mangle]
+extern "C" fn fmod() {
+    crate::println!("libos: fmod")
+}

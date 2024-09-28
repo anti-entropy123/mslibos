@@ -61,15 +61,14 @@ pub fn get_file_like(fd: Fd) -> FdtabResult<Arc<dyn FileLike>> {
 
 pub fn add_file_like(f: Arc<dyn FileLike>) -> FdtabResult<Fd> {
     let _exec = *MUST_EXEC;
-    Ok(FD_TABLE.write().add(f).ok_or(FdtabError::Unknown)? as u32)
+    let err_msg = FdtabError::RuxfsError("add_file_like failed".to_owned());
+    Ok(FD_TABLE.write().add(f).ok_or(err_msg)? as u32)
 }
 
 pub fn close_file_like(fd: Fd) -> FdtabResult<()> {
     let _exec = *MUST_EXEC;
-    let f = FD_TABLE
-        .write()
-        .remove(fd as usize)
-        .ok_or(FdtabError::Unknown)?;
+    let err_msg = FdtabError::RuxfsError("close_file_like failed".to_owned());
+    let f = FD_TABLE.write().remove(fd as usize).ok_or(err_msg)?;
     drop(f);
     Ok(())
 }

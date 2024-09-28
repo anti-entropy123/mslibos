@@ -7,23 +7,36 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [features]
+mpk = ["ms_std/mpk"]
+log = []
+
 default = []
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
+ms_std = { path = "../../ms_std" }
 ms_hostcall = { path = "../../ms_hostcall", features = ["fatfs"] }
 
 axerrno = { git = "https://github.com/anti-entropy123/ruxos/" }
+# axerrno = { path = "/home/yjn/rust_project/ruxos/crates/axerrno" }
+
 axio = { git = "https://github.com/anti-entropy123/ruxos/" }
+# axio = { path = "/home/yjn/rust_project/ruxos/crates/axio" }
+
 ruxfdtable = { git = "https://github.com/anti-entropy123/ruxos/" }
-# ruxfs = { path = "/home/yjn/rust_project/ruxos/modules/ruxfs", features = [
-#     "use-ramdisk",
-# ] }
+# ruxfdtable = { path = "/home/yjn/rust_project/ruxos/modules/ruxfdtable" }
+
 ruxfs = { git = "https://github.com/anti-entropy123/ruxos/", features = [
     "use-ramdisk",
 ] }
+# ruxfs = { path = "/home/yjn/rust_project/ruxos/modules/ruxfs", features = [
+#     "use-ramdisk",
+# ] }
 ruxdriver = { git = "https://github.com/anti-entropy123/ruxos/", features = [
     "ramdisk",
 ] }
+# ruxdriver = { path = "/home/yjn/rust_project/ruxos/modules/ruxdriver", features = [
+#     "ramdisk",
+# ] }
+
 spin = "0.9.8"
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }

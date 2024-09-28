@@ -2,7 +2,7 @@
   "services": [
     [
       "fdtab",
-      "libfdtab.so"
+      "libruxfdtab.so"
     ],
     [
       "stdio",

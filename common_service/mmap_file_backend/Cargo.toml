@@ -17,3 +17,8 @@ ms_hostcall = { path = "../../ms_hostcall", features = [
 
 nix = { version = "0.27.1", features = ["poll", "signal", "fs", "event"] }
 userfaultfd = { version = "0.7.0", features = [] }
+
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []

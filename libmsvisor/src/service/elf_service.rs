@@ -34,7 +34,7 @@ use core::arch::asm;
 
 use ms_hostcall::types::RustMainFunc;
 
-use core::result;
+use std::mem::forget;
 
 lazy_static! {
     static ref SHOULD_NOT_SET_CONTEXT: Arc<HashSet<ServiceName>> = Arc::from({
@@ -158,65 +158,37 @@ impl ElfService {
         );
         let user_stack_top = stack.top();
 
-        unsafe {
-            #[cfg(feature = "enable_mpk")]
-            {
-                asm!(
-                    // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
-                    "sub rsp, 0x90",
-                    "mov [rsp], rax",
-                    "mov [rsp+8], rcx",
-                    "mov [rsp+16], rdx",
-                    "mov [rsp+24], rsi",
-                    "mov [rsp+32], rdi",
-                    "mov [rsp+40], r8",
-                    "mov [rsp+48], r9",
-                    "mov [rsp+56], r10",
-                    "mov [rsp+64], r11",
-                    // 跳板
-                    "mov r11, r13",
-                    "mov [r12+8], rsp",
-                    "mov rsp, r12",
-                    "mov eax, 0x5555555c",
-                    "xor rcx, rcx",
-                    "mov rdx, rcx",
-                    "wrpkru",
-                    "call r11",
-                    in("r12") (user_stack_top-16),
-                    // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
-                    in("r13") rust_main,
-                );
-            }
-            #[cfg(not(feature = "enable_mpk"))]
-            {
-                asm!(
-                    // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
-                    "sub rsp, 0x90",
-                    "mov [rsp], rax",
-                    "mov [rsp+8], rcx",
-                    "mov [rsp+16], rdx",
-                    "mov [rsp+24], rsi",
-                    "mov [rsp+32], rdi",
-                    "mov [rsp+40], r8",
-                    "mov [rsp+48], r9",
-                    "mov [rsp+56], r10",
-                    "mov [rsp+64], r11",
-                    // 跳板
-                    "mov r11, r13",
-                    "mov [r12+8], rsp",
-                    "mov rsp, r12",
-                    "call r11",
-                    in("r12") (user_stack_top-16),
-                    // in("rdi") args, // 64 位 Windows 的 C ABI 的第一二参数是用 RCX 和 RDX 传递, 32 位为RDI 和 RSI
-                    in("r13") rust_main,
-                );
-            };
+        #[cfg(feature = "enable_mpk")]
+        let ret: Result<(), String> = unsafe {
+            asm!(
+                // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+                "sub rsp, 0x90",
+                "mov [rsp+8], rcx",
+                "mov [rsp+16], rdx",
+                "mov [rsp+24], rsi",
+                "mov [rsp+32], rdi",
+                "mov [rsp+40], r8",
+                "mov [rsp+48], r9",
+                "mov [rsp+56], r10",
+                "mov [rsp+64], r11",
+                // 跳板
+                "mov r11, r13",
+                "mov [r12+8], rsp",
+                "mov rsp, r12",
+                "mov eax, 0x5555555c",
+                "xor rcx, rcx",
+                "mov rdx, rcx",
+                "wrpkru",
+                "call r11",
+                in("r12") (user_stack_top-16),
+                in("r13") rust_main,
+            );
 
             // 复原 rsp 寄存器的值
             asm!("mov rsp, [rsp+8]");
+
             // 恢复寄存器
             asm!(
-                "mov rax, [rsp]",
                 "mov rcx, [rsp+8]",
                 "mov rdx, [rsp+16]",
                 "mov rsi, [rsp+24]",
@@ -227,17 +199,62 @@ impl ElfService {
                 "mov r11, [rsp+64]",
                 "add rsp, 0x90",
             );
-        }
+
+            // 获取返回值
+            let return_value_addr: u64;
+            asm!("mov {}, rax", out(reg) return_value_addr);
+            (*(return_value_addr as *const Result<(), String>)).clone()
+        };
+        #[cfg(not(feature = "enable_mpk"))]
+        let ret: Result<(), String> = unsafe {
+            asm!(
+                // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+                "sub rsp, 0x90",
+                "mov [rsp+8], rcx",
+                "mov [rsp+16], rdx",
+                "mov [rsp+24], rsi",
+                "mov [rsp+32], rdi",
+                "mov [rsp+40], r8",
+                "mov [rsp+48], r9",
+                "mov [rsp+56], r10",
+                "mov [rsp+64], r11",
+                // 跳板
+                "mov r11, r13",
+                "mov [r12+8], rsp",
+                "mov rsp, r12",
+                "call r11",
+                in("r12") (user_stack_top-16),
+                in("r13") rust_main,
+            );
+
+            // 复原 rsp 寄存器的值
+            asm!("mov rsp, [rsp+8]");
+
+            // 恢复寄存器
+            asm!(
+                "mov rcx, [rsp+8]",
+                "mov rdx, [rsp+16]",
+                "mov rsi, [rsp+24]",
+                "mov rdi, [rsp+32]",
+                "mov r8, [rsp+40]",
+                "mov r9, [rsp+48]",
+                "mov r10, [rsp+56]",
+                "mov r11, [rsp+64]",
+                "add rsp, 0x90",
+            );
+            // 获取返回值
+            let return_value_addr: u64;
+            asm!("mov {}, rax", out(reg) return_value_addr);
+            (*(return_value_addr as *const Result<(), String>)).clone()
+        };
 
         logger::info!("{} complete.", self.name);
-        // result.map_err(|e| {
-        //     let err_msg = format!("function {} run failed: {}", self.name, e);
-        //     // forget because String refer to heap of libos modules.
-        //     forget(e);
-        //     err_msg
-        // })
-
-        result::Result::Ok(())
+        ret.map_err(|e| {
+            let err_msg = format!("function {} run failed: {}", self.name, e);
+            // forget because String refer to heap of libos modules.
+            forget(e);
+            err_msg
+        })
     }
 
     pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {

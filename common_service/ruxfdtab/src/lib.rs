@@ -8,7 +8,7 @@
  */
 
 //! fd table and FileLike trait for file system
-#![no_std]
+
 extern crate alloc;
 
 pub use ms_std;

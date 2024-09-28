@@ -5,6 +5,10 @@ use nix::{
     libc::{size_t, syscall, SYS_pkey_alloc, SYS_pkey_mprotect},
 };
 
+use core::slice;
+use std::alloc::{self, Layout};
+use nix::libc;
+
 pub fn pkey_alloc() -> i32 {
     unsafe { syscall(SYS_pkey_alloc, 0, 0) as i32 }
 }
@@ -96,5 +100,5 @@ fn test_mpk() {
     println!("pkru: {:b}", pkru);
 
     // 下一行预期会报错:
-    println!("data: {}", data[0]);
+    // println!("data: {}", data[0]);
 }

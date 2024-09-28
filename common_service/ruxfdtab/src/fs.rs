@@ -29,7 +29,7 @@ impl File {
         let f = super::fd_ops::get_file_like(fd)?;
         f.into_any()
             .downcast::<Self>()
-            .map_err(|_| FdtabError::Unknown)
+            .map_err(|_| FdtabError::NoExistFd(fd))
     }
 }
 
