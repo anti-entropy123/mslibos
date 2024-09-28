@@ -88,8 +88,13 @@ impl ServiceLoader {
             )
             .map_err(|e| anyhow!("load_dynlib faile: {e}"))?,
         );
-
-        let service = Service::new(name, lib, metric, self.with_libos);
+        let service = Service::new(
+            name,
+            lib_path.to_str().unwrap(),
+            lib,
+            metric,
+            self.with_libos,
+        );
         self.namespace.get_or_init(|| service.namespace());
 
         service.init(self.isol_id)?;
@@ -203,6 +208,7 @@ fn service_drop_test() {
 
     let socket = WithLibOSService::new(
         "socket",
+        path.to_str().unwrap(),
         lib,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),
     );

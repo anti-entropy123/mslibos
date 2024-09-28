@@ -18,3 +18,7 @@ burn = { path = "/home/yjn/rust_project/burn/burn", default-features = false, fe
 ] }
 serde = { version = "1.0.193", default-features = false, features = ["derive"] }
 thiserror-no-std = "2.0.2"
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []

@@ -20,3 +20,8 @@ spin = "0.9.8"
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
 
 libc = "0.2.150"
+
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []

@@ -36,5 +36,5 @@ jobs:
           override: true
       - name: Build
         run: cargo build --workspace && ./scripts/build_all_common.sh && ./scripts/build_user.sh
-      - name: Rust Test
-        run: RUST_BACKTRACE=1 cargo test -p libmsvisor
+      - name: Test
+        run: ./scripts/run_tests.sh

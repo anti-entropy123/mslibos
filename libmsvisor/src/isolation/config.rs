@@ -65,7 +65,8 @@ impl IsolationGroup {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoadableUnit(
     pub ServiceName,
-    #[serde(default = "Default::default")] pub PathBuf,
+    #[serde(default = "Default::default")] 
+    pub PathBuf,
 );
 
 #[derive(Serialize, Deserialize, Clone)]

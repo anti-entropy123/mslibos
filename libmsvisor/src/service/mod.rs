@@ -23,12 +23,18 @@ pub enum Service {
 }
 
 impl Service {
-    fn new(name: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>, with_libos: bool) -> Self {
+    fn new(
+        name: &str,
+        path: &str,
+        lib: Arc<Library>,
+        metric: Arc<SvcMetricBucket>,
+        with_libos: bool,
+    ) -> Self {
         logger::debug!("Service::new, name={name}");
         if with_libos {
-            Self::WithLibOSService(WithLibOSService::new(name, lib, metric))
+            Self::WithLibOSService(WithLibOSService::new(name, path, lib, metric))
         } else {
-            Self::ELFService(ElfService::new(name, lib, metric))
+            Self::ELFService(ElfService::new(name, path, lib, metric))
         }
     }
     fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
@@ -67,6 +73,16 @@ impl Service {
         match self {
             Service::ELFService(svc) => svc.namespace(),
             Service::WithLibOSService(svc) => svc.namespace(),
+            #[cfg(feature = "serviceV2")]
+            Service::RustService(_) => todo!(),
+        }
+    }
+
+    #[cfg(feature = "enable_mpk")]
+    pub fn mprotect(&self) -> anyhow::Result<()> {
+        match self {
+            Service::ELFService(svc) => svc.mprotect(),
+            Service::WithLibOSService(svc) => svc.mprotect(),
             #[cfg(feature = "serviceV2")]
             Service::RustService(_) => todo!(),
         }

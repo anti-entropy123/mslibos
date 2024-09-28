@@ -7,6 +7,7 @@ edition = "2021"
 crate-type = ["dylib"]
 
 [features]
+mpk = ["ms_std/mpk"]
 log = []
 
 default = []

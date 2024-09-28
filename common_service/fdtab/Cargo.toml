@@ -17,3 +17,7 @@ ms_hostcall = { path = "../../ms_hostcall", features = [
 ] }
 
 spin = "0.9.8"
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []

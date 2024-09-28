@@ -22,7 +22,9 @@ default-members = ["bins/msvisor"]
 resolver = "2"
 
 [workspace.dependencies]
-libmsvisor = { path = "libmsvisor", default-features = false }
+libmsvisor = { path = "libmsvisor", default-features = false, features = [
+    # "enable_mpk",
+] }
 
 ms_hostcall = { path = "ms_hostcall" }
 ms_std = { path = "ms_std" }
