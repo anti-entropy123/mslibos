@@ -18,6 +18,8 @@ use ms_hostcall::types::{
     ServiceName,
 };
 
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
 use crate::{
     logger,
     metric::MetricBucket,
@@ -71,6 +73,8 @@ pub struct Isolation {
     app_names: Vec<ServiceName>,
     groups: Vec<Vec<App>>,
     fs_image: Option<String>,
+    #[cfg(feature = "enable_mpk")]
+    _pkey: i32,
 
     inner: Mutex<IsolationInner>,
 }
@@ -102,6 +106,8 @@ impl Isolation {
                 .map(|group| group.to_isolation())
                 .collect(),
             fs_image: config.fs_image.clone(),
+            #[cfg(feature = "enable_mpk")]
+            _pkey: mpk::pkey_alloc(),
 
             inner: Mutex::new(IsolationInner::default()),
         });
@@ -114,7 +120,11 @@ impl Isolation {
     pub fn preload(&self, config: &IsolationConfig) -> Result<(), anyhow::Error> {
         for service in config.all_modules() {
             let svc_name = &service.0;
-            self.service_or_load(svc_name)?;
+            if self.app_names.contains(svc_name) {
+                self.app_or_load(svc_name)?;
+            } else {
+                self.service_or_load(svc_name)?;
+            }
         }
 
         Ok(())
@@ -137,6 +147,25 @@ impl Isolation {
         }
     }
 
+    pub fn app_or_load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
+        let mut isol_inner = self.inner_access();
+        let app = match isol_inner.modules.get(name) {
+            Some(app) => Arc::clone(app),
+            None => {
+                info!("first load {}.", name);
+                let app = self.loader.load_app(name)?;
+                isol_inner.modules.insert(name.to_owned(), Arc::clone(&app));
+                app
+            }
+        };
+
+        #[cfg(feature = "enable_mpk")]
+        app.mprotect()
+            .map_err(|_e| anyhow::Error::msg("mpk protect failed"))?;
+
+        Ok(app)
+    }
+
     fn run_as_sequence(&self) -> Result<(), anyhow::Error> {
         let args = {
             let mut args = BTreeMap::new();
@@ -146,8 +175,9 @@ impl Isolation {
 
         for app in &self.app_names {
             let app = self
-                .service_or_load(app)
+                .app_or_load(app)
                 .map_err(|e| anyhow!("load app failed: {e}"))?;
+
             let result = app.run(&args);
             result.map_err(|e| anyhow!("app_{} run failed, reason: {}", app.name(), e))?
         }
@@ -158,7 +188,7 @@ impl Isolation {
     fn run_group_in_parallel(&self, group: &[App]) -> Result<(), anyhow::Error> {
         let apps: Vec<_> = group
             .iter()
-            .map(|app| self.service_or_load(&app.name))
+            .map(|app| self.app_or_load(&app.name))
             .collect::<Result<Vec<_>, anyhow::Error>>()?;
 
         thread::scope(|scope| {

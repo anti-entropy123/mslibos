@@ -8,17 +8,22 @@
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
 #![feature(const_maybe_uninit_zeroed)]
+#![feature(const_mut_refs)]
 
 use agent::FaaSFuncResult;
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
+use core::{arch::asm, result};
 
 pub mod agent;
+pub mod args;
 pub mod console;
 pub mod fs;
 pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
+#[cfg(feature = "mpk")]
+pub mod mpk;
 pub mod net;
 pub mod prelude;
 pub mod sym_patch;
@@ -57,35 +62,51 @@ cfg_if::cfg_if! {
 
 #[linkage = "weak"]
 #[no_mangle]
-pub fn main(_: BTreeMap<String, String>) -> FaaSFuncResult<()> {
+pub fn main() -> FaaSFuncResult<()> {
     panic!("need real main");
 }
 
 #[no_mangle]
-pub fn rust_main(args: BTreeMap<String, String>) -> Result<(), String> {
+pub extern "C" fn rust_main() -> u64 
+{
+    let mut return_value: Result<(), String> = Ok(());
     #[cfg(feature = "unwinding")]
     {
-        let result = unwinding::panic::catch_unwind(|| main(args));
+        let result = unwinding::panic::catch_unwind(|| main());
 
         match result {
             Ok(func_res) => {
                 if let Err(e) = func_res {
-                    Err(alloc::format!("function exec error: {}", e.msg()))?;
+                    return_value = Err(alloc::format!("function exec error: {}", e.msg()));
+                    return &return_value as *const _ as u64;
                 }
             }
             Err(e) => {
                 core::mem::forget(e);
-                Err(alloc::format!("catch user function panic."))?;
+                return_value = Err(alloc::format!("catch user function panic."));
+                return &return_value as *const _ as u64;
             }
         }
     }
     #[cfg(not(feature = "unwinding"))]
     {
-        let result = main(args);
+        let result = main();
 
         if let Err(e) = result {
-            Err(alloc::format!("function exec error: {}", e.msg()))?
-        };
+            // Err(alloc::format!("function exec error: {}", e.msg()))?
+            return_value = Err(alloc::format!("function exec error: {}", e.msg()));
+            return &return_value as *const _ as u64;
+        }
     }
-    Ok(())
+    #[cfg(feature = "mpk")]
+    unsafe {
+        asm!(
+            "wrpkru",
+            in("rax") 0x55555550,
+            in("rcx") 0,
+            in("rdx") 0,
+        );
+    }
+    // return result to pointer
+    &return_value as *const _ as u64
 }

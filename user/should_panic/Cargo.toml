@@ -11,3 +11,7 @@ crate-type = ["dylib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []

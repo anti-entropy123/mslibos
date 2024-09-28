@@ -1,6 +1,7 @@
 use std::{path::PathBuf, sync::Mutex};
 
 use lazy_static::lazy_static;
+use nix::libc;
 
 pub const PAGE_SIZE: usize = 0x1000;
 
@@ -69,10 +70,16 @@ fn test_round_page() {
 }
 
 const REPOS_ROOT: &str = env!("CARGO_MANIFEST_DIR");
+pub const PROFILE: &str = if cfg!(debug_assertions) {
+    "debug"
+} else {
+    "release"
+};
+
 lazy_static! {
     pub static ref REPOS_ROOT_PATH: PathBuf =
         PathBuf::from(REPOS_ROOT).parent().unwrap().to_path_buf();
-    pub static ref TARGET_DEBUG_PATH: PathBuf = REPOS_ROOT_PATH.join("target/debug");
+    pub static ref TARGET_DEBUG_PATH: PathBuf = REPOS_ROOT_PATH.join("target").join(PROFILE);
     pub static ref ISOL_CONFIG_PATH: PathBuf = REPOS_ROOT_PATH.join("isol_config");
 }
 
@@ -81,4 +88,50 @@ fn common_path_test() {
     use std::fs;
 
     fs::metadata(ISOL_CONFIG_PATH.join("base_config.json")).expect("base_config.json not found.");
+}
+
+use std::io::{self};
+
+#[derive(Debug, Clone)]
+pub struct MemorySegment {
+    pub start_addr: usize,
+    pub length: usize,
+    pub perm: i32,
+    pub path: Option<String>,
+}
+
+pub fn parse_memory_segments(input: &str) -> io::Result<Vec<MemorySegment>> {
+    let lines = input.lines().collect::<Vec<_>>();
+    let mut segments = Vec::new();
+
+    for line in lines {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+
+        let path = if parts.len() == 6 {
+            Some(parts[5].to_string())
+        } else {
+            None
+        };
+
+        let mut items = parts[0].split('-');
+        let start_addr = usize::from_str_radix(items.next().unwrap(), 16).unwrap();
+        let mut perm = 0i32;
+        if parts[1].contains('r') {
+            perm |= libc::PROT_READ
+        }
+        if parts[1].contains('w') {
+            perm |= libc::PROT_WRITE
+        }
+        if parts[1].contains('x') {
+            perm |= libc::PROT_EXEC
+        }
+        segments.push(MemorySegment {
+            start_addr,
+            length: usize::from_str_radix(items.next().unwrap(), 16).unwrap() - start_addr,
+            perm,
+            path,
+        });
+    }
+
+    Ok(segments)
 }

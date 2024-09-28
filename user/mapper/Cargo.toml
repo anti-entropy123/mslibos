@@ -14,3 +14,7 @@ ms_hostcall = { path = "../../ms_hostcall" }
 ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
 
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
+
+[features]
+mpk = ["ms_std/mpk"]
+default = []
