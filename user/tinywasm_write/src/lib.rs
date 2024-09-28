@@ -12,8 +12,8 @@ cfg_if::cfg_if! {
 
 use ms_std::{agent::FaaSFuncError, println};
 
-use tinywasm::{Module, Store};
-use wasi_api::tinywasm::{self, ModuleInstance};
+use tinywasm::{Module, Store, ModuleInstance};
+use wasi_api::tinywasm;
 
 const WASM: &[u8] = include_bytes!("../write.wasm");
 

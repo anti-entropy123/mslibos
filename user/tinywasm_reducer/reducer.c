@@ -18,7 +18,7 @@ int main() {
     int word_index = 0;
     for (int i = 0; i < reducer_num; ++i) {
         char input_file[30];
-        sprintf(input_file, "buffer_%d_%d.txt", i, id);
+        sprintf(input_file, "buffer_%d_%d.txt", id, i);
         FILE *file = fopen(input_file, "r");
         if (!file) {
             perror("Failed to open input file");

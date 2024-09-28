@@ -11,51 +11,12 @@ cfg_if::cfg_if! {
     }
 }
 
-use alloc::{format, vec};
-use alloc::vec::Vec;
 use ms_std::{
-    libos::{libos},
     println,
     time::{SystemTime, UNIX_EPOCH},
 };
+use tinywasm::{Module, Store, ModuleInstance};
 use wasi_api::tinywasm;
-use tinywasm::Extern;
-use tinywasm::{FuncContext, Imports, Module, Store, ModuleInstance};
-
-// use ms_std::libos::libos;
-
-#[repr(C)]
-struct WasiCiovec {
-    buf: u32,
-    buf_len: u32,
-}
-
-struct LCG {
-    state: u64,
-}
-
-impl LCG {
-    fn new(seed: u64) -> Self {
-        LCG { state: seed }
-    }
-
-    fn next_u8(&mut self) -> u8 {
-        // LCG的参数
-        const A: u64 = 1664525;
-        const C: u64 = 1013904223;
-        const MOD: u64 = 1 << 32;
-
-        // 更新状态
-        self.state = (A.wrapping_mul(self.state).wrapping_add(C)) % MOD;
-
-        // 返回一个0到255之间的随机u8
-        (self.state % 256) as u8
-    }
-
-    fn generate_random_u8_slice(&mut self, length: usize) -> Vec<u8> {
-        (0..length).map(|_| self.next_u8()).collect()
-    }
-}
 
 const WASM: &[u8] = include_bytes!("../rustpython.wasm");
 
@@ -67,16 +28,11 @@ pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
 
     let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
-    
-    let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
 
-    if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {
-        let msg = format!("{:?}", e);
-        println!("err msg: {:?}", msg);
-        if msg != "normally exit" {
-            // return Err();
-        }
-    };
+    let _start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
+
+    let result = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap());
+    println!("result: {:?}", result);
 
     Ok(().into())
 }
