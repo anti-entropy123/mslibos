@@ -53,11 +53,11 @@ lazy_static::lazy_static! {
 }
 
 // This is a non-pub function because it should not be init in other file.
-fn get_hashmap_wasi_state_mut() -> spin::MutexGuard<'static, HashMap<usize, WasiState>> {
+fn get_hashmap_wasi_state_mut() -> MutexGuard<'static, HashMap<usize, WasiState>> {
     WASI_STATE.lock()
 }
 
-fn get_wasi_state<'a>(id: usize, map: &'a spin::MutexGuard<'static, HashMap<usize, WasiState>>) -> &'a WasiState {
+fn get_wasi_state<'a>(id: usize, map: &'a MutexGuard<'static, HashMap<usize, WasiState>>) -> &'a WasiState {
     let wasi_state =  map.get(&id).unwrap();
     if wasi_state.args.len() == 0 {
         panic!("WASI_STATE uninit")
@@ -198,7 +198,7 @@ pub fn environ_get(_: FuncContext<'_>, _args: (i32, i32)) -> tinywasm::Result<i3
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into environ_get");
-        println!("args: environ: {:?}, environ_buf: {:?}", args.0, args.1);
+        println!("args: environ: {:?}, environ_buf: {:?}", _args.0, _args.1);
     }
     Ok(0)
 }
@@ -331,7 +331,7 @@ pub fn fd_filestat_get(_: FuncContext<'_>, _args: (i32, i32)) -> tinywasm::Resul
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_filestat_get");
-        println!("args: fd: {:?}, buf: {:?}", args.0, args.1);
+        println!("args: fd: {:?}, buf: {:?}", _args.0, _args.1);
     }
 
     Ok(0)
@@ -341,7 +341,7 @@ pub fn fd_filestat_set_size(_: FuncContext<'_>, _args: (i32, i64)) -> tinywasm::
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_filestat_set_size");
-        println!("args: fd: {:?}, st_size: {:?}", args.0, args.1);
+        println!("args: fd: {:?}, st_size: {:?}", _args.0, _args.1);
     }
 
     Ok(0)
@@ -460,7 +460,7 @@ pub fn fd_readdir(
         println!("[Debug] Invoke into fd_readdir");
         println!(
             "args: fd: {:?}, buf: {:?}, buf_len: {:?}, cookie: {:?}, bufused: {:?}",
-            args.0, args.1, args.2, args.3, args.4
+            _args.0, _args.1, _args.2, _args.3, _args.4
         );
     }
 
@@ -473,7 +473,7 @@ pub fn fd_seek(mut _ctx: FuncContext<'_>, _args: (i32, i64, i32, i32)) -> tinywa
         println!("[Debug] Invoke into fd_seek");
         println!(
             "args: fd: {:?}, offset: {:?}, whence: {:?}, pos: {:?}",
-            args.0, args.1, args.2, args.3
+            _args.0, _args.1, _args.2, _args.3
         );
     }
 
@@ -499,7 +499,7 @@ pub fn fd_sync(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_sync");
-        println!("args: fd: {:?}", args);
+        println!("args: fd: {:?}", _args);
     }
     Ok(0)
 }
@@ -548,7 +548,7 @@ pub fn path_create_directory(
         println!("[Debug] Invoke into path_create_directory");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -564,7 +564,7 @@ pub fn path_filestat_get(
         println!("[Debug] Invoke into path_filestat_get");
         println!(
             "args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, buf: {:?}",
-            args.0, args.1, args.2, args.3, args.4
+            _args.0, _args.1, _args.2, _args.3, _args.4
         );
     }
 
@@ -578,7 +578,7 @@ pub fn path_filestat_set_times(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_filestat_set_times");
-        println!("args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6);
+        println!("args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5, _args.6);
     }
     Ok(0)
 }
@@ -590,7 +590,7 @@ pub fn path_link(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_link");
-        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6);
+        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5, _args.6);
     }
     Ok(0)
 }
@@ -602,7 +602,7 @@ pub fn path_open(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_open");
-        // println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
+        println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
     }
     let mut mem = ctx.exported_memory_mut("memory")?;
     let _fd = args.0 as u32;
@@ -650,7 +650,7 @@ pub fn path_readlink(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_readlink");
-        println!("args: dir_fd: {:?}, path: {:?}, path_len: {:?}, buf: {:?}, buf_len: {:?}, buf_used: {:?}", args.0, args.1, args.2, args.3, args.4, args.5);
+        println!("args: dir_fd: {:?}, path: {:?}, path_len: {:?}, buf: {:?}, buf_len: {:?}, buf_used: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
     }
     Ok(0)
 }
@@ -664,7 +664,7 @@ pub fn path_remove_directory(
         println!("[Debug] Invoke into path_remove_directory");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -678,7 +678,7 @@ pub fn path_rename(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_rename");
-        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5);
+        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
     }
 
     Ok(0)
@@ -690,7 +690,7 @@ pub fn path_unlink_file(_ctx: FuncContext<'_>, _args: (i32, i32, i32)) -> tinywa
         println!("[Debug] Invoke into path_unlink_file");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -703,7 +703,7 @@ pub fn poll_oneoff(_ctx: FuncContext<'_>, _args: (i32, i32, i32, i32)) -> tinywa
         println!("[Debug] Invoke into poll_oneoff");
         println!(
             "args: in_: {:?}, out_: {:?}, nsubscriptions: {:?}, nevents: {:?}",
-            args.0, args.1, args.2, args.3
+            _args.0, _args.1, _args.2, _args.3
         );
     }
 
