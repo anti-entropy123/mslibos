@@ -20,6 +20,7 @@ for group in "${!test_groups[@]}"; do
     
     for name in $names; do
         output=$(RUST_LOG=info cargo run $feature_arg -- --files "isol_config/$name.json" 2>&1)
+        echo "$output"
         if [ $? -eq 0 ]; then
             results[$name]="passed"
             ((passed_count++)) # 增加通过计数
