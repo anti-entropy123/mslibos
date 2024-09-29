@@ -5,7 +5,7 @@
 #define MAX_WORD_LENGTH 100
 #define MAX_WORDS 1000
 #define MAX_SLOT_NUM 100
-#define MAX_BUFFER_SIZE 30000
+#define MAX_BUFFER_SIZE 8000
 
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 

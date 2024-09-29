@@ -35,11 +35,17 @@
         "mapper"
       ],
       "args": {
-        "reducer_num": "4"
+        "reducer_num": "10"
       }
     },
     {
       "list": [
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
         "reducer",
         "reducer",
         "reducer",

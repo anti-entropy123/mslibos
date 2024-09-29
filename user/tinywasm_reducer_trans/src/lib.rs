@@ -27,14 +27,8 @@ lazy_static::lazy_static! {
     };
 }
 
-#[no_mangle]
-pub fn main() -> Result<()> {
-    let my_id = args::get("id").unwrap();
-    let mapper_num: u64 = args::get("mapper_num")
-        .expect("missing arg mapper_num")
-        .parse()
-        .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args::get("mapper_num").unwrap()));
-
+fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
+    #[cfg(feature = "log")]
     println!("rust: my_id: {:?}, mapper_num: {:?}", my_id, mapper_num);
 
     let mut wasi_args: Vec<String> = Vec::new();
@@ -53,7 +47,7 @@ pub fn main() -> Result<()> {
     let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
 
     let mut mem = instance.exported_memory_mut(&mut store, "memory")?;
-    mem.grow(100);
+    mem.grow(3000);
     drop(mem);
 
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
@@ -67,4 +61,15 @@ pub fn main() -> Result<()> {
     };
 
     Ok(().into())
+}
+
+#[no_mangle]
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
+    let mapper_num: u64 = args::get("mapper_num")
+        .expect("missing arg mapper_num")
+        .parse()
+        .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args::get("mapper_num").unwrap()));
+
+    func_body(my_id, mapper_num)
 }

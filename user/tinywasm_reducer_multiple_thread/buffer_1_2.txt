@@ -1,2 +1,0 @@
-name 4
-potato 4

@@ -9,6 +9,10 @@
       "libstdio.so"
     ],
     [
+      "mm",
+      "libmm.so"
+    ],
+    [
       "fatfs",
       "libfatfs.so"
     ]
@@ -26,15 +30,30 @@
   "groups": [
     {
       "list": [
+        "mapper",
+        "mapper",
         "mapper"
       ],
-      "args": {}
+      "args": {
+        "reducer_num": "10"
+      }
     },
     {
       "list": [
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
+        "reducer",
         "reducer"
       ],
-      "args": {}
+      "args": {
+        "mapper_num": "3"
+      }
     }
   ]
 }

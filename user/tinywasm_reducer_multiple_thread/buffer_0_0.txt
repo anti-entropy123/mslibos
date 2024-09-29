@@ -1,2 +1,0 @@
-hello 4
-like 4

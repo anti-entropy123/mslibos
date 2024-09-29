@@ -26,14 +26,8 @@ lazy_static::lazy_static! {
     };
 }
 
-#[no_mangle]
-pub fn main() -> Result<()> {
-    let my_id = args::get("id").unwrap();
-    let reducer_num: u64 = args::get("reducer_num")
-        .expect("missing arg reducer_num")
-        .parse()
-        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
-
+fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
+    #[cfg(feature = "log")]
     println!("rust: my_id: {:?}, reducer_num: {:?}", my_id, reducer_num);
 
     let mut wasi_args: Vec<String> = Vec::new();
@@ -67,4 +61,15 @@ pub fn main() -> Result<()> {
     };
 
     Ok(().into())
+}
+
+#[no_mangle]
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
+    let reducer_num: u64 = args::get("reducer_num")
+        .expect("missing arg reducer_num")
+        .parse()
+        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
+
+    func_body(my_id, reducer_num)
 }
