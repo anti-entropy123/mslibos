@@ -27,7 +27,7 @@ pub trait Read {
     }
 
     fn read_to_string(&mut self, buf: &mut String) -> Result<usize, FdtabError> {
-        let mut v_buf = Vec::with_capacity(1000);
+        let mut v_buf = Vec::with_capacity(1024);
         self.read_to_end(&mut v_buf)?;
 
         *buf = String::from_utf8_lossy(&v_buf).to_string();

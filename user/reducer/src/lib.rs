@@ -1,7 +1,6 @@
 #![no_std]
 use alloc::{
     borrow::ToOwned,
-    collections::BTreeMap,
     format,
     string::{String, ToString},
 };

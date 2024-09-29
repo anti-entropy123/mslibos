@@ -97,16 +97,14 @@ pub macro libos_with_switch_mpk {
             use core::arch::asm;
             use crate::mpk;
             let pkru = mpk::pkey_read();
-            let is_user_level = (pkru & 0b11 != 0);
-            if is_user_level {
-                unsafe{
-                    asm!(
-                        "mov eax, 0x55555550",
-                        "xor rcx, rcx",
-                        "mov rdx, rcx",
-                        "wrpkru"
-                    );
-                }
+            let is_user_level = (pkru & 0b1100 != 0);
+            unsafe{
+                asm!(
+                    "mov eax, 0x55555550",
+                    "xor rcx, rcx",
+                    "mov rdx, rcx",
+                    "wrpkru"
+                );
             }
 
             fn binding() -> func_type!($name){
@@ -119,7 +117,7 @@ pub macro libos_with_switch_mpk {
             if is_user_level {
                 unsafe{
                     asm!(
-                        "mov eax, 0x55555553",
+                        "mov eax, 0x5555555c",
                         "xor rcx, rcx",
                         "mov rdx, rcx",
                         "wrpkru"

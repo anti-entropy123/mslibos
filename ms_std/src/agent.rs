@@ -67,7 +67,9 @@ where
             let addr =
                 libos!(buffer_alloc(&slot, l, fingerprint)).expect("alloc failed.") as *mut T;
 
-            unsafe { core::ptr::write(addr, T::default()) };
+            // let val = T::default();
+            println!("will write addr=0x{:x}", addr as usize);
+            // unsafe { core::ptr::write(addr, val) };
 
             addr
         };

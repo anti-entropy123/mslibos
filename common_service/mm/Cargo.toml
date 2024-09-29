@@ -20,6 +20,7 @@ spin = "0.9.8"
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
 
 libc = "0.2.150"
+linked_list_allocator = "0.10.5"
 
 
 [features]

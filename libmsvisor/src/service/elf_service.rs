@@ -60,9 +60,9 @@ fn test_should_not_set_context() {
 }
 
 #[repr(C, align(4096))]
-struct MemoryRegion<const SIZE: usize>([u8; SIZE]);
+struct PageAlignedRegion<const SIZE: usize>([u8; SIZE]);
 
-struct ServiceHeap(Box<MaybeUninit<MemoryRegion<SERVICE_HEAP_SIZE>>>);
+struct ServiceHeap(Box<MaybeUninit<PageAlignedRegion<SERVICE_HEAP_SIZE>>>);
 
 impl ServiceHeap {
     fn new() -> Self {
@@ -89,7 +89,7 @@ impl ArgsItem {
     }
 }
 
-pub struct UserStack(Box<MaybeUninit<MemoryRegion<SERVICE_STACK_SIZE>>>);
+pub struct UserStack(Box<MaybeUninit<PageAlignedRegion<SERVICE_STACK_SIZE>>>);
 
 impl UserStack {
     fn new() -> Self {
@@ -98,34 +98,8 @@ impl UserStack {
         Self(stack)
     }
 
-    fn c_ptr(&self) -> NonNull<c_void> {
-        NonNull::new((self.0.as_ptr() as usize) as *mut std::ffi::c_void).unwrap()
-    }
-
     fn top(&self) -> usize {
         self.0.as_ptr() as usize + SERVICE_STACK_SIZE - PAGE_SIZE
-    }
-
-    #[cfg(feature = "enable_mpk")]
-    fn mprotect(&self) -> anyhow::Result<()> {
-        let user_stack = self.c_ptr();
-        let user_stack_top = unsafe { user_stack.as_ptr().add(SERVICE_STACK_SIZE) as usize };
-
-        mpk::pkey_mprotect(
-            user_stack.as_ptr(),
-            8 * 1024 * 1024,
-            nix::libc::PROT_READ | nix::libc::PROT_WRITE,
-            0x1,
-        )
-        .unwrap();
-        logger::info!(
-            "user stack (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-            user_stack.as_ptr() as usize,
-            user_stack_top,
-            nix::libc::PROT_READ | nix::libc::PROT_WRITE
-        );
-
-        Ok(())
     }
 
     fn write_args(&self, args: &BTreeMap<String, String>) {
@@ -173,40 +147,6 @@ impl ElfService {
         Ok(())
     }
 
-    #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> anyhow::Result<()> {
-        let maps_str = std::fs::read_to_string("/proc/self/maps").unwrap();
-        let segments = crate::utils::parse_memory_segments(&maps_str).unwrap();
-
-        let user_app_name = self.path.split('/').last().unwrap();
-        for segment in segments {
-            if let Some(seg) = &segment.path {
-                log::debug!("seg: {}", seg);
-                let name = seg.split('/').last().unwrap();
-                log::debug!("name: {}", name);
-                if name != user_app_name {
-                    continue;
-                }
-                mpk::pkey_mprotect(
-                    segment.start_addr as *mut c_void,
-                    segment.length,
-                    segment.perm,
-                    0x1,
-                )
-                .unwrap();
-                logger::info!(
-                    "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-                    segment.path.unwrap(),
-                    segment.start_addr,
-                    segment.start_addr + segment.length,
-                    segment.perm
-                );
-            }
-        }
-
-        Ok(())
-    }
-
     fn invoke_elf_symbol(&self, rust_main: RustMainFunc, stack: UserStack) -> Result<(), String> {
         log::info!(
             "service_{} rust_main={:x} thread_name={}",
@@ -218,7 +158,6 @@ impl ElfService {
 
         #[cfg(feature = "enable_mpk")]
         let ret: Result<(), String> = unsafe {
-            // sleep(1000);
             asm!(
                 // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
                 "sub rsp, 0x90",
@@ -234,7 +173,7 @@ impl ElfService {
                 "mov r11, r13",
                 "mov [r12+8], rsp",
                 "mov rsp, r12",
-                "mov eax, 0x55555553",
+                "mov eax, 0x5555555c",
                 "xor rcx, rcx",
                 "mov rdx, rcx",
                 "wrpkru",
@@ -322,8 +261,6 @@ impl ElfService {
         let rust_main = unsafe { transmute(*rust_main as usize) };
 
         let stack = UserStack::new();
-        #[cfg(feature = "enable_mpk")]
-        stack.mprotect().map_err(|err| err.to_string())?;
         stack.write_args(args);
 
         let ret = self.invoke_elf_symbol(rust_main, stack);
@@ -390,8 +327,16 @@ impl WithLibOSService {
     }
 
     pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
+        info!("init name={}", self.name());
         let heap_start = self.heap.c_ptr().as_ptr() as usize;
-        let heap_range = (heap_start, heap_start + SERVICE_HEAP_SIZE);
+        let mut heap_size = SERVICE_HEAP_SIZE;
+
+        if self.name() == "mm" {
+            heap_size /= 2;
+            info!("set buffer alloc region");
+        }
+
+        let heap_range = (heap_start, heap_start + heap_size);
         logger::debug!(
             "init for service_{}, isol_id={}, find_host_call_addr=0x{:x}, heap_range={:x?}",
             self.elf.name,
@@ -451,25 +396,4 @@ impl WithLibOSService {
         self.elf.namespace()
     }
 
-    #[cfg(feature = "enable_mpk")]
-    pub fn mprotect(&self) -> anyhow::Result<()> {
-        self.elf.mprotect()?;
-        let heap_start = self.heap.c_ptr().as_ptr() as usize;
-        /* unsafe { libc::syscall(SYS_pkey_alloc, 0, 0); }; */
-        mpk::pkey_mprotect(
-            heap_start as *mut c_void,
-            SERVICE_HEAP_SIZE,
-            nix::libc::PROT_READ | nix::libc::PROT_WRITE,
-            1,
-        )
-        .unwrap();
-        logger::info!(
-            "heap segement (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-            heap_start,
-            heap_start + SERVICE_HEAP_SIZE,
-            nix::libc::PROT_READ | nix::libc::PROT_WRITE
-        );
-
-        Ok(())
-    }
 }

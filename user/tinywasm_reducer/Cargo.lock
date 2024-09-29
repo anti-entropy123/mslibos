@@ -319,6 +319,7 @@ name = "tinywasm_reducer"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
+ "lazy_static",
  "ms_hostcall",
  "ms_std",
  "unwinding",
