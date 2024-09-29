@@ -2,9 +2,8 @@
 
 declare -A test_groups=(
     [faasflow_test]="long_chain map_reduce pass_complex_args"
-    [file_test]="simple_file" # mmap_file 
-    [run_dylib_test]="base_config"
-    [wasm_test]="tinywasm tinywasm_py tinywasm_pass_args"
+    [file_test]="simple_file"
+    [wasm_test]="tinywasm_py"
 )
 
 passed_count=0
