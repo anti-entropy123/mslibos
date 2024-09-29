@@ -51,6 +51,11 @@ pub fn main() -> Result<()> {
     wasi_api::set_wasi_args(store.id(), wasi_args);
 
     let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
+
+    let mut mem = instance.exported_memory_mut(&mut store, "memory")?;
+    mem.grow(100);
+    drop(mem);
+
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
 
     if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {
