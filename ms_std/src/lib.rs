@@ -12,7 +12,8 @@
 
 use agent::FaaSFuncResult;
 use alloc::string::String;
-use core::{arch::asm, result};
+#[cfg(feature = "mpk")]
+use core::arch::asm;
 
 pub mod agent;
 pub mod args;
@@ -22,13 +23,14 @@ pub mod init_context;
 pub mod io;
 pub mod libos;
 pub mod mm;
-#[cfg(feature = "mpk")]
-pub mod mpk;
 pub mod net;
 pub mod prelude;
 pub mod sym_patch;
 pub mod sync;
 pub mod time;
+
+#[cfg(feature = "mpk")]
+pub mod mpk;
 
 extern crate alloc;
 

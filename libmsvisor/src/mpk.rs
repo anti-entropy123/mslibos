@@ -14,15 +14,17 @@ pub fn pkey_alloc() -> i32 {
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn pkey_mprotect(addr: *mut c_void, len: size_t, prot: i32, pkey: i32) -> Result<(), i32> {
+pub fn pkey_mprotect(addr: *mut c_void, len: size_t, prot: i32, pkey: i32) -> anyhow::Result<()> {
     let ret: i64;
     unsafe {
         ret = syscall(SYS_pkey_mprotect, addr, len, prot, pkey);
     }
     match ret {
         0 => Ok(()),
-        -1 => Err(Errno::last_raw()),
-        _ => Err(Errno::last_raw()),
+        _ => Err(anyhow::Error::msg(format!(
+            "mprotect failed, errno={}",
+            Errno::last_raw()
+        ))),
     }
 }
 

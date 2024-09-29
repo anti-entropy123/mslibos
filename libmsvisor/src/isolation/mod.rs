@@ -18,8 +18,11 @@ use ms_hostcall::types::{
     ServiceName,
 };
 
+#[cfg(feature = "enbale_mpk")]
+use std::{fs, ffi::c_void};
+
 #[cfg(feature = "enable_mpk")]
-use crate::mpk;
+use crate::{mpk, utils};
 use crate::{
     logger,
     metric::MetricBucket,
@@ -125,6 +128,11 @@ impl Isolation {
             } else {
                 self.service_or_load(svc_name)?;
             }
+            if self.app_names.contains(svc_name) {
+                self.app_or_load(svc_name)?;
+            } else {
+                self.service_or_load(svc_name)?;
+            }
         }
 
         Ok(())
@@ -139,7 +147,7 @@ impl Isolation {
         match isol_inner.modules.get(name) {
             Some(svc) => Ok(Arc::clone(svc)),
             None => {
-                info!("first load {}.", name);
+                info!("[service] first load {}.", name);
                 let svc = self.loader.load_service(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&svc));
                 Ok(svc)
@@ -152,16 +160,12 @@ impl Isolation {
         let app = match isol_inner.modules.get(name) {
             Some(app) => Arc::clone(app),
             None => {
-                info!("first load {}.", name);
+                info!("[app] first load {}.", name);
                 let app = self.loader.load_app(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&app));
                 app
             }
         };
-
-        #[cfg(feature = "enable_mpk")]
-        app.mprotect()
-            .map_err(|_e| anyhow::Error::msg("mpk protect failed"))?;
 
         Ok(app)
     }
@@ -177,6 +181,7 @@ impl Isolation {
             let app = self
                 .app_or_load(app)
                 .map_err(|e| anyhow!("load app failed: {e}"))?;
+
 
             let result = app.run(&args);
             result.map_err(|e| anyhow!("app_{} run failed, reason: {}", app.name(), e))?
@@ -214,7 +219,25 @@ impl Isolation {
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
         self.metric.mark(Mem);
-
+        #[cfg(feature = "enable_mpk")] {
+            let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
+            let segments = utils::parse_memory_segments(&maps_str).unwrap();
+            let black_list = [ "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
+                                            "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".to_owned(),
+                                            "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1".to_owned(),
+                                            "[heap]".to_owned(),
+                                            "[stack]".to_owned(),
+                                            "[vdso]".to_owned(),
+                                            "[vvar]".to_owned(),];
+            for segment in segments {
+                if let Some(path) = segment.clone().path {
+                    if black_list.iter().any(|need| path.contains(need)) {
+                        mpk::pkey_mprotect(segment.start_addr as *mut c_void, segment.length, segment.perm, 0x1).unwrap();
+                        logger::info!("{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.", segment.path.unwrap(), segment.start_addr, segment.start_addr + segment.length, segment.perm);
+                    }
+                }
+            }
+        }
         #[cfg(feature = "namespace")]
         self.service_or_load(&"libc".to_owned())
             .map_err(|e| anyhow!("namespace feature, load libc failed: {e}"))?;

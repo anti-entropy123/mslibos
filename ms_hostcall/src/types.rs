@@ -1,6 +1,6 @@
 #![allow(improper_ctypes_definitions)]
 
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
 
 use crate::{HostCallID, IsolationContext};
 

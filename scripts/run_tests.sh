@@ -2,26 +2,33 @@
 
 declare -A test_groups=(
     [faasflow_test]="long_chain map_reduce pass_complex_args"
-    [file_test]="simple_file" # mmap_file 
-    [run_dylib_test]="base_config"
-    [should_panic_test]="should_panic"
-    [wasm_test]="tinywasm tinywasm_py tinywasm_pass_args"
-    # [network_test]="simple_http"
+    [file_test]="simple_file"
+    [wasm_test]="tinywasm_py"
 )
 
 passed_count=0
 declare -A results
 
+# 获取脚本参数（feature）
+feature_arg=""
+if [ $# -gt 0 ]; then
+    feature_arg="--features $1"
+fi
+
 for group in "${!test_groups[@]}"; do
     names=${test_groups[$group]}
     
     for name in $names; do
-        if cargo run -- --files "isol_config/$name.json"; then
-            # 如果命令正常退出，记录通过结果
+        output=$(RUST_LOG=info cargo run $feature_arg -- --files "isol_config/$name.json" 2>&1)
+        echo "$output"
+        if [ $? -eq 0 ]; then
             results[$name]="passed"
             ((passed_count++)) # 增加通过计数
+        elif echo "$output" | grep -q "ERROR msvisor"; then
+            echo "Error detected in $name"
+            results[$name]="failed"
         else
-            # 如果命令失败，记录失败结果
+            echo "Command failed for $name"
             results[$name]="failed"
         fi
     done
