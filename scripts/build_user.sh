@@ -1,3 +1,9 @@
 #!/bin/bash
 
-find user -name 'Cargo.toml' | xargs -n 1 echo cargo build "$1" --manifest-path | bash
+if [ $# -gt 0 ]; then
+    feature_arg="--features $1"
+else
+    feature_arg=""
+fi
+
+find user -name 'Cargo.toml' | xargs -I {} bash -c "cargo build $feature_arg --manifest-path {}"

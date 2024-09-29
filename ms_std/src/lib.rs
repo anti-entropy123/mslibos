@@ -12,6 +12,7 @@
 
 use agent::FaaSFuncResult;
 use alloc::string::String;
+#[cfg(feature = "mpk")]
 use core::arch::asm;
 
 pub mod agent;
