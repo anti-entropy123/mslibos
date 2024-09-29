@@ -184,7 +184,7 @@ fn inference(
 }
 
 #[no_mangle]
-pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     println!("main");
     let model = build_and_load_model()?;
     println!("load model ok");

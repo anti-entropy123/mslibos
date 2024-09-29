@@ -8,6 +8,8 @@ __attribute__((import_module("env"), import_name("buffer_register"))) void buffe
 #define MAX_WORD_LENGTH 100
 #define MAX_WORDS 8000
 #define MAX_SLOT_NUM 100
+#define MAX_BUFFER_SIZE 30000
+
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower(str[i]);
@@ -57,7 +59,7 @@ int main(int argc, char* argv[]) {
     char *slot_name[MAX_SLOT_NUM];
     char *buffer[MAX_SLOT_NUM];
     char slot[20];
-    int bufferSize = MAX_WORD_LENGTH + 10;
+    int bufferSize = MAX_BUFFER_SIZE;
     int slot_index = 0;
     
     for (int i = 0; i < word_index; i++) {

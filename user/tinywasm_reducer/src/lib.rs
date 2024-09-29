@@ -22,7 +22,7 @@ use wasi_api::tinywasm;
 const WASM: &[u8] = include_bytes!("../reducer.wasm");
 
 #[no_mangle]
-pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     libos!(open("/", OpenFlags::empty(), OpenMode::RD))?;
     let module = Module::parse_bytes(WASM)?;
     let mut store = Store::default();

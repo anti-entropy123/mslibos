@@ -5,7 +5,7 @@ declare -A test_groups=(
     [file_test]="simple_file" # mmap_file 
     [run_dylib_test]="base_config"
     [should_panic_test]="should_panic"
-    [wasm_test]="tinywasm tinywasm_py tinywasm_pass_args"
+    [wasm_test]="tinywasm tinywasm_py tinywasm_pass_args tinywasm_wordcount_single_thread tinywasm_wordcount_multiple_thread tinywasm_wordcount_trans"
     # [network_test]="simple_http"
 )
 

@@ -21,7 +21,7 @@ use wasi_api::tinywasm;
 const WASM: &[u8] = include_bytes!("../rustpython.wasm");
 
 #[no_mangle]
-pub fn main(_args: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     let module = Module::parse_bytes(WASM)?;
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;

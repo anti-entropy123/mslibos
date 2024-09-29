@@ -9,6 +9,10 @@
       "libstdio.so"
     ],
     [
+      "mm",
+      "libmm.so"
+    ],
+    [
       "fatfs",
       "libfatfs.so"
     ]

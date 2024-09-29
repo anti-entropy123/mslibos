@@ -3,7 +3,7 @@
 
 use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
 
-use ms_std::prelude::*;
+use ms_std::{args, prelude::*};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -12,9 +12,9 @@ struct VecArg {
 }
 
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     let merger_num: u32 = {
-        let m = &args["merger_num"];
+        let m = args::get("merger_num").unwrap();
         m.parse().unwrap()
     };
 

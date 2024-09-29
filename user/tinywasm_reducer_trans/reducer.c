@@ -5,6 +5,7 @@
 #define MAX_WORD_LENGTH 100
 #define MAX_WORDS 1000
 #define MAX_SLOT_NUM 100
+#define MAX_BUFFER_SIZE 30000
 
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 
@@ -21,7 +22,7 @@ int main(int argc, char* argv[]) {
     char *slot_name[MAX_SLOT_NUM];
     char *buffer[MAX_SLOT_NUM];
     char slot[20];
-    int bufferSize = MAX_WORD_LENGTH + 10;
+    int bufferSize = MAX_BUFFER_SIZE;
     int slot_num = mapper_num;
 
     printf("access start!\n");

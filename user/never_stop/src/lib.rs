@@ -16,7 +16,7 @@ cfg_if::cfg_if! {
 }
 
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     sleep(Duration::from_secs(100000));
 
     Ok(().into())
