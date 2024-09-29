@@ -2,26 +2,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
+
+__attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
+
 #define MAX_WORD_LENGTH 100
-#define MAX_WORDS 1000
+#define MAX_WORDS 8000
+#define MAX_SLOT_NUM 100
+#define MAX_BUFFER_SIZE 8000
+
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
         str[i] = tolower(str[i]);
     }
 }
-int main() {
-    int id = 1;
-    int reducer_num = 3;
-    char input_file[20] = "fake_data_1.txt";
-    // sprintf(input_file, "fake_data_%d.txt", id);
-    // printf("input file: %s\n", input_file);
-    // write(1, "input file: fake_data_1.txt\n", sizeof("input file: fake_data_1.txt\n"));
+int main(int argc, char* argv[]) {
+    int id = atoi(argv[1]);
+    int reducer_num = atoi(argv[2]);
+    printf("mapper.c recieve: id: %d, reducer_num: %d\n", id, reducer_num);
+
+    char input_file[30];
+    sprintf(input_file, "fake_data_%d.txt", id);
     FILE *file = fopen(input_file, "r");
     if (!file) {
-        perror("Failed to open input file");
+        perror("Failed to open input file\n");
         exit(EXIT_FAILURE);
     }
+
+    printf("mapper_%d input file: %s\n", id, input_file);
+    
     int count[MAX_WORDS] = {0};
     char *words[MAX_WORDS];
     char word[MAX_WORD_LENGTH];
@@ -46,17 +54,51 @@ int main() {
     }
     fclose(file);
 
-    write(1, "map read success!\n", sizeof("map read success!\n"));
+    printf("mapper_%d read success!\n", id);
 
-    char output_file[20];
+    char *slot_name[MAX_SLOT_NUM];
+    char *buffer[MAX_SLOT_NUM];
+    char slot[20];
+    int bufferSize = MAX_BUFFER_SIZE;
+    int slot_index = 0;
+    
     for (int i = 0; i < word_index; i++) {
         int partition_index = i % reducer_num;
-        sprintf(output_file, "buffer_%d_%d.txt", partition_index, id);
+        sprintf(slot, "buffer_%d_%d", partition_index, id);
+        int found = 0;
+        for (int j = 0; j < slot_index; j++) {
+            if (strcmp(slot_name[j], slot) == 0) {
+                found = 1;
+                sprintf(buffer[j] + strlen(buffer[j]), "%s: %d\n", words[i], count[i]);
+                break;
+            }
+        }
         
-        FILE *output = fopen(output_file, "a");
-        fprintf(output, "%s %d\n", words[i], count[i]);
-        fclose(output);
-        
+        if (!found) {
+            slot_name[slot_index] = strdup(slot);
+            buffer[slot_index] = (char *)malloc(bufferSize * sizeof(char));
+            if (buffer == NULL) {
+                printf("alloc mem failed\n");
+                return 1;
+            }
+            memset(buffer[slot_index], 0, bufferSize * sizeof(char));
+            sprintf(buffer[slot_index], "%s: %d\n", words[i], count[i]);
+            // printf("slot: %s; buffer: %s\n", slot_name[slot_index], buffer[slot_index]);
+            slot_index++;
+        }
+        // printf("found: %d; word: %s; count: %d; slot_name: %s; buffer: %s\n", found, words[i], count[i], slot, buffer[slot_index]);
         free(words[i]);
     }
+
+    for (int i = 0; i < slot_index; i++) {
+        buffer_register(slot_name[i], strlen(slot_name[i]), buffer[i], bufferSize);
+    }
+    
+    for (int i = 0; i < slot_index; i++) {
+        free(slot_name[i]); // 释放 strdup 分配的内存
+        free(buffer[i]);    // 释放 buffer
+    }
+
+    printf("mapper_%d finished!\n", id);
+    return 0;
 }

@@ -10,7 +10,7 @@ cfg_if::cfg_if! {
     }
 }
 
-use wasi_api::tinywasm::{Module, Store};
+use wasi_api::tinywasm::{Module, Store, ModuleInstance};
 
 const WASM: &[u8] = include_bytes!("../fibonacci.wasm");
 
@@ -18,7 +18,7 @@ const WASM: &[u8] = include_bytes!("../fibonacci.wasm");
 pub fn main() -> Result<()> {
     let module = Module::parse_bytes(WASM)?;
     let mut store = Store::default();
-    let instance = module.instantiate(&mut store, None)?;
+    let instance = ModuleInstance::instantiate(&mut store, module, None)?;
     let fib = instance.exported_func::<i32, i32>(&store, "fibonacci_recursive")?;
     // assert_eq!(add.call(&mut store, (20))?, 3);
     println!("fib(20)={}", fib.call(&mut store, 20)?);

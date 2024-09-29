@@ -1,7 +1,9 @@
 extern crate alloc;
 
-use alloc::vec::Vec;
 use core::slice;
+use alloc::{format, string::String, vec::Vec};
+use spin::{Mutex, MutexGuard};
+use hashbrown::HashMap;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{
@@ -41,13 +43,41 @@ struct WasiPrestatT {
     u: WasiPrestatUt,
 }
 
-struct Lcg {
+#[derive(Clone)]
+pub struct WasiState {
+    pub args: Vec<String>
+}
+
+lazy_static::lazy_static! {
+    static ref WASI_STATE: Mutex<HashMap<usize, WasiState>> = Mutex::new( HashMap::new() );
+}
+
+// This is a non-pub function because it should not be init in other file.
+fn get_hashmap_wasi_state_mut() -> MutexGuard<'static, HashMap<usize, WasiState>> {
+    WASI_STATE.lock()
+}
+
+fn get_wasi_state<'a>(id: usize, map: &'a MutexGuard<'static, HashMap<usize, WasiState>>) -> &'a WasiState {
+    let wasi_state =  map.get(&id).unwrap();
+    if wasi_state.args.len() == 0 {
+        panic!("WASI_STATE uninit")
+    }
+    wasi_state
+}
+
+pub fn set_wasi_state(id: usize, _args: Vec<String>) {
+    let mut map = get_hashmap_wasi_state_mut();
+    let wasi_state: WasiState = WasiState{args: _args};
+    map.insert(id, (&wasi_state).clone());
+}
+
+struct LCG {
     state: u64,
 }
 
-impl Lcg {
+impl LCG {
     fn new(seed: u64) -> Self {
-        Lcg { state: seed }
+        LCG { state: seed }
     }
 
     fn next_u8(&mut self) -> u8 {
@@ -68,15 +98,43 @@ impl Lcg {
     }
 }
 
-pub fn args_get(_: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
-    #[cfg(feature = "log")]
+pub fn args_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature="log")]
     {
         println!("[Debug] Invoke into args_get");
         println!("args: argv: {:?}, argv_buf: {:?}", args.0, args.1);
     }
 
-    let _argv = args.0 as usize;
-    let _argv_buf = args.1 as usize;
+    // argv是每个arg在argv_buf中的起始地址的数组的起始地址
+    // argv_buf是存arg的buf的起始地址
+    // 在buf中存入arg，并以\0结尾 (len需要+1)
+    let argv = args.0 as usize;
+    let argv_buf = args.1 as usize;
+
+    let ctx_id = ctx.store().id();
+    let map = WASI_STATE.lock();
+    let wasi_state = get_wasi_state(ctx_id, &map);
+    let args: Vec<&[u8]> = wasi_state.args
+        .iter()
+        .map(|a| a.as_bytes())
+        .collect::<Vec<_>>();
+    let mut offset: usize = 0;
+
+    let mut mem = ctx.exported_memory_mut("memory")?;
+
+    #[cfg(feature="log")]
+    println!("arg_vec len: {}", args.len());
+    for (i, arg) in args.iter().enumerate() {
+        #[cfg(feature="log")]
+        println!("i: {:?}, offset: {:?}, arg: {:?}, arg_len: {:?}", i, offset, arg, arg.len());
+        let arg_addr = argv_buf + offset;
+
+        mem.store(argv + i * core::mem::size_of::<u32>(), core::mem::size_of::<u32>(), &(arg_addr as u32).to_ne_bytes())?;
+        mem.store(arg_addr, arg.len(), arg)?;
+        mem.store(arg_addr + arg.len(), core::mem::size_of::<u8>(), "\0".as_bytes())?;
+
+        offset += arg.len() + 1;
+    }
 
     Ok(0)
 }
@@ -90,15 +148,20 @@ pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Resul
 
     let argc_ptr = args.0 as usize;
     let argv_buf_size_ptr = args.1 as usize;
-    let argc = 0_i32;
-    let argv_buf_size = 0_i32;
+
+    let ctx_id = ctx.store().id();
+    let map = WASI_STATE.lock();
+    let wasi_state = get_wasi_state(ctx_id, &map);
+    let argc_val = wasi_state.args.len();
+    let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
+
+    #[cfg(feature="log")]
+    println!("argc_val={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
+
     let mut mem = ctx.exported_memory_mut("memory")?;
-    mem.store(argc_ptr, core::mem::size_of::<i32>(), &argc.to_ne_bytes())?;
-    mem.store(
-        argv_buf_size_ptr,
-        core::mem::size_of::<i32>(),
-        &argv_buf_size.to_ne_bytes(),
-    )?;
+
+    mem.store(argc_ptr, core::mem::size_of::<u32>(), &(argc_val as u32).to_ne_bytes())?;
+    mem.store(argv_buf_size_ptr, core::mem::size_of::<u32>(), &(argv_buf_size_val as u32).to_ne_bytes())?;
 
     Ok(0)
 }
@@ -135,7 +198,7 @@ pub fn environ_get(_: FuncContext<'_>, _args: (i32, i32)) -> tinywasm::Result<i3
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into environ_get");
-        println!("args: environ: {:?}, environ_buf: {:?}", args.0, args.1);
+        println!("args: environ: {:?}, environ_buf: {:?}", _args.0, _args.1);
     }
     Ok(0)
 }
@@ -225,7 +288,6 @@ pub fn fd_fdstat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Re
         }
         _ => (),
     }
-
     // Todo: 从表中寻找fd
     // let FdStruct = table.find(fd);
     // fdstat.fs_filetype = match FdStruct.kind {
@@ -269,7 +331,7 @@ pub fn fd_filestat_get(_: FuncContext<'_>, _args: (i32, i32)) -> tinywasm::Resul
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_filestat_get");
-        println!("args: fd: {:?}, buf: {:?}", args.0, args.1);
+        println!("args: fd: {:?}, buf: {:?}", _args.0, _args.1);
     }
 
     Ok(0)
@@ -279,7 +341,7 @@ pub fn fd_filestat_set_size(_: FuncContext<'_>, _args: (i32, i64)) -> tinywasm::
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_filestat_set_size");
-        println!("args: fd: {:?}, st_size: {:?}", args.0, args.1);
+        println!("args: fd: {:?}, st_size: {:?}", _args.0, _args.1);
     }
 
     Ok(0)
@@ -398,7 +460,7 @@ pub fn fd_readdir(
         println!("[Debug] Invoke into fd_readdir");
         println!(
             "args: fd: {:?}, buf: {:?}, buf_len: {:?}, cookie: {:?}, bufused: {:?}",
-            args.0, args.1, args.2, args.3, args.4
+            _args.0, _args.1, _args.2, _args.3, _args.4
         );
     }
 
@@ -411,7 +473,7 @@ pub fn fd_seek(mut _ctx: FuncContext<'_>, _args: (i32, i64, i32, i32)) -> tinywa
         println!("[Debug] Invoke into fd_seek");
         println!(
             "args: fd: {:?}, offset: {:?}, whence: {:?}, pos: {:?}",
-            args.0, args.1, args.2, args.3
+            _args.0, _args.1, _args.2, _args.3
         );
     }
 
@@ -437,7 +499,7 @@ pub fn fd_sync(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into fd_sync");
-        println!("args: fd: {:?}", args);
+        println!("args: fd: {:?}", _args);
     }
     Ok(0)
 }
@@ -486,7 +548,7 @@ pub fn path_create_directory(
         println!("[Debug] Invoke into path_create_directory");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -502,7 +564,7 @@ pub fn path_filestat_get(
         println!("[Debug] Invoke into path_filestat_get");
         println!(
             "args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, buf: {:?}",
-            args.0, args.1, args.2, args.3, args.4
+            _args.0, _args.1, _args.2, _args.3, _args.4
         );
     }
 
@@ -516,7 +578,7 @@ pub fn path_filestat_set_times(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_filestat_set_times");
-        println!("args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6);
+        println!("args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5, _args.6);
     }
     Ok(0)
 }
@@ -528,7 +590,7 @@ pub fn path_link(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_link");
-        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5, args.6);
+        println!("args: old_fd: {:?}, old_flags: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5, _args.6);
     }
     Ok(0)
 }
@@ -540,7 +602,7 @@ pub fn path_open(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_open");
-        // println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
+        println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
     }
     let mut mem = ctx.exported_memory_mut("memory")?;
     let _fd = args.0 as u32;
@@ -588,7 +650,7 @@ pub fn path_readlink(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_readlink");
-        println!("args: dir_fd: {:?}, path: {:?}, path_len: {:?}, buf: {:?}, buf_len: {:?}, buf_used: {:?}", args.0, args.1, args.2, args.3, args.4, args.5);
+        println!("args: dir_fd: {:?}, path: {:?}, path_len: {:?}, buf: {:?}, buf_len: {:?}, buf_used: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
     }
     Ok(0)
 }
@@ -602,7 +664,7 @@ pub fn path_remove_directory(
         println!("[Debug] Invoke into path_remove_directory");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -616,7 +678,7 @@ pub fn path_rename(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_rename");
-        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", args.0, args.1, args.2, args.3, args.4, args.5);
+        println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
     }
 
     Ok(0)
@@ -628,7 +690,7 @@ pub fn path_unlink_file(_ctx: FuncContext<'_>, _args: (i32, i32, i32)) -> tinywa
         println!("[Debug] Invoke into path_unlink_file");
         println!(
             "args: fd: {:?}, path: {:?}, path_len: {:?}",
-            args.0, args.1, args.2
+            _args.0, _args.1, _args.2
         );
     }
 
@@ -641,7 +703,7 @@ pub fn poll_oneoff(_ctx: FuncContext<'_>, _args: (i32, i32, i32, i32)) -> tinywa
         println!("[Debug] Invoke into poll_oneoff");
         println!(
             "args: in_: {:?}, out_: {:?}, nsubscriptions: {:?}, nevents: {:?}",
-            args.0, args.1, args.2, args.3
+            _args.0, _args.1, _args.2, _args.3
         );
     }
 
@@ -666,7 +728,7 @@ pub fn random_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Resul
     let buf = args.0 as usize;
     let buf_len = args.1 as usize;
     // let seed: u64 = 42;
-    let mut lcg = Lcg::new(buf as u64);
+    let mut lcg = LCG::new(buf as u64);
     let array = lcg.generate_random_u8_slice(buf_len);
 
     let data: &[u8] = &array;

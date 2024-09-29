@@ -5,7 +5,7 @@ use ms_std::{agent::FaaSFuncResult as Result, fs::File, mm::Mmap, println};
 extern crate alloc;
 
 #[no_mangle]
-pub fn main(_: &BTreeMap<String, String>) -> Result<()> {
+pub fn main() -> Result<()> {
     let file1 = File::open("lines.txt").expect("file1 don't exist?");
     let file2 = File::open("fake_data_0.txt").expect("file2 don't exist?");
 

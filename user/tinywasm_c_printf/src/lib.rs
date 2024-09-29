@@ -12,7 +12,7 @@ cfg_if::cfg_if! {
 use alloc::format;
 use ms_std::println;
 
-use wasi_api::tinywasm::{Module, Store};
+use wasi_api::tinywasm::{Module, Store, ModuleInstance};
 
 const WASM: &[u8] = include_bytes!("../write.wasm");
 
@@ -22,7 +22,7 @@ pub fn main() -> Result<()> {
     let mut store = Store::default();
     let imports = wasi_api::import_all()?;
 
-    let instance = module.instantiate(&mut store, Some(imports))?;
+    let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     let main = instance.exported_func::<(), ()>(&store, "_start")?;
 
     if let Err(e) = unwinding::panic::catch_unwind(|| main.call(&mut store, ()).unwrap()) {

@@ -1,7 +1,7 @@
 #![no_std]
 use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
 
-use ms_std::prelude::*;
+use ms_std::{args, prelude::*};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -10,10 +10,10 @@ struct VecArg {
 }
 
 #[no_mangle]
-pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
-    let my_id = &args["id"];
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
     let sorter_num: u32 = {
-        let m = &args["sorter_num"];
+        let m = args::get("sorter_num").unwrap();
         m.parse().unwrap()
     };
 

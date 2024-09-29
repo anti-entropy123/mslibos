@@ -102,6 +102,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy_static"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+dependencies = [
+ "spin",
+]
+
+[[package]]
 name = "libm"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -318,9 +327,12 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "wasi_api"
 version = "0.1.0"
 dependencies = [
+ "hashbrown",
+ "lazy_static",
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",
+ "spin",
  "tinywasm",
 ]
 

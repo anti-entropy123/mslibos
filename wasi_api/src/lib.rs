@@ -1,10 +1,16 @@
 #![no_std]
 
+extern crate alloc;
+use alloc::{string::String, vec::Vec};
 pub use tinywasm;
 use tinywasm::{Extern, Imports};
 
 mod data_buffer;
 mod wasi;
+
+pub fn set_wasi_args(id: usize, _args: Vec<String>) {
+    wasi::set_wasi_state(id, _args);
+}
 
 pub fn import_all() -> tinywasm::Result<Imports> {
     let mut imports = Imports::new();
