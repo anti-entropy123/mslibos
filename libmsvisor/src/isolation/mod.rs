@@ -128,6 +128,11 @@ impl Isolation {
             } else {
                 self.service_or_load(svc_name)?;
             }
+            if self.app_names.contains(svc_name) {
+                self.app_or_load(svc_name)?;
+            } else {
+                self.service_or_load(svc_name)?;
+            }
         }
 
         Ok(())
@@ -176,6 +181,7 @@ impl Isolation {
             let app = self
                 .app_or_load(app)
                 .map_err(|e| anyhow!("load app failed: {e}"))?;
+
 
             let result = app.run(&args);
             result.map_err(|e| anyhow!("app_{} run failed, reason: {}", app.name(), e))?

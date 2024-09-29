@@ -2,13 +2,13 @@
 
 extern crate alloc;
 
-use core::{mem::size_of, ptr};
+use core::{mem::size_of, /* ptr */};
 
 use alloc::{borrow::ToOwned, string::String};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
-    time::SystemTime,
+    // time::SystemTime,
 };
 use ms_std_proc_macro::FaasData;
 

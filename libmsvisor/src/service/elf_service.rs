@@ -21,6 +21,8 @@ use ms_hostcall::{
 use nix::libc::RTLD_DI_LMID;
 use thiserror::Error;
 
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
 use crate::{
     isolation::handler::{find_host_call, panic_handler},
     logger,
@@ -397,4 +399,5 @@ impl WithLibOSService {
     pub fn namespace(&self) -> Namespace {
         self.elf.namespace()
     }
+
 }

@@ -5,8 +5,8 @@ extern crate alloc;
 use alloc::{borrow::ToOwned, string::String};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
-    println,
-    time::SystemTime,
+    // println,
+    // time::SystemTime,
 };
 use ms_std_proc_macro::FaasData;
 

@@ -12,7 +12,7 @@
 
 use agent::FaaSFuncResult;
 use alloc::string::String;
-use core::{arch::asm, result};
+use core::arch::asm;
 
 pub mod agent;
 pub mod args;

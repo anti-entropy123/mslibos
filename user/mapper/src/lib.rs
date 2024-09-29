@@ -1,7 +1,7 @@
 #![no_std]
-use core::hash::{BuildHasher, Hash, Hasher};
+// use core::hash::{BuildHasher, Hash, Hasher};
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, format, string::String, vec::Vec};
 use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::{
@@ -38,7 +38,6 @@ pub fn main() -> Result<()> {
         .expect("missing arg reducer_num")
         .parse()
         .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
-    println!("mapper: func_id={}, reducer_num={}", my_id, reducer_num);
 
     let reader: DataBuffer<Reader2Mapper> =
         DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
