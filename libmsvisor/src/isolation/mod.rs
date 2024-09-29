@@ -6,8 +6,6 @@ use std::{
     iter::zip,
     sync::{Arc, Mutex, MutexGuard, Weak},
     thread,
-    fs,
-    ffi::c_void,
 };
 
 use anyhow::{anyhow, Ok};
@@ -20,14 +18,16 @@ use ms_hostcall::types::{
     ServiceName,
 };
 
+#[cfg(feature = "enbale_mpk")]
+use std::{fs, ffi::c_void};
+
 #[cfg(feature = "enable_mpk")]
-use crate::mpk;
+use crate::{mpk, utils};
 use crate::{
     logger,
     metric::MetricBucket,
     service::{Service, ServiceLoader},
     utils::gen_new_id,
-    utils,
 };
 use config::IsolationConfig;
 

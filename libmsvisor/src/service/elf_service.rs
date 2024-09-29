@@ -98,10 +98,6 @@ impl UserStack {
         Self(stack)
     }
 
-    fn c_ptr(&self) -> NonNull<c_void> {
-        NonNull::new((self.0.as_ptr() as usize) as *mut std::ffi::c_void).unwrap()
-    }
-
     fn top(&self) -> usize {
         self.0.as_ptr() as usize + SERVICE_STACK_SIZE - PAGE_SIZE
     }
