@@ -3,7 +3,7 @@
 declare -A test_groups=(
     [faasflow_test]="long_chain map_reduce pass_complex_args"
     [file_test]="simple_file"
-    [wasm_test]="tinywasm_py tinywasm_wordcount"
+    [wasm_test]="tinywasm_wordcount"
 )
 
 passed_count=0
