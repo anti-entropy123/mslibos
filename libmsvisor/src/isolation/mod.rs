@@ -218,9 +218,8 @@ impl Isolation {
 
     pub fn run(&self) -> Result<(), anyhow::Error> {
         self.metric.mark(Mem);
-        #[cfg(feature = "enable_mpk")]
-        {
-            let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
+        #[cfg(feature = "enable_mpk")] {
+            let maps_str = std::fs::read_to_string("/proc/self/maps").unwrap();
             let segments = utils::parse_memory_segments(&maps_str).unwrap();
             let black_list = [
                 std::env::current_exe()
@@ -239,20 +238,8 @@ impl Isolation {
             for segment in segments {
                 if let Some(path) = segment.clone().path {
                     if black_list.iter().any(|need| path.contains(need)) {
-                        mpk::pkey_mprotect(
-                            segment.start_addr as *mut c_void,
-                            segment.length,
-                            segment.perm,
-                            0x1,
-                        )
-                        .unwrap();
-                        logger::info!(
-                            "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-                            segment.path.unwrap(),
-                            segment.start_addr,
-                            segment.start_addr + segment.length,
-                            segment.perm
-                        );
+                        mpk::pkey_mprotect(segment.start_addr as *mut std::ffi::c_void, segment.length, segment.perm, 0x1).unwrap();
+                        logger::info!("{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.", segment.path.unwrap(), segment.start_addr, segment.start_addr + segment.length, segment.perm);
                     }
                 }
             }
