@@ -56,7 +56,7 @@ mv config.json isol_config/[your-isol-name].json
 使用 MPK：
 
 ```bash
-./scripts/run_test.sh mpk
+./scripts/run_tests.sh mpk
 ```
 
 ### 单个测试
