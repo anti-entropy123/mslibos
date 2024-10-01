@@ -19,7 +19,7 @@ use ms_hostcall::types::{
 };
 
 #[cfg(feature = "enbale_mpk")]
-use std::{fs, ffi::c_void};
+use std::{fs, ffi::c_void, env};
 
 #[cfg(feature = "enable_mpk")]
 use crate::{mpk, utils};
@@ -222,7 +222,8 @@ impl Isolation {
         #[cfg(feature = "enable_mpk")] {
             let maps_str = std::fs::read_to_string("/proc/self/maps").unwrap();
             let segments = utils::parse_memory_segments(&maps_str).unwrap();
-            let black_list = [ "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
+            let black_list = [ std::env::current_exe().unwrap().to_str().unwrap().to_owned(),
+                                            "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
                                             "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".to_owned(),
                                             "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1".to_owned(),
                                             "[heap]".to_owned(),
