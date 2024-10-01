@@ -1,0 +1,40 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libruxfdtab.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "sorter",
+      "libtinywasm_sorter.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "sorter",
+        "sorter",
+        "sorter",
+        "sorter"
+      ],
+      "args": {
+        "sorter_num": "4",
+        "merger_num": "5"
+      }
+    }
+  ]
+}
