@@ -1,12 +1,12 @@
 use core::net::SocketAddrV4;
 
-use alloc::string::String;
+use alloc::{string::String, vec::Vec};
 use thiserror_no_std::Error;
 
 use crate::{
     fatfs::FatfsError,
     socket::SmoltcpError,
-    types::{Fd, OpenFlags, OpenMode, Size, SockFd, Stat},
+    types::{Fd, OpenFlags, OpenMode, Size, SockFd, Stat, DirEntry},
 };
 
 pub type OpenFunc = fn(&str, OpenFlags, OpenMode) -> FdtabResult<Fd>;
@@ -15,6 +15,7 @@ pub type ReadFunc = fn(Fd, &mut [u8]) -> FdtabResult<Size>;
 pub type CloseFunc = fn(Fd) -> FdtabResult<()>;
 pub type LseekFunc = fn(Fd, u32) -> FdtabResult<()>;
 pub type StatFunc = fn(Fd) -> FdtabResult<Stat>;
+pub type ReadDirFunc = fn(&str) -> FdtabResult<Vec<DirEntry>>;
 pub type ConnectFunc = fn(SocketAddrV4) -> FdtabResult<Fd>;
 pub type BindFunc = fn(SocketAddrV4) -> FdtabResult<Fd>;
 pub type AcceptFunc = fn(SockFd) -> FdtabResult<SockFd>;

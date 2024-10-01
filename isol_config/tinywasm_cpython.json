@@ -1,0 +1,36 @@
+{
+  "services": [
+    [
+      "fdtab",
+      "libruxfdtab.so"
+    ],
+    [
+      "time",
+      "libtime.so"
+    ],
+    [
+      "stdio",
+      "libstdio.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
+    ]
+  ],
+  "apps": [
+    [
+      "tinywasm",
+      "libtinywasm_cpython.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "tinywasm"
+      ],
+      "args": {
+        "pyfile_path": "/wasm_bench/alu.py"
+      }
+    }
+  ]
+}

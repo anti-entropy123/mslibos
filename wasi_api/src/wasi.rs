@@ -1,14 +1,14 @@
 extern crate alloc;
 
 use core::slice;
-use alloc::{format, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use spin::{Mutex, MutexGuard};
 use hashbrown::HashMap;
 
-use ms_hostcall::types::{OpenFlags, OpenMode};
+use ms_hostcall::{fdtab::FdtabResult, types::{OpenFlags, OpenMode, Stat, Fd, DirEntry}};
 use ms_std::{
     libos::libos,
-    println,
+    // println,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tinywasm::{FuncContext, MemoryStringExt};
@@ -25,6 +25,28 @@ struct WasiFdstat {
     fs_flags: u16,
     fs_rights_base: u64,
     fs_rights_inheriting: u64,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+struct WasiFilestat {
+    dev: u64,
+    ino: u64,
+    filetype: u8,
+    nlink: u64,
+    size: u64,
+    atim: u64,
+    mtim: u64,
+    ctim: u64,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+struct Dirent {
+    d_next: u64,
+    d_ino: u64,
+    d_namelen: u32,
+    d_type: u8
 }
 
 #[repr(C)]
@@ -69,6 +91,27 @@ pub fn set_wasi_state(id: usize, _args: Vec<String>) {
     let mut map = get_hashmap_wasi_state_mut();
     let wasi_state: WasiState = WasiState{args: _args};
     map.insert(id, (&wasi_state).clone());
+}
+
+lazy_static::lazy_static! {
+    static ref FD2PATH: Mutex<HashMap<u32, String>> = Mutex::new( HashMap::new() );
+}
+
+fn get_hashmap_fd2path_mut() -> MutexGuard<'static, HashMap<u32, String>> {
+    FD2PATH.lock()
+}
+
+fn get_fd2path<'a>(fd: u32, map: &'a MutexGuard<'static, HashMap<u32, String>>) -> &'a String {
+    let path =  map.get(&fd).unwrap();
+    if path.len() == 0 {
+        panic!("FD2PATH uninit")
+    }
+    path
+}
+
+pub fn set_fd2path(fd: u32, path: String) {
+    let mut map = get_hashmap_fd2path_mut();
+    map.insert(fd, path);
 }
 
 struct LCG {
@@ -166,6 +209,16 @@ pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Resul
     Ok(0)
 }
 
+pub fn clock_res_get(_: FuncContext, _args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into clock_res_get");
+        println!("args: clock_id: {:?}, resolution: {:?}", _args.0, _args.1);
+    }
+
+    Ok(0)
+}
+
 pub fn clock_time_get(mut ctx: FuncContext, args: (i32, i64, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
@@ -175,12 +228,6 @@ pub fn clock_time_get(mut ctx: FuncContext, args: (i32, i64, i32)) -> tinywasm::
             args.0, args.1, args.2
         );
     }
-
-    println!("[Debug] Invoke into clock_time_get");
-    println!(
-        "args: clock_id: {:?}, precision: {:?}, time: {:?}",
-        args.0, args.1, args.2
-    );
 
     let time_ptr = args.2 as usize;
     let mut mem = ctx.exported_memory_mut("memory")?;
@@ -228,6 +275,15 @@ pub fn environ_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Re
     Ok(0)
 }
 
+pub fn fd_advise(_: FuncContext<'_>, _args: (i32, i64, i64, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_advise");
+        println!("args: fd: {:?}, offset: {:?}, len: {:?}, advice: {:?}", _args.0, _args.1, _args.2, _args.3);
+    }
+    Ok(0)
+}
+
 pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
@@ -238,6 +294,15 @@ pub fn fd_close(mut _ctx: FuncContext, _args: i32) -> tinywasm::Result<i32> {
     let fd = _args as u32;
     libos!(close(fd)).unwrap();
 
+    Ok(0)
+}
+
+pub fn fd_datasync(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_datasync");
+        println!("args: fd: {:?}", _args);
+    }
     Ok(0)
 }
 
@@ -347,6 +412,28 @@ pub fn fd_filestat_set_size(_: FuncContext<'_>, _args: (i32, i64)) -> tinywasm::
     Ok(0)
 }
 
+pub fn fd_filestat_set_times(_: FuncContext<'_>, _args: (i32, i64, i64, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_filestat_set_times");
+        println!("args: fd: {:?}, st_atim: {:?}, st_mtim: {:?}, fst_flags: {:?}", _args.0, _args.1, _args.2, _args.3);
+    }
+    Ok(0)
+}
+
+pub fn fd_pread(mut _ctx: FuncContext<'_>, _args: (i32, i32, i32, i64, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_pread");
+        println!(
+            "args: fd: {:?}, iovs: {:?}, iovs_len: {:?}, offset: {:?}, nread: {:?}",
+            _args.0, _args.1, _args.2, _args.3, _args.4
+        );
+    }
+
+    Ok(0)
+}
+
 pub fn fd_prestat_get(mut ctx: FuncContext<'_>, args: (i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
@@ -451,21 +538,113 @@ pub fn fd_read(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i32)) -> tinywasm
     Ok(0)
 }
 
-pub fn fd_readdir(
-    mut _ctx: FuncContext<'_>,
-    _args: (i32, i32, i32, i64, i32),
-) -> tinywasm::Result<i32> {
+pub fn fd_pwrite(mut _ctx: FuncContext<'_>, _args: (i32, i32, i32, i64, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
-        println!("[Debug] Invoke into fd_readdir");
+        println!("[Debug] Invoke into fd_pwrite");
         println!(
-            "args: fd: {:?}, buf: {:?}, buf_len: {:?}, cookie: {:?}, bufused: {:?}",
+            "args: fd: {:?}, iovs: {:?}, iovs_len: {:?}, offset: {:?}, nwritten: {:?}",
             _args.0, _args.1, _args.2, _args.3, _args.4
         );
     }
 
     Ok(0)
 }
+
+pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_readdir");
+        println!(
+            "args: fd: {:?}, buf: {:?}, buf_len: {:?}, cookie: {:?}, bufused: {:?}",
+            args.0, args.1, args.2, args.3, args.4
+        );
+    }
+
+    let fd = args.0 as u32;
+    let buf = args.1 as u32;
+    let buf_len = args.2 as u32;
+    let cookie = args.3 as u64;
+    let bufused = args.4 as u32;
+    let mut mem = ctx.exported_memory_mut("memory")?;
+
+    let map = FD2PATH.lock();
+    let path = get_fd2path(fd, &map);
+
+    #[cfg(feature = "log")] {
+        println!("[DEBUG] fd_readdir: fd = {:?}, path = {:?}", fd, path);
+    }
+
+    let mut entries: Vec<DirEntry> = libos!(readdir(path)).unwrap();
+
+    entries.push(DirEntry{
+        dir_path: ".".to_owned(),
+        entry_name: ".".to_owned(),
+        entry_type: 4
+    });
+    entries.push(DirEntry{
+        dir_path: "..".to_owned(),
+        entry_name: "..".to_owned(),
+        entry_type: 4
+    });
+
+    entries.sort_by(|a, b| a.entry_name.cmp(&b.entry_name));
+
+    let mut cur_cookie = cookie;
+    let mut cur_buf = buf;
+    let mut bufused_len: u32 = 0;
+    for item in entries.iter().skip(cookie as usize) {
+        cur_cookie += 1;
+        let dirent = Dirent {
+            d_next: cur_cookie,
+            d_ino: match item.entry_name.as_str() {
+                "." | ".." => 0,
+                _ => {
+                    let item_fd = libos!(open(&item.dir_path, OpenFlags::empty(), OpenMode::RD)).unwrap();
+                    let item_stat = libos!(stat(item_fd)).unwrap();
+                    item_stat.st_ino
+                }
+            },
+            d_namelen: item.entry_name.len() as u32,
+            d_type: match item.entry_type {
+                2 => 2, // CharDevice
+                4 => 3, // Directory
+                8 => 4, // Regular file
+                _ => 0 // Unknown
+            }
+        };
+        // println!("[DEBUG] dirent: {:?}", dirent);
+        let ret = (&dirent) as *const _ as usize;
+        let ret = unsafe {
+            core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<Dirent>())
+        };
+
+        if bufused_len + core::mem::size_of::<Dirent>() as u32 + item.entry_name.len() as u32 > buf_len {
+            // println!("[ERR] fd_readdir: bufused overflow!");
+            let cap = buf_len - bufused_len;
+            let result: Vec<u8> = [ret, item.entry_name.as_bytes()].concat();
+            // let result: &[u8] = &result;
+            let result = &result as *const _ as _;
+            let result = unsafe { core::slice::from_raw_parts(&result, cap as _) };
+            mem.store(cur_buf as usize, cap as usize, result)?;
+            mem.store(bufused as usize, core::mem::size_of::<u32>(), &buf_len.to_ne_bytes())?;
+            return Ok(0); // Overflow
+        }
+
+        mem.store(cur_buf as usize, core::mem::size_of::<Dirent>(), ret)?;
+        cur_buf += core::mem::size_of::<Dirent>() as u32;
+        bufused_len += core::mem::size_of::<Dirent>() as u32;
+
+        mem.store(cur_buf as usize, item.entry_name.len(), item.entry_name.as_bytes())?;
+        cur_buf += item.entry_name.len() as u32;
+        bufused_len += item.entry_name.len() as u32;
+       
+    }
+    mem.store(bufused as usize, core::mem::size_of::<u32>(), &bufused_len.to_ne_bytes())?;
+
+    Ok(0)
+}
+
 
 pub fn fd_seek(mut _ctx: FuncContext<'_>, _args: (i32, i64, i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
@@ -501,6 +680,16 @@ pub fn fd_sync(_: FuncContext<'_>, _args: i32) -> tinywasm::Result<i32> {
         println!("[Debug] Invoke into fd_sync");
         println!("args: fd: {:?}", _args);
     }
+    Ok(0)
+}
+
+pub fn fd_tell(_: FuncContext, _args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into fd_tell");
+        println!("args: fd: {:?}, offset: {:?}", _args.0, _args.1);
+    }
+
     Ok(0)
 }
 
@@ -556,17 +745,68 @@ pub fn path_create_directory(
 }
 
 pub fn path_filestat_get(
-    _ctx: FuncContext<'_>,
-    _args: (i32, i32, i32, i32, i32),
+    mut ctx: FuncContext<'_>,
+    args: (i32, i32, i32, i32, i32),
 ) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_filestat_get");
         println!(
             "args: fd: {:?}, flags: {:?}, path: {:?}, path_len: {:?}, buf: {:?}",
-            _args.0, _args.1, _args.2, _args.3, _args.4
+            args.0, args.1, args.2, args.3, args.4
         );
     }
+
+    let _fd = args.0 as usize;
+    let _flags = args.1 as usize;
+    let _path = args.2 as usize;
+    let _path_len = args.3 as usize;
+    let buf = args.4 as usize;
+
+    let mut mem = ctx.exported_memory_mut("memory")?;
+    let path = mem.load_string(args.2 as usize, args.3 as usize)?;
+    #[cfg(feature = "log")]
+    println!("path: {:?}", path);
+
+    let path_fd: FdtabResult<Fd> = libos!(open(&path, OpenFlags::empty(), OpenMode::RD));
+    let path_fd = if let Err(_e) = path_fd {
+        #[cfg(feature = "log")] {
+            println!("[DEBUG] get path err: {:?}", _e);
+            println!("[DEBUG] return to wasi with errno 44: (noent - No such file or directory)");
+        }
+        return Ok(44);
+    } else {
+        path_fd.unwrap()
+    };
+
+
+    let ruxstat: Stat = libos!(stat(path_fd)).unwrap();
+
+    // println!("[DEBUG] ruxstat.st_mode: {:?}", (ruxstat.st_mode >> 12));
+
+    let stat = WasiFilestat{
+        dev: ruxstat.st_dev,
+        ino: ruxstat.st_ino,
+        filetype: match ruxstat.st_mode >> 12 {
+            2 => 2, // CharDevice
+            4 => 3, // Directory
+            8 => 4, // Regular file
+            _ => 0 // Unknown
+        },
+        nlink: ruxstat.st_nlink,
+        size: ruxstat.st_size as u64,
+        atim: ruxstat.st_atime.tv_nsec as u64,
+        mtim: ruxstat.st_mtime.tv_nsec as u64 ,
+        ctim: ruxstat.st_ctime.tv_nsec as u64,
+    };
+
+    // println!("[DEBUG] return WasiFilestat: {:?}", stat);
+
+    let ret = (&stat) as *const _ as usize;
+    let ret = unsafe {
+        core::slice::from_raw_parts(ret as *const u8, core::mem::size_of::<WasiFilestat>())
+    };
+    mem.store(buf, core::mem::size_of::<WasiFilestat>(), ret)?;
 
     Ok(0)
 }
@@ -602,7 +842,7 @@ pub fn path_open(
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into path_open");
-        println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
+        // println!("args: fd: {:?}, dirflags: {:?}, path_addr: {:?}, path_len: {:?}, oflags: {:?}, fs_rights_base: {:?}, fs_rights_inheriting: {:?}, fdflags: {:?}, retptr: {:?}", args.0 as u32, args.1 as u32, args.2 as u32, args.3 as u32, args.4 as u16, format!("{:064b}", args.5 as u64), format!("{:064b}", args.6 as u64), args.7 as u16, args.8 as u32);
     }
     let mut mem = ctx.exported_memory_mut("memory")?;
     let _fd = args.0 as u32;
@@ -619,6 +859,17 @@ pub fn path_open(
     let path = mem.load_string(path_addr as usize, path_len as usize)?;
     #[cfg(feature = "log")]
     println!("path: {:?}", path);
+
+    // special processing for cpython
+    if path == "pyvenv.cfg" {
+        // println!("[DEBUG] Return 44 (noent - No such file or directory)");
+        return Ok(44);
+    }
+
+    if path == "pybuilddir.txt" {
+        // println!("[DEBUG] Return 44 (noent - No such file or directory)");
+        return Ok(44);
+    }
 
     let mut flags: OpenFlags = OpenFlags::empty();
     if (fdflags & 1) == 1 {
@@ -640,6 +891,8 @@ pub fn path_open(
     #[cfg(feature = "log")]
     println!("ret_fd: {:?}", ret_fd);
     mem.store(retptr, core::mem::size_of::<i32>(), &ret_fd.to_ne_bytes())?;
+    // set fd2path
+    set_fd2path(ret_fd as u32, path);
     Ok(0)
 }
 
@@ -679,6 +932,22 @@ pub fn path_rename(
     {
         println!("[Debug] Invoke into path_rename");
         println!("args: old_fd: {:?}, old_path: {:?}, old_path_len: {:?}, new_fd: {:?}, new_path: {:?}, new_path_len: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
+    }
+
+    Ok(0)
+}
+
+pub fn path_symlink(
+    _ctx: FuncContext<'_>,
+    _args: (i32, i32, i32, i32, i32),
+) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into path_symlink");
+        println!(
+            "args: old_path: {:?}, old_path_len: {:?}, fd: {:?}, new_path: {:?}, new_path_len: {:?}",
+            _args.0, _args.1, _args.2, _args.3, _args.4
+        );
     }
 
     Ok(0)
@@ -741,6 +1010,59 @@ pub fn sched_yield(_ctx: FuncContext<'_>, _args: ()) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into sched_yield");
+    }
+
+    Ok(0)
+}
+
+pub fn sock_accept(_ctx: FuncContext<'_>, _args: (i32, i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into sock_accept");
+        // TO FIX: different parameters with https://wasix.org/docs/api-reference/wasi/sock_accept
+        println!(
+            "args: sock: {:?}, fd_flags: {:?}, ro_fd: {:?}",
+            _args.0, _args.1, _args.2
+        );
+    }
+
+    Ok(0)
+}
+
+pub fn sock_recv(
+    _ctx: FuncContext<'_>,
+    _args: (i32, i32, i32, i32, i32, i32),
+) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into sock_recv");
+        println!("args: sock: {:?}, ri_data: {:?}, ri_data_len: {:?}, ri_flags: {:?}, ro_data_len: {:?}, ro_flags: {:?}", _args.0, _args.1, _args.2, _args.3, _args.4, _args.5);
+    }
+
+    Ok(0)
+}
+
+pub fn sock_send(
+    _ctx: FuncContext<'_>,
+    _args: (i32, i32, i32, i32, i32),
+) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into sock_send");
+        println!(
+            "args: sock: {:?}, si_data: {:?}, si_data_len: {:?}, si_flags: {:?}, ret_data_len: {:?}",
+            _args.0, _args.1, _args.2, _args.3, _args.4
+        );
+    }
+
+    Ok(0)
+}
+
+pub fn sock_shutdown(_: FuncContext, _args: (i32, i32)) -> tinywasm::Result<i32> {
+    #[cfg(feature = "log")]
+    {
+        println!("[Debug] Invoke into sock_shutdown");
+        println!("args: sock: {:?}, how: {:?}", _args.0, _args.1);
     }
 
     Ok(0)
