@@ -1,9 +1,9 @@
 extern crate alloc;
 
+use alloc::{string::String, vec::Vec};
 use core::slice;
-use alloc::{format, string::String, vec::Vec};
-use spin::{Mutex, MutexGuard};
 use hashbrown::HashMap;
+use spin::{Mutex, MutexGuard};
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{
@@ -45,7 +45,7 @@ struct WasiPrestatT {
 
 #[derive(Clone)]
 pub struct WasiState {
-    pub args: Vec<String>
+    pub args: Vec<String>,
 }
 
 lazy_static::lazy_static! {
@@ -57,8 +57,11 @@ fn get_hashmap_wasi_state_mut() -> MutexGuard<'static, HashMap<usize, WasiState>
     WASI_STATE.lock()
 }
 
-fn get_wasi_state<'a>(id: usize, map: &'a MutexGuard<'static, HashMap<usize, WasiState>>) -> &'a WasiState {
-    let wasi_state =  map.get(&id).unwrap();
+fn get_wasi_state<'a>(
+    id: usize,
+    map: &'a MutexGuard<'static, HashMap<usize, WasiState>>,
+) -> &'a WasiState {
+    let wasi_state = map.get(&id).unwrap();
     if wasi_state.args.len() == 0 {
         panic!("WASI_STATE uninit")
     }
@@ -67,7 +70,7 @@ fn get_wasi_state<'a>(id: usize, map: &'a MutexGuard<'static, HashMap<usize, Was
 
 pub fn set_wasi_state(id: usize, _args: Vec<String>) {
     let mut map = get_hashmap_wasi_state_mut();
-    let wasi_state: WasiState = WasiState{args: _args};
+    let wasi_state: WasiState = WasiState { args: _args };
     map.insert(id, (&wasi_state).clone());
 }
 
@@ -99,7 +102,7 @@ impl LCG {
 }
 
 pub fn args_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32> {
-    #[cfg(feature="log")]
+    #[cfg(feature = "log")]
     {
         println!("[Debug] Invoke into args_get");
         println!("args: argv: {:?}, argv_buf: {:?}", args.0, args.1);
@@ -114,7 +117,8 @@ pub fn args_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32>
     let ctx_id = ctx.store().id();
     let map = WASI_STATE.lock();
     let wasi_state = get_wasi_state(ctx_id, &map);
-    let args: Vec<&[u8]> = wasi_state.args
+    let args: Vec<&[u8]> = wasi_state
+        .args
         .iter()
         .map(|a| a.as_bytes())
         .collect::<Vec<_>>();
@@ -122,16 +126,30 @@ pub fn args_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Result<i32>
 
     let mut mem = ctx.exported_memory_mut("memory")?;
 
-    #[cfg(feature="log")]
+    #[cfg(feature = "log")]
     println!("arg_vec len: {}", args.len());
     for (i, arg) in args.iter().enumerate() {
-        #[cfg(feature="log")]
-        println!("i: {:?}, offset: {:?}, arg: {:?}, arg_len: {:?}", i, offset, arg, arg.len());
+        #[cfg(feature = "log")]
+        println!(
+            "i: {:?}, offset: {:?}, arg: {:?}, arg_len: {:?}",
+            i,
+            offset,
+            arg,
+            arg.len()
+        );
         let arg_addr = argv_buf + offset;
 
-        mem.store(argv + i * core::mem::size_of::<u32>(), core::mem::size_of::<u32>(), &(arg_addr as u32).to_ne_bytes())?;
+        mem.store(
+            argv + i * core::mem::size_of::<u32>(),
+            core::mem::size_of::<u32>(),
+            &(arg_addr as u32).to_ne_bytes(),
+        )?;
         mem.store(arg_addr, arg.len(), arg)?;
-        mem.store(arg_addr + arg.len(), core::mem::size_of::<u8>(), "\0".as_bytes())?;
+        mem.store(
+            arg_addr + arg.len(),
+            core::mem::size_of::<u8>(),
+            "\0".as_bytes(),
+        )?;
 
         offset += arg.len() + 1;
     }
@@ -155,13 +173,24 @@ pub fn args_sizes_get(mut ctx: FuncContext, args: (i32, i32)) -> tinywasm::Resul
     let argc_val = wasi_state.args.len();
     let argv_buf_size_val: usize = wasi_state.args.iter().map(|v| v.len() + 1).sum();
 
-    #[cfg(feature="log")]
-    println!("argc_val={:?}, argv_buf_size_val: {:?}", argc_val, argv_buf_size_val);
+    #[cfg(feature = "log")]
+    println!(
+        "argc_val={:?}, argv_buf_size_val: {:?}",
+        argc_val, argv_buf_size_val
+    );
 
     let mut mem = ctx.exported_memory_mut("memory")?;
 
-    mem.store(argc_ptr, core::mem::size_of::<u32>(), &(argc_val as u32).to_ne_bytes())?;
-    mem.store(argv_buf_size_ptr, core::mem::size_of::<u32>(), &(argv_buf_size_val as u32).to_ne_bytes())?;
+    mem.store(
+        argc_ptr,
+        core::mem::size_of::<u32>(),
+        &(argc_val as u32).to_ne_bytes(),
+    )?;
+    mem.store(
+        argv_buf_size_ptr,
+        core::mem::size_of::<u32>(),
+        &(argv_buf_size_val as u32).to_ne_bytes(),
+    )?;
 
     Ok(0)
 }

@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(internal_features)]
 #![feature(lang_items)]
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
@@ -7,7 +8,6 @@
 #![feature(concat_idents)]
 #![feature(generic_const_exprs)]
 #![allow(incomplete_features)]
-#![feature(const_maybe_uninit_zeroed)]
 #![feature(const_mut_refs)]
 
 use agent::FaaSFuncResult;
@@ -69,8 +69,7 @@ pub fn main() -> FaaSFuncResult<()> {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_main() -> u64 
-{
+pub extern "C" fn rust_main() -> u64 {
     let mut return_value: Result<(), String> = Ok(());
     #[cfg(feature = "unwinding")]
     {

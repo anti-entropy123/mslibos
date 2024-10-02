@@ -49,7 +49,7 @@ pub fn addrinfo(name: &str) -> SmoltcpResult<Ipv4Addr> {
         let dns_socket = sockets.get_mut::<dns::Socket>(dns_handle);
         match dns_socket.get_query_result(query) {
             Ok(addrs) => {
-                let addr = match addrs.get(0).ok_or(SmoltcpError::DNSQueryFailed)? {
+                let addr = match addrs.first().ok_or(SmoltcpError::DNSQueryFailed)? {
                     smoltcp::wire::IpAddress::Ipv4(ipv4) => ipv4.0,
                 };
                 sockets.remove(dns_handle);
