@@ -19,16 +19,12 @@ for group in "${!test_groups[@]}"; do
     names=${test_groups[$group]}
     
     for name in $names; do
-        output=$(RUST_LOG=info cargo run $feature_arg -- --files "isol_config/$name.json" 2>&1)
-        echo "$output"
+        output=$(RUST_LOG=info cargo run $feature_arg -- --files "isol_config/$name.json")
         if [ $? -eq 0 ]; then
             results[$name]="passed"
             ((passed_count++)) # 增加通过计数
-        elif echo "$output" | grep -q "ERROR msvisor"; then
-            echo "Error detected in $name"
-            results[$name]="failed"
         else
-            echo "Command failed for $name"
+            echo -e "===== \033[31mCommand failed for $name\033[0m ====="
             results[$name]="failed"
         fi
     done

@@ -27,12 +27,13 @@ jobs:
       #     url: 'http://47.92.106.203:3306/fatfs.zip'
       #     destination: fs_images/
       - run: unzip fs_images/fatfs.zip -d fs_images
+      - run: unzip fs_images/fatfs_wasm.zip -d fs_images
       - run: ls -alh fs_images && realpath fs_images/fatfs.img
       - name: install rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2023-08-04
+          toolchain: nightly-2023-12-01
           override: true
       - name: Build
         run: cargo build --workspace && ./scripts/build_all_common.sh && ./scripts/build_user.sh
