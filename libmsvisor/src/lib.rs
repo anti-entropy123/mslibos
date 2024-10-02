@@ -1,4 +1,5 @@
 #![allow(clippy::result_unit_err)]
+#![feature(new_uninit)]
 
 mod hostcalls;
 

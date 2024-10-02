@@ -1,7 +1,5 @@
 #![no_std]
-#![feature(ip_in_core)]
 #![feature(decl_macro)]
-#![feature(error_in_core)]
 
 extern crate alloc;
 

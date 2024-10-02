@@ -2,6 +2,7 @@
 use core::hash::{BuildHasher, Hash, Hasher};
 
 use alloc::{borrow::ToOwned, collections::BTreeMap, format, string::String, vec::Vec};
+use hashbrown::DefaultHashBuilder;
 use hashbrown::HashMap;
 pub use ms_hostcall::Verify;
 use ms_std::agent::{DataBuffer, FaaSFuncResult as Result};
@@ -64,7 +65,7 @@ pub fn main(args: &BTreeMap<String, String>) -> Result<()> {
     ms_std::println!("the counter nums is {}", counter.len());
     for (word, count) in counter {
         let shuffle_idx = {
-            let mut hasher = hashbrown::hash_map::DefaultHashBuilder::default().build_hasher();
+            let mut hasher = DefaultHashBuilder::default().build_hasher();
             word.hash(&mut hasher);
             hasher.finish() % reducer_num
         };
