@@ -1,5 +1,5 @@
 #![no_std]
-use alloc::{collections::BTreeMap, string::String};
+use alloc::string::String;
 use ms_std::{agent::FaaSFuncResult as Result, fs::File, mm::Mmap, println};
 
 extern crate alloc;

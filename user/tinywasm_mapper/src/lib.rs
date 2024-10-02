@@ -10,11 +10,15 @@ cfg_if::cfg_if! {
     }
 }
 
-use alloc::{collections::BTreeMap, format, string::{String, ToString}, vec::Vec};
-use ms_std::{args, println, libos::libos};
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
 use ms_hostcall::types::{OpenFlags, OpenMode};
+use ms_std::{args, libos::libos, println};
 
-use tinywasm::{Module, Store, ModuleInstance};
+use tinywasm::{Module, ModuleInstance, Store};
 use wasi_api::tinywasm;
 
 const WASM: &[u8] = include_bytes!("../mapper.wasm");
@@ -30,10 +34,11 @@ fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
     #[cfg(feature = "log")]
     println!("rust: my_id: {:?}, reducer_num: {:?}", my_id, reducer_num);
 
-    let mut wasi_args: Vec<String> = Vec::new();
-    wasi_args.push("fake system path!".to_string()); // c语言main第一个参数是系统路径
-    wasi_args.push(my_id.to_string());
-    wasi_args.push(reducer_num.to_string());
+    let wasi_args: Vec<String> = Vec::from([
+        "fake system path!".to_string(),
+        my_id.to_string(),
+        reducer_num.to_string(),
+    ]);
 
     let _open_root = *MUST_OPEN_ROOT;
 

@@ -27,6 +27,7 @@
       "libtinywasm_reducer.so"
     ]
   ],
+  "fs_image": "fs_images/fatfs_wasm.img",
   "groups": [
     {
       "list": [

@@ -1,5 +1,5 @@
 #![no_std]
-use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
+use alloc::{format, vec::Vec};
 
 use ms_std::{args, prelude::*, println};
 use ms_std_proc_macro::FaasData;
