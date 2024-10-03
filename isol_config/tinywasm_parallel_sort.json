@@ -39,24 +39,20 @@
     {
       "list": [
         "sorter",
-        "sorter",
-        "sorter",
         "sorter"
       ],
       "args": {
-        "sorter_num": "4",
+        "sorter_num": "2",
         "merger_num": "5"
       }
     },
     {
       "list": [
         "spliter",
-        "spliter",
-        "spliter",
         "spliter"
       ],
       "args": {
-        "sorter_num": "4",
+        "sorter_num": "2",
         "merger_num": "5"
       }
     },
@@ -69,7 +65,7 @@
         "merger"
       ],
       "args": {
-        "sorter_num": "4",
+        "sorter_num": "2",
         "merger_num": "5"
       }
     },
@@ -78,7 +74,7 @@
         "checker"
       ],
       "args": {
-        "sorter_num": "4",
+        "sorter_num": "2",
         "merger_num": "5"
       }
     }
