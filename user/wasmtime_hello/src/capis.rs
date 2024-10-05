@@ -1,9 +1,9 @@
 #![allow(non_camel_case_types)]
 
 extern crate sjlj;
-use core::ptr::null_mut;
+use core::ptr::{null, null_mut};
 
-use ms_hostcall::mm::{MMResult, ProtFlags};
+use ms_hostcall::{mm::{MMResult, ProtFlags}, signal::{SigAction, SigInfo, Sigset, Ucontext}};
 use ms_std::libos::libos;
 use ms_std::println;
 use sjlj::{JumpBuf, longjmp, setjmp};
@@ -45,10 +45,19 @@ pub use WASMTIME_PROT_WRITE as PROT_WRITE;
 ///
 /// When this function does not return it's because `wasmtime_longjmp` is
 /// used to handle a Wasm-based trap.
-// pub type wasmtime_trap_handler_t =
-//     extern "C" fn(ip: usize, fp: usize, has_faulting_addr: bool, faulting_addr: usize);
+pub type wasmtime_trap_handler_t =
+    extern "C" fn(ip: usize, fp: usize, has_faulting_addr: bool, faulting_addr: usize);
 
-// static mut g_handler: wasmtime_trap_handler_t = null_mut();
+extern "C" fn null_trap_handler(
+    _ip: usize,
+    _fp: usize,
+    _has_faulting_addr: bool,
+    _faulting_addr: usize,
+) {
+    // no-op
+}
+
+static mut g_handler: wasmtime_trap_handler_t = null_trap_handler;
 /// Abstract pointer type used in the `wasmtime_memory_image_*` APIs which
 /// is defined by the embedder.
 pub enum wasmtime_memory_image {}
@@ -198,58 +207,49 @@ pub extern "C" fn wasmtime_longjmp(jmp_buf: *const u8) {
 /// the system.
 ///
 
+const SA_SIGINFO: u32 = 0x00000008;
+const SA_NODEFER: u32 = 0x40000000;
+const SIGILL: i32 = 4;
+const SIGSEGV: i32 = 11;
+const SIGFPE: i32 = 8;
+
 /// Returns 0 on success and an error code on failure.
+fn handle_signal(sig: i32, info: *mut SigInfo, ctx: *mut Ucontext) {
+    unsafe {
+        if g_handler == null_trap_handler {
+            return;
+        }
+        let ip = (*ctx).uc_mcontext.gregs[16];
+        let fp = (*ctx).uc_mcontext.gregs[10];
+        let has_faulting_addr = sig == SIGSEGV;
+        let mut faulting_addr = 0;
+        if has_faulting_addr {
+            faulting_addr = (*info).siginfo.sifields.sigsys.call_addr as usize;
+        }
+        println!("handle_signal: sig: {}, ip: {}, fp: {}, has_faulting_addr: {}, faulting_addr: {}", sig, ip, fp, has_faulting_addr, faulting_addr);
+        g_handler(ip, fp, has_faulting_addr, faulting_addr);
+    }
+    // signal(signo, SIG_DFL);
+    println!("handle_signal: sig: {}, should signal", sig);
+}
 
-// pub struct sigaction {
-//     sa_sigaction: extern "C" fn(),
-//     sa_flags: u32,
-//     sa_mask: u32,
-// }
 
-// // in <bits/sigaction.h>
-// pub const SA_SIGINFO: u32 = 0x00000004;
-// pub const SA_NODEFER: u32 = 0x40000000;
-
-// // in <bits/signum-generic.h>
-// pub const SIGILL: u32 = 4;
-// pub const SIGSEGV: u32 = 11;
-// pub const SIGFPE: u32 = 8;
-
-
-// #[no_mangle]
-// pub extern "C" fn wasmtime_init_traps(handler: wasmtime_trap_handler_t) -> i32 {
-//     /*
-//        int rc;
-//     g_handler = handler;
-
-//     struct sigaction action;
-//     memset(&action, 0, sizeof(action));
-
-//     action.sa_sigaction = handle_signal;
-//     action.sa_flags = SA_SIGINFO | SA_NODEFER;
-//     sigemptyset(&action.sa_mask);
-
-//     rc = sigaction(SIGILL, &action, NULL);
-//     if (rc != 0)
-//         return errno;
-//     rc = sigaction(SIGSEGV, &action, NULL);
-//     if (rc != 0)
-//         return errno;
-//     rc = sigaction(SIGFPE, &action, NULL);
-//     if (rc != 0)
-//         return errno;
-//     return 0;
-//     */
-//     let rc = 0;
-//     unsafe {
-//         g_handler = handler;
-//         let action = sigaction {
-//             sa_sigaction: handle_signal,
-//             sa_flags: SA_SIGINFO | SA_NODEFER,
-//             sa_mask: 0,
-//         };
-//     }
-// }
+#[no_mangle]
+pub extern "C" fn wasmtime_init_traps(handler: wasmtime_trap_handler_t) -> i32 {
+    unsafe {
+        g_handler = handler;
+        let action = SigAction {
+            sa_handler: handle_signal as usize,
+            sa_flags: (SA_NODEFER | SA_SIGINFO) as usize,
+            sa_mask: Sigset { sig: [0; 1] },
+        };
+        let rc = libos!(sigaction(SIGILL, &action, null()));
+        if rc != 0 {
+            return rc;
+        }
+    }
+    0
+}
 
 /// Attempts to create a new in-memory image of the `ptr`/`len` combo which
 /// can be mapped to virtual addresses in the future.

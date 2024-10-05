@@ -64,6 +64,8 @@ pub struct UserHostCall {
 
     get_time_addr: Option<usize>,
     nanosleep_addr: Option<usize>,
+
+    sigaction_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -121,6 +123,8 @@ impl UserHostCall {
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
             CommonHostCall::NanoSleep => &mut self.nanosleep_addr,
+
+            CommonHostCall::SigAction => &mut self.sigaction_addr,
         };
 
         if entry_addr.is_none() {

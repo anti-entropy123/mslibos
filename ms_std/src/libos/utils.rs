@@ -37,6 +37,7 @@ pub macro func_type {
     (unregister_file_backend) => (ms_hostcall::mmap_file_backend::UnregisterFileBackendFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
     (nanosleep) => (ms_hostcall::types::NanoSleepFunc),
+    (sigaction) => (ms_hostcall::signal::SigActionFunc),
 }
 
 pub macro hostcall_id {
@@ -76,6 +77,7 @@ pub macro hostcall_id {
     (unregister_file_backend) => (ms_hostcall::CommonHostCall::UnregisterFileBackend),
     (get_time) => (ms_hostcall::CommonHostCall::GetTime),
     (nanosleep) => (ms_hostcall::CommonHostCall::NanoSleep),
+    (sigaction) => (ms_hostcall::CommonHostCall::SigAction),
 }
 
 pub macro libos {

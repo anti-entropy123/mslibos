@@ -11,6 +11,10 @@
     [
       "mm",
       "libmm.so"
+    ],
+    [
+      "signal",
+      "libsignal.so"
     ]
   ],
   "apps": [
