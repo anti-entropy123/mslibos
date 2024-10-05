@@ -1,9 +1,9 @@
 #![cfg_attr(feature = "with_libos", no_std)]
 
 use alloc::format;
-use ms_std::{agent::FaaSFuncResult as Result, println};
+use ms_std::agent::FaaSFuncResult as Result;
 extern crate alloc;
-use wasi_api::tinywasm::{Module, Store, ModuleInstance};
+use wasi_api::tinywasm::{Module, ModuleInstance, Store};
 
 #[no_mangle]
 pub fn main() -> Result<()> {
@@ -14,7 +14,7 @@ pub fn main() -> Result<()> {
 
     let instance = ModuleInstance::instantiate(&mut store, module, Some(imports))?;
     // assert_eq!(add.call(&mut store, (20))?, 3);
-    let result = instance.start(&mut store);
+    let _result = instance.start(&mut store);
     // println!("{:?}", unwinding::panic::catch_unwind(|| result));
 
     Ok(().into())

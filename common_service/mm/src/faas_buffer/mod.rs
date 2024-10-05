@@ -9,7 +9,6 @@ use ms_hostcall::{mm::MMResult, SERVICE_HEAP_SIZE};
 
 use hashbrown::HashMap;
 use lazy_static::lazy_static;
-use ms_std::println;
 use spin::Mutex;
 
 lazy_static! {
@@ -31,7 +30,7 @@ pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> 
         .lock()
         .insert(slot.to_owned(), (addr, fingerprint));
 
-    println!("buffer_alloc layout={:?}, addr=0x{:x}", l, addr);
+    // ms_std::println!("buffer_alloc layout={:?}, addr=0x{:x}", l, addr);
 
     Ok(addr)
 }
