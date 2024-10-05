@@ -1,6 +1,6 @@
 extern crate alloc;
 
-use core::slice;
+use core::{mem::forget, slice};
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use spin::{Mutex, MutexGuard};
 use hashbrown::HashMap;
@@ -8,7 +8,7 @@ use hashbrown::HashMap;
 use ms_hostcall::{fdtab::FdtabResult, types::{OpenFlags, OpenMode, Stat, Fd, DirEntry}};
 use ms_std::{
     libos::libos,
-    // println,
+    println,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tinywasm::{FuncContext, MemoryStringExt};
@@ -602,6 +602,7 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
                 _ => {
                     let item_fd = libos!(open(&item.dir_path, OpenFlags::empty(), OpenMode::RD)).unwrap();
                     let item_stat = libos!(stat(item_fd)).unwrap();
+                    let _close_result =  libos!(close(item_fd));
                     item_stat.st_ino
                 }
             },
@@ -620,14 +621,23 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
         };
 
         if bufused_len + core::mem::size_of::<Dirent>() as u32 + item.entry_name.len() as u32 > buf_len {
-            // println!("[ERR] fd_readdir: bufused overflow!");
-            let cap = buf_len - bufused_len;
+            #[cfg(feature = "log")]
+            println!("[ERR] fd_readdir: bufused overflow!");
+            // let cap = buf_len.wrapping_sub(bufused_len);
+            let cap: u32 = buf_len - bufused_len;
+            #[cfg(feature = "log")]
+            println!("[ERR] fd_readdir: wrapping_sub over! ({:?} = {:?} - {:?})", cap, buf_len, bufused_len);
             let result: Vec<u8> = [ret, item.entry_name.as_bytes()].concat();
             // let result: &[u8] = &result;
-            let result = &result as *const _ as _;
-            let result = unsafe { core::slice::from_raw_parts(&result, cap as _) };
-            mem.store(cur_buf as usize, cap as usize, result)?;
+            let result_void = &result as *const _ as _;
+            let result_write = unsafe { core::slice::from_raw_parts(&result_void, cap as _) };
+            #[cfg(feature = "log")]
+            println!("[ERR] fd_readdir: cap: {:?}, result_write.len(): {:?}", cap, result_write.len());
+            mem.store(cur_buf as usize, cap as usize, result_write)?;
             mem.store(bufused as usize, core::mem::size_of::<u32>(), &buf_len.to_ne_bytes())?;
+            #[cfg(feature = "log")]
+            println!("[ERR] fd_readdir: store over!");
+            forget(entries);
             return Ok(0); // Overflow
         }
 
@@ -641,7 +651,7 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
        
     }
     mem.store(bufused as usize, core::mem::size_of::<u32>(), &bufused_len.to_ne_bytes())?;
-
+    forget(entries);
     Ok(0)
 }
 
@@ -774,6 +784,7 @@ pub fn path_filestat_get(
             println!("[DEBUG] get path err: {:?}", _e);
             println!("[DEBUG] return to wasi with errno 44: (noent - No such file or directory)");
         }
+        forget(_e);
         return Ok(44);
     } else {
         path_fd.unwrap()

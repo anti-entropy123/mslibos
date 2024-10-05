@@ -1,7 +1,7 @@
 use core::mem::forget;
 
 use ms_std::agent::DataBuffer;
-#[cfg(feature = "log")]
+// #[cfg(feature = "log")]
 use ms_std::println;
 use ms_std_proc_macro::FaasData;
 use tinywasm::{FuncContext, MemoryStringExt};

@@ -28,9 +28,7 @@
       "list": [
         "tinywasm"
       ],
-      "args": {
-        "pyfile_path": "/wasm_bench/alu.py"
-      }
+      "args": {}
     }
   ]
 }
