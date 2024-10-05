@@ -4,6 +4,7 @@ use alloc::{string::ToString, vec::Vec};
 use ms_std::{agent::FaaSFuncResult as Result, args, println};
 use wasmtime::{component::Func, Engine, Extern, Instance, Linker, Module, Store};
 use wasmtime::{AsContext, Caller};
+mod capis;
 extern crate alloc;
 
 static CWASM: &[u8] = include_bytes!("../add.cwasm");
@@ -44,6 +45,3 @@ pub fn main() -> Result<()> {
 
     Ok(().into())
 }
-
-// #[no_mangle]
-// fn wasmtime_tls_set() {}
