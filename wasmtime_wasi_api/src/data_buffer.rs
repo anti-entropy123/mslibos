@@ -9,6 +9,8 @@ use ms_std::println;
 use ms_std_proc_macro::FaasData;
 use wasmtime::Caller;
 
+use crate::LibosCtx;
+
 #[derive(FaasData)]
 struct WasmDataBuffer(*mut u8, usize);
 
@@ -19,17 +21,17 @@ impl Default for WasmDataBuffer {
 }
 
 pub fn buffer_register(
-    mut caller: Caller<'_, ()>,
+    mut caller: Caller<'_, LibosCtx>,
     slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
-    println!("buffer_register");
+    println!("[Debug] buffer_register");
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);
     slot_name.resize(slot_name_size as usize, 0);
     memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
-    let slot_name = String::from_utf8(slot_name).expect("Not a valid UTF-8 sequence");
+    let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);
@@ -37,7 +39,7 @@ pub fn buffer_register(
     let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     content.resize(buffer_size as usize, 0);
     memory.read(&caller, buffer_base as usize, &mut content).unwrap();
-    let mut content = String::from_utf8(content).expect("Not a valid UTF-8 sequence");
+    let mut content = String::from_utf8(content).expect("[Err] Not a valid UTF-8 sequence");
 
     let buffer_base = content.as_mut_ptr();
     #[cfg(feature = "log")]
@@ -50,17 +52,17 @@ pub fn buffer_register(
 }
 
 pub fn access_buffer(
-    mut caller: Caller<'_, ()>,
+    mut caller: Caller<'_, LibosCtx>,
     slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
-    println!("access_buffer");
+    println!("[Debug] access_buffer");
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);
     slot_name.resize(slot_name_size as usize, 0);
     memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
-    let slot_name = String::from_utf8(slot_name).expect("Not a valid UTF-8 sequence");
+    let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);

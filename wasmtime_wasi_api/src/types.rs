@@ -1,4 +1,34 @@
-pub enum Errno {
+#[repr(C)]
+pub(crate) struct WasiCiovec {
+    pub(crate) buf: u32,
+    pub(crate) buf_len: u32,
+}
+
+#[repr(C)]
+pub(crate) struct WasiFdstat {
+    pub(crate) fs_filetype: u8,
+    pub(crate) fs_flags: u16,
+    pub(crate) fs_rights_base: u64,
+    pub(crate) fs_rights_inheriting: u64,
+}
+
+#[repr(C)]
+pub(crate)  struct WasiPrestatDir {
+    pub(crate) dirname_len: u32,
+}
+
+#[repr(C)]
+pub(crate) struct WasiPrestatUt {
+    pub(crate) dir: WasiPrestatDir,
+}
+
+#[repr(C)]
+pub(crate) struct WasiPrestatT {
+    pub(crate) tag: u8,
+    pub(crate) u: WasiPrestatUt,
+}
+
+pub(crate) enum Errno {
     #[doc = " No error occurred. System call completed successfully."]
     Success,
     #[doc = " Argument list too long."]

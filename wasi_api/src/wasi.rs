@@ -1,6 +1,6 @@
 extern crate alloc;
 
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec::Vec, format};
 use core::slice;
 use hashbrown::HashMap;
 use spin::{Mutex, MutexGuard};
