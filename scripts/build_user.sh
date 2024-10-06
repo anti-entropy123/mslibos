@@ -1,10 +1,21 @@
 #!/bin/bash
 
-if [ $# -gt 0 ]; then
-    feature_arg="--features $1"
-else
-    feature_arg=""
-fi
+feature_arg=""
+release_flag=""
+
+# 解析命令行参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --release)
+            release_flag="--release"
+            shift
+            ;;
+        *)  # 处理features参数
+            feature_arg="--features $1"
+            shift
+            ;;
+    esac
+done
 
 find user -name 'Cargo.toml' \
     -not -path 'user/nn_conv/Cargo.toml' \
@@ -20,4 +31,4 @@ find user -name 'Cargo.toml' \
     -not -path 'user/tinywasm_write/Cargo.toml' \
     -not -path 'user/tinywasm_recv_str/Cargo.toml' \
     -not -path 'user/tinywasm_c_printf/Cargo.toml' | \
-    xargs -I {} bash -c "cargo build $feature_arg --manifest-path {}"
+    xargs -I {} bash -c "cargo build $feature_arg --manifest-path {} $release_flag"
