@@ -32,7 +32,7 @@ pub fn getidx(word: &str, reducer_num: u64) -> u64 {
     let mut hash_val: u64 = 0;
     for c in word.chars() {
         hash_val = hash_val * 31 + c as u64;
-        hash_val = hash_val % reducer_num;
+        hash_val %= reducer_num;
     }
     hash_val
 }
