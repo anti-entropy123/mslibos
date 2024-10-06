@@ -1,2 +1,0 @@
-0 24 22 14 36 17 15 32 6 4
-e name name name world world world world
