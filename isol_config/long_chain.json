@@ -67,7 +67,7 @@
             "libarray_sum.so"
         ]
     ],
-    "fs_image": "fs_images/fatfs_large.img",
+    "fs_image": "fs_images/fatfs.img",
     "groups": [
         {
             "list": [

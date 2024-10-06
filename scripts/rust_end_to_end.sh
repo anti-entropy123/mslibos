@@ -16,10 +16,15 @@ fi
 case $1 in
   "long_chain")
     echo "Executing long_chain"
+    if [ -f "./user/file_reader/Cargo.toml" ]; then
+        cargo clean --manifest-path ./user/file_reader/Cargo.toml
+    fi
     if [ -f "./user/array_sum/Cargo.toml" ]; then
         cargo clean --manifest-path ./user/array_sum/Cargo.toml
     fi
+    cargo build --features mpk --manifest-path ./user/file_reader/Cargo.toml --release
     cargo build --features mpk --manifest-path ./user/array_sum/Cargo.toml --release
+    
     # 循环执行十次
     for (( i=1; i<=EXECUTIONS; i++ ))
     do
