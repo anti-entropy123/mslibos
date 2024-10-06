@@ -8,6 +8,7 @@ members = [
     "ms_std_proc_macro",
     "ms_std",
     "wasi_api",
+    "wasmtime_wasi_api",
 ]
 
 # The reason for excluding "user/" is obvious. This workspace can be regarded as 
