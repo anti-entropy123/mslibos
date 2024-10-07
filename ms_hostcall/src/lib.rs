@@ -45,6 +45,8 @@ pub enum CommonHostCall {
     Lseek,
     #[display(fmt = "stat")]
     Stat,
+    #[display(fmt = "readdir")]
+    ReadDir,
     #[display(fmt = "connect")]
     Connect,
     #[display(fmt = "socket")]
@@ -129,6 +131,7 @@ impl HostCallID {
                 | CommonHostCall::Close
                 | CommonHostCall::Lseek
                 | CommonHostCall::Stat
+                | CommonHostCall::ReadDir
                 | CommonHostCall::Connect
                 | CommonHostCall::Socket
                 | CommonHostCall::Bind

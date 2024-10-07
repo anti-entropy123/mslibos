@@ -38,6 +38,11 @@ pub fn import_all() -> tinywasm::Result<Imports> {
         )?
         .define(
             "wasi_snapshot_preview1",
+            "clock_res_get",
+            Extern::typed_func(wasi::clock_res_get),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
             "clock_time_get",
             Extern::typed_func(wasi::clock_time_get),
         )?
@@ -53,8 +58,18 @@ pub fn import_all() -> tinywasm::Result<Imports> {
         )?
         .define(
             "wasi_snapshot_preview1",
+            "fd_advise",
+            Extern::typed_func(wasi::fd_advise),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
             "fd_close",
             Extern::typed_func(wasi::fd_close),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "fd_datasync",
+            Extern::typed_func(wasi::fd_datasync),
         )?
         .define(
             "wasi_snapshot_preview1",
@@ -75,6 +90,21 @@ pub fn import_all() -> tinywasm::Result<Imports> {
             "wasi_snapshot_preview1",
             "fd_filestat_set_size",
             Extern::typed_func(wasi::fd_filestat_set_size),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "fd_filestat_set_times",
+            Extern::typed_func(wasi::fd_filestat_set_times),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "fd_pread",
+            Extern::typed_func(wasi::fd_pread),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "fd_pwrite",
+            Extern::typed_func(wasi::fd_pwrite),
         )?
         .define(
             "wasi_snapshot_preview1",
@@ -110,6 +140,11 @@ pub fn import_all() -> tinywasm::Result<Imports> {
             "wasi_snapshot_preview1",
             "fd_sync",
             Extern::typed_func(wasi::fd_sync),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "fd_tell",
+            Extern::typed_func(wasi::fd_tell),
         )?
         .define(
             "wasi_snapshot_preview1",
@@ -158,6 +193,11 @@ pub fn import_all() -> tinywasm::Result<Imports> {
         )?
         .define(
             "wasi_snapshot_preview1",
+            "path_symlink",
+            Extern::typed_func(wasi::path_symlink),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
             "path_unlink_file",
             Extern::typed_func(wasi::path_unlink_file),
         )?
@@ -180,6 +220,26 @@ pub fn import_all() -> tinywasm::Result<Imports> {
             "wasi_snapshot_preview1",
             "sched_yield",
             Extern::typed_func(wasi::sched_yield),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "sock_accept",
+            Extern::typed_func(wasi::sock_accept),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "sock_recv",
+            Extern::typed_func(wasi::sock_recv),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "sock_send",
+            Extern::typed_func(wasi::sock_send),
+        )?
+        .define(
+            "wasi_snapshot_preview1",
+            "sock_shutdown",
+            Extern::typed_func(wasi::sock_shutdown),
         )?;
 
     Ok(imports)

@@ -12,10 +12,10 @@ use crate::{
 };
 use ms_hostcall::{
     fdtab::{FdtabError, FdtabResult},
-    types::{Fd, OpenFlags, OpenMode, Size, Stat},
+    types::{Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec, DirEntry},
 };
 use ruxdriver::init_drivers;
-use ruxfdtable::FileLike;
+use ruxfdtable::{FileLike, RuxStat};
 use ruxfs::{fops::OpenOptions, init_blkfs, init_filesystems, prepare_commonfs};
 
 fn get_fs_image_path() -> PathBuf {
@@ -58,9 +58,9 @@ pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
     #[cfg(feature = "log")]
     {
         println!("ruxfdtab: open path={:?}", path);
-        for item in ruxfs::api::read_dir("/").unwrap().flatten() {
-            println!("item: {}", item.file_name())
-        }
+        // for item in ruxfs::api::read_dir("/").unwrap().flatten() {
+        //     println!("item: {}", item.file_name())
+        // }
     }
 
     let mut options = OpenOptions::new();
@@ -124,13 +124,66 @@ pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
     Ok(())
 }
 
+fn convert(ruxstat: RuxStat) -> Stat {
+    return Stat {
+        st_dev: ruxstat.st_dev,
+        st_ino: ruxstat.st_ino,
+        st_nlink: ruxstat.st_nlink,
+        st_mode: ruxstat.st_mode,
+        st_uid: ruxstat.st_uid,
+        st_gid: ruxstat.st_gid,
+        __pad0: ruxstat.__pad0,
+        st_rdev: ruxstat.st_rdev,
+        st_size: ruxstat.st_size as usize,
+        st_blksize: ruxstat.st_blksize,
+        st_blocks: ruxstat.st_blocks,
+        st_atime: TimeSpec {
+            tv_sec: ruxstat.st_atime.tv_sec,
+            tv_nsec: ruxstat.st_atime.tv_nsec,
+        },
+        st_mtime: TimeSpec {
+            tv_sec: ruxstat.st_mtime.tv_sec,
+            tv_nsec: ruxstat.st_mtime.tv_nsec,
+        },
+        st_ctime: TimeSpec {
+            tv_sec: ruxstat.st_ctime.tv_sec,
+            tv_nsec: ruxstat.st_ctime.tv_nsec,
+        },
+        __unused: ruxstat.__unused,
+    }
+}
+
 #[no_mangle]
 pub fn stat(fd: Fd) -> FdtabResult<Stat> {
     let _exec = MUST_EXIC.lock();
     let stat = fs::File::from_fd(fd)?
         .stat()
         .map_err(|e| FdtabError::RuxfsError(e.to_string()))?;
-    Ok(Stat {
-        st_size: stat.st_size as usize,
-    })
+    let res = convert(stat);
+    // #[cfg(feature = "log")]
+    // println!("[DEBUG] stat fd: {:?}, stat: {:?}", fd, res);
+    
+    Ok(res)
 }
+
+#[no_mangle]
+pub fn readdir(path: &str) -> FdtabResult<Vec<DirEntry>> {
+    #[cfg(feature = "log")]
+    println!("[DEBUG] ruxfs read_dir: {:?}", path);
+
+    let mut entries: Vec<DirEntry> = Vec::new();
+    for item in ruxfs::api::read_dir(path).unwrap().flatten() {
+        // #[cfg(feature = "log")]
+        // println!("[DEBUG] item {:?}: path: {:?}, file_name: {:?}, file_type: {:?}", item, item.path(), item.file_name(), item.file_type() as u32);
+
+        let entry = DirEntry {
+            dir_path: item.path(),
+            entry_name: item.file_name(),
+            entry_type: item.file_type() as u32
+        };
+        entries.push(entry);
+    }
+
+    Ok(entries)
+}
+
