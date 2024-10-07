@@ -1,11 +1,13 @@
 #![no_std]
 
 extern crate alloc;
+use core::mem::forget;
+
 use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, println, libos::libos};
+use ms_std::{agent::FaaSFuncResult as Result, args, console::print, libos::libos, println};
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;

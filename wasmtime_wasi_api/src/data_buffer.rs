@@ -42,8 +42,8 @@ pub fn buffer_register(
     let mut content = String::from_utf8(content).expect("[Err] Not a valid UTF-8 sequence");
 
     let buffer_base = content.as_mut_ptr();
-    #[cfg(feature = "log")]
-    println!("content={}", content);
+    // #[cfg(feature = "log")]
+    // println!("content={}", content);
     forget(content);
 
     let mut wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::with_slot(slot_name);
@@ -67,17 +67,17 @@ pub fn access_buffer(
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);
     let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap();
-    #[cfg(feature = "log")]
-    println!(
-        "wasm_buffer -> addr={:?}, size={}",
-        wasm_buffer.0, wasm_buffer.1
-    );
+    // #[cfg(feature = "log")]
+    // println!(
+    //     "wasm_buffer -> addr={:?}, size={}",
+    //     wasm_buffer.0, wasm_buffer.1
+    // );
 
     if buffer_size as usize != wasm_buffer.1 {
         panic!()
     }
     let buffer = unsafe { core::slice::from_raw_parts(wasm_buffer.0, wasm_buffer.1) };
-    #[cfg(feature = "log")]
-    println!("buffer: {:?}", buffer);
+    // #[cfg(feature = "log")]
+    // println!("buffer: {:?}", buffer);
     memory.write(&mut caller, buffer_base as usize, buffer).unwrap();
 }

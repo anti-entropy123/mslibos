@@ -1,9 +1,9 @@
+extern crate alloc;
+
 #[cfg(feature = "log")]
 use ms_std::println;
 #[cfg(feature = "log")]
 use alloc::format;
-
-extern crate alloc;
 
 use alloc::{string::{String, ToString}, vec::Vec};
 use hashbrown::HashMap;
@@ -180,14 +180,13 @@ pub fn fd_fdstat_get(mut caller: Caller<'_, LibosCtx>, fd: i32, retptr: i32) -> 
     // fdstat.fs_flags = msFdStat.flags;
     // fdstat.fs_rights_base = msFdStat.fs_rights_base;
     // fdstat.fs_rights_inheriting = msFdStat.fs_rights_inheriting;
-
-    // if fd == 4 || fd == 5 || fd == 6 || fd == 7 || fd == 8 {
-    // 假设打开的都是文件
-    fdstat.fs_filetype = 4;
-    fdstat.fs_flags = 0;
-    fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
-    fdstat.fs_rights_inheriting = 0xFFFFFFFFFFFFFFFF;
-    // }
+    if fd as u32 > 3 {
+        // 假设打开的都是文件
+        fdstat.fs_filetype = 4;
+        fdstat.fs_flags = 0;
+        fdstat.fs_rights_base = 0xFFFFFFFFFFFFFFFF;
+        fdstat.fs_rights_inheriting = 0xFFFFFFFFFFFFFFFF;
+    }
 
     let buf = (&fdstat) as *const _ as usize;
     let buf = unsafe {
@@ -293,7 +292,7 @@ pub fn fd_read(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_le
 
     #[cfg(feature = "log")]
     println!("read_size: {:?}", read_size);
-    memory.write(&mut caller, retptr as usize, &read_size.to_ne_bytes()).unwrap();
+    memory.write(&mut caller, retptr as usize, &(read_size as u32).to_ne_bytes()).unwrap();
     Errno::Success as i32
 }
 
@@ -351,7 +350,7 @@ pub fn fd_write(mut caller: Caller<'_, LibosCtx>, fd: i32, iovs_ptr: i32, iovs_l
 
     #[cfg(feature = "log")]
     println!("write_size: {:?}", write_size);
-    memory.write(&mut caller, retptr as usize, &write_size.to_ne_bytes()).unwrap();
+    memory.write(&mut caller, retptr as usize, &(write_size as u32).to_ne_bytes()).unwrap();
     Errno::Success as i32
 }
 
@@ -401,12 +400,13 @@ pub fn path_open(
         core::mem::forget(_e);
         return Errno::Noent as i32;
     } else {
-        path_fd.unwrap()
+        path_fd.unwrap() as u32
     };
 
     #[cfg(feature = "log")]
     println!("return path_fd: {:?}", path_fd);
     memory.write(&mut caller, retptr as usize, &path_fd.to_ne_bytes()).unwrap();
+    
     Errno::Success as i32
 }
 
