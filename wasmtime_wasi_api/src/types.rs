@@ -1,7 +1,17 @@
+#![allow(warnings)]
+
 #[repr(C)]
 pub(crate) struct WasiCiovec {
     pub(crate) buf: u32,
     pub(crate) buf_len: u32,
+}
+
+#[repr(C)]
+pub(crate) struct WasiDirent {
+    pub(crate) d_next: u64,
+    pub(crate) d_ino: u64,
+    pub(crate) d_namelen: u32,
+    pub(crate) d_type: u8
 }
 
 #[repr(C)]
@@ -10,6 +20,18 @@ pub(crate) struct WasiFdstat {
     pub(crate) fs_flags: u16,
     pub(crate) fs_rights_base: u64,
     pub(crate) fs_rights_inheriting: u64,
+}
+
+#[repr(C)]
+pub(crate) struct WasiFilestat {
+    pub(crate) dev: u64,
+    pub(crate) ino: u64,
+    pub(crate) filetype: u8,
+    pub(crate) nlink: u64,
+    pub(crate) size: u64,
+    pub(crate) atim: u64,
+    pub(crate) mtim: u64,
+    pub(crate) ctim: u64,
 }
 
 #[repr(C)]

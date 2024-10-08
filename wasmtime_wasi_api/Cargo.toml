@@ -13,7 +13,7 @@ spin = "0.9.8"
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 
-wasmtime = { version = "=21.0.0", default-features = false, features = [
+wasmtime = { version = "=22.0.0", default-features = false, features = [
     "runtime",
     "gc",
     "component-model",

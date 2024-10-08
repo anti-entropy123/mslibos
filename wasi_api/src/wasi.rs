@@ -687,7 +687,6 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
     Ok(0)
 }
 
-
 pub fn fd_seek(mut _ctx: FuncContext<'_>, _args: (i32, i64, i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]
     {

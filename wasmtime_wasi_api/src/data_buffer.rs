@@ -33,8 +33,8 @@ pub fn buffer_register(
     memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
-    #[cfg(feature = "log")]
-    println!("slot_name={}", slot_name);
+    // #[cfg(feature = "log")]
+    // println!("slot_name={}", slot_name);
 
     let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     content.resize(buffer_size as usize, 0);
@@ -64,8 +64,8 @@ pub fn access_buffer(
     memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
-    #[cfg(feature = "log")]
-    println!("slot_name={}", slot_name);
+    // #[cfg(feature = "log")]
+    // println!("slot_name={}", slot_name);
     let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap();
     // #[cfg(feature = "log")]
     // println!(

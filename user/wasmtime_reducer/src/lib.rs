@@ -47,6 +47,9 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
 
     main.call(store, ()).map_err(|e| e.to_string())?;
 
+    #[cfg(feature = "log")]
+    println!("rust: wasmtime_mapper_{:?} finished!", my_id);
+
     Ok(().into())
 }
 

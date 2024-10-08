@@ -1,13 +1,12 @@
 #![no_std]
 
 extern crate alloc;
-use core::mem::forget;
 
 use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, console::print, libos::libos, println};
+use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println};
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;
@@ -48,6 +47,9 @@ fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     main.call(store, ()).map_err(|e| e.to_string())?;
+
+    #[cfg(feature = "log")]
+    println!("rust: wasmtime_mapper_{:?} finished!", my_id);
 
     Ok(().into())
 }
