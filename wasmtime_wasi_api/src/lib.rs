@@ -7,8 +7,9 @@ pub use wasmtime;
 use wasmtime::{Engine, Linker, Module};
 
 mod data_buffer;
-mod wasi;
+// mod capis;
 mod types;
+mod wasi;
 
 pub struct LibosCtx {
     pub id: String
