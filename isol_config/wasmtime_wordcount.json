@@ -31,18 +31,22 @@
   "groups": [
     {
       "list": [
+        "mapper",
+        "mapper",
         "mapper"
       ],
       "args": {
-        "reducer_num": "1"
+        "reducer_num": "3"
       }
     },
     {
       "list": [
+        "reducer",
+        "reducer",
         "reducer"
       ],
       "args": {
-        "mapper_num": "1"
+        "mapper_num": "3"
       }
     }
   ]
