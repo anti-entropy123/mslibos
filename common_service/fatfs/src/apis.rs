@@ -5,7 +5,7 @@ use std::{
 
 use ms_hostcall::{
     fatfs::{FatfsError, FatfsResult},
-    types::{Fd, OpenFlags, Size, Stat},
+    types::{Fd, OpenFlags, Size, Stat, TimeSpec},
 };
 
 use crate::{get_fs_ref, FTABLE};
@@ -59,7 +59,32 @@ pub fn fatfs_stat(fd: Fd) -> FatfsResult<Stat> {
     let st_size = f
         .stream_len()
         .map_err(|e| FatfsError::HostIOErr(e.to_string()))? as Size;
-    Ok(Stat { st_size })
+    Ok(Stat { 
+        st_dev: 0,
+        st_ino: 0,
+        st_nlink: 0,
+        st_mode: 0,
+        st_uid: 0,
+        st_gid: 0,
+        __pad0: 0,
+        st_rdev: 0,
+        st_size: st_size,
+        st_blksize: 0,
+        st_blocks: 0,
+        st_atime: TimeSpec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        },
+        st_mtime: TimeSpec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        },
+        st_ctime: TimeSpec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        },
+        __unused: [0, 0, 0], 
+    })
 }
 
 #[no_mangle]
