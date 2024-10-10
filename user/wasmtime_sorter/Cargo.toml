@@ -1,9 +1,8 @@
 [package]
-name = "wasmtime_mapper"
+name = "wasmtime_sorter"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
-#build = "../../build_wasm.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
@@ -11,8 +10,7 @@ crate-type = ["staticlib"]
 
 [dependencies]
 ms_std = { path = "../../ms_std", features = ["panic_def", "alloc_def"] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
-
+ms_hostcall = { path = "../../ms_hostcall" }
 wasmtime_wasi_api = { path = "../../wasmtime_wasi_api" }
 
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
