@@ -847,7 +847,10 @@ pub fn proc_exit(mut caller: Caller<'_, LibosCtx>, code: i32) {
         // An exit code of 0 indicates successful termination of the program.
         println!("args: code: {:?}", code);
     }
-    // nothing to do
+    
+    if code > 0 {
+        panic!("[ERR] proc_exit got error code {:?}", code);
+    }
 }
 
 pub fn random_get(mut caller: Caller<'_, LibosCtx>, buf: i32, buf_len: i32) -> i32 {
