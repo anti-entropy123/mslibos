@@ -22,7 +22,7 @@ lazy_static::lazy_static! {
 }
 
 fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
-    // #[cfg(feature = "log")]
+    #[cfg(feature = "log")]
     println!("rust: my_id: {:?}, mapper_num: {:?}", my_id, mapper_num);
 
     let wasi_args: Vec<String> = Vec::from([
@@ -37,16 +37,19 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
     let lock = INIT_LOCK.lock();
     let (engine, module, linker) = wasmtime_wasi_api::build_wasm(CWASM);
     drop(lock);
-   
+
     let mut store = Store::new(&engine, LibosCtx{id: my_id.to_string()});
     let instance = linker.instantiate(&mut store, &module)?;
 
     let main = instance
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
-    
+
     main.call(store, ()).map_err(|e| e.to_string())?;
-    
+
+    #[cfg(feature = "log")]
+    println!("rust: wasmtime_mapper_{:?} finished!", my_id);
+
     Ok(().into())
 }
 

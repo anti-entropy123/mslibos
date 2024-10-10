@@ -29,6 +29,7 @@ pub struct UserHostCall {
     close_addr: Option<usize>,
     lseek_addr: Option<usize>,
     stat_addr: Option<usize>,
+    readdir_addr: Option<usize>,
     connect_addr: Option<usize>,
     socket_addr: Option<usize>,
     bind_addr: Option<usize>,
@@ -56,6 +57,7 @@ pub struct UserHostCall {
     dealloc_buffer_addr: Option<usize>,
     mmap_addr: Option<usize>,
     munmap_addr: Option<usize>,
+    mprotect_addr: Option<usize>,
 
     pf_handler_addr: Option<usize>,
     register_file_backend_addr: Option<usize>,
@@ -63,6 +65,8 @@ pub struct UserHostCall {
 
     get_time_addr: Option<usize>,
     nanosleep_addr: Option<usize>,
+
+    sigaction_addr: Option<usize>,
 }
 
 impl UserHostCall {
@@ -85,6 +89,7 @@ impl UserHostCall {
             CommonHostCall::Close => &mut self.close_addr,
             CommonHostCall::Lseek => &mut self.lseek_addr,
             CommonHostCall::Stat => &mut self.stat_addr,
+            CommonHostCall::ReadDir => &mut self.readdir_addr,
             CommonHostCall::Connect => &mut self.connect_addr,
             CommonHostCall::Socket => &mut self.socket_addr,
             CommonHostCall::Bind => &mut self.bind_addr,
@@ -112,6 +117,7 @@ impl UserHostCall {
             CommonHostCall::BufferDealloc => &mut self.dealloc_buffer_addr,
             CommonHostCall::Mmap => &mut self.mmap_addr,
             CommonHostCall::Munmap => &mut self.munmap_addr,
+            CommonHostCall::Mprotect => &mut self.mprotect_addr,
 
             CommonHostCall::RegisterFileBackend => &mut self.register_file_backend_addr,
             CommonHostCall::UnregisterFileBackend => &mut self.unregister_file_backend_addr,
@@ -119,6 +125,8 @@ impl UserHostCall {
 
             CommonHostCall::GetTime => &mut self.get_time_addr,
             CommonHostCall::NanoSleep => &mut self.nanosleep_addr,
+
+            CommonHostCall::SigAction => &mut self.sigaction_addr,
         };
 
         if entry_addr.is_none() {

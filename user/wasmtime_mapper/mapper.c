@@ -6,10 +6,11 @@
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_WORD_LENGTH 20
-#define MAX_WORDS 5000
+#define MAX_WORD_LENGTH 100
+#define MAX_WORDS 8000
 #define MAX_SLOT_NUM 100
-#define MAX_BUFFER_SIZE 6000
+#define MAX_BUFFER_SIZE 8000
+
 
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -67,7 +68,6 @@ int main(int argc, char* argv[]) {
 
     fclose(file);
     printf("mapper_%d_index: %d\n", id, word_index);
-    printf("mapper_%d read success!\n", id);
 
     char *slot_name[MAX_SLOT_NUM];
     char *buffer[MAX_SLOT_NUM];

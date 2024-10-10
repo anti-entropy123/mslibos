@@ -1,5 +1,6 @@
 target
 tinywasm
+wasmtime-as-lib
 
 .VSCodeCounter
 .gdbinit

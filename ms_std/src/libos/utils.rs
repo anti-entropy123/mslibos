@@ -10,6 +10,7 @@ pub macro func_type {
     (close) => (ms_hostcall::fdtab::CloseFunc),
     (lseek) => (ms_hostcall::fdtab::LseekFunc),
     (stat) => (ms_hostcall::fdtab::StatFunc),
+    (readdir) => (ms_hostcall::fdtab::ReadDirFunc),
     (connect) => (ms_hostcall::fdtab::ConnectFunc),
     (bind) => (ms_hostcall::fdtab::BindFunc),
     (accept) => (ms_hostcall::fdtab::AcceptFunc),
@@ -32,10 +33,12 @@ pub macro func_type {
     (buffer_dealloc) => (ms_hostcall::mm::BufferDeallocFunc),
     (mmap) => (ms_hostcall::mm::MemmapFunc),
     (munmap) => (ms_hostcall::mm::MemunmapFunc),
+    (mprotect) => (ms_hostcall::mm::MprotectFunc),
     (register_file_backend) => (ms_hostcall::mmap_file_backend::RegisterFileBackendFunc),
     (unregister_file_backend) => (ms_hostcall::mmap_file_backend::UnregisterFileBackendFunc),
     (get_time) => (ms_hostcall::types::GetTimeFunc),
     (nanosleep) => (ms_hostcall::types::NanoSleepFunc),
+    (sigaction) => (ms_hostcall::signal::SigActionFunc),
 }
 
 pub macro hostcall_id {
@@ -48,6 +51,7 @@ pub macro hostcall_id {
     (close) => (ms_hostcall::CommonHostCall::Close),
     (lseek) => (ms_hostcall::CommonHostCall::Lseek),
     (stat) => (ms_hostcall::CommonHostCall::Stat),
+    (readdir) => (ms_hostcall::CommonHostCall::ReadDir),
     (connect) => (ms_hostcall::CommonHostCall::Connect),
     (bind) => (ms_hostcall::CommonHostCall::Bind),
     (accept) => (ms_hostcall::CommonHostCall::Accept),
@@ -70,10 +74,12 @@ pub macro hostcall_id {
     (buffer_dealloc) => (ms_hostcall::CommonHostCall::BufferDealloc),
     (mmap) => (ms_hostcall::CommonHostCall::Mmap),
     (munmap) => (ms_hostcall::CommonHostCall::Munmap),
+    (mprotect) => (ms_hostcall::CommonHostCall::Mprotect),
     (register_file_backend) => (ms_hostcall::CommonHostCall::RegisterFileBackend),
     (unregister_file_backend) => (ms_hostcall::CommonHostCall::UnregisterFileBackend),
     (get_time) => (ms_hostcall::CommonHostCall::GetTime),
     (nanosleep) => (ms_hostcall::CommonHostCall::NanoSleep),
+    (sigaction) => (ms_hostcall::CommonHostCall::SigAction),
 }
 
 pub macro libos {
