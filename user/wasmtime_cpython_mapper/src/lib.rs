@@ -37,7 +37,7 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64) -> Result<()> {
     }
 
     #[cfg(feature = "log")]
-    println!("rust: my_id: {:?}, pyfile_path: {:?}, reducer_num: {:?}", my_map_id, pyfile_path, reducer_num);
+    println!("rust: my_id: {:?}, pyfile_path: {:?}, reducer_num: {:?}", my_id, pyfile_path, reducer_num);
 
     let wasi_args: Vec<String> = Vec::from([
         "fake system path!".to_string(),
