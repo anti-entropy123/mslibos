@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
@@ -9,6 +10,7 @@ __attribute__((import_module("env"), import_name("buffer_register"))) void buffe
 #define MAX_WORDS 8000
 #define MAX_SLOT_NUM 100
 #define MAX_BUFFER_SIZE 8000
+
 
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -34,27 +36,38 @@ int main(int argc, char* argv[]) {
     char *words[MAX_WORDS];
     char word[MAX_WORD_LENGTH];
     int word_index = 0;
-    while (fscanf(file, "%s", word) != EOF) {
-        to_lowercase(word);
-        
-        int found = 0;
-        for (int i = 0; i < word_index; i++) {
-            if (strcmp(words[i], word) == 0) {
-                count[i]++;
-                found = 1;
-                break;
+    
+    char line[1024];
+    while (fgets(line, sizeof(line), file)) {
+        char *token = strtok(line, " \n"); // 以空格和换行作为分隔符
+        while (token != NULL) {
+            char word[MAX_WORD_LENGTH];
+            strncpy(word, token, MAX_WORD_LENGTH);
+            word[MAX_WORD_LENGTH - 1] = '\0'; // 确保字符串以 null 结尾
+
+            to_lowercase(word);
+            int found = 0;
+
+            for (int i = 0; i < word_index; i++) {
+                if (strcmp(words[i], word) == 0) {
+                    count[i]++;
+                    found = 1;
+                    break;
+                }
             }
-        }
-        
-        if (!found) {
-            words[word_index] = strdup(word);
-            count[word_index]++;
-            word_index++;
+            
+            if (!found) {
+                words[word_index] = strdup(word);
+                count[word_index]++;
+                word_index++;
+            }
+
+            token = strtok(NULL, " \n"); //读取下一个单词
         }
     }
-    fclose(file);
 
-    printf("mapper_%d read success!\n", id);
+    fclose(file);
+    printf("mapper_%d_index: %d\n", id, word_index);
 
     char *slot_name[MAX_SLOT_NUM];
     char *buffer[MAX_SLOT_NUM];
@@ -77,7 +90,7 @@ int main(int argc, char* argv[]) {
         if (!found) {
             slot_name[slot_index] = strdup(slot);
             buffer[slot_index] = (char *)malloc(bufferSize * sizeof(char));
-            if (buffer == NULL) {
+            if (buffer[slot_index] == NULL) {
                 printf("alloc mem failed\n");
                 return 1;
             }
@@ -98,7 +111,7 @@ int main(int argc, char* argv[]) {
         free(slot_name[i]); // 释放 strdup 分配的内存
         free(buffer[i]);    // 释放 buffer
     }
-
-    printf("mapper_%d finished!\n", id);
+    write(1, "mapper end!\n", sizeof("mapper end!\n"));
+    // printf("mapper_%d finished!\n", id);
     return 0;
 }
