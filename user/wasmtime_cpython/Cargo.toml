@@ -20,4 +20,3 @@ spin = "0.9.8"
 
 [features]
 mpk = ["ms_std/mpk"]
-log = ["wasmtime_wasi_api/log"]

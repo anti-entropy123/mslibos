@@ -45,7 +45,7 @@ fn func_body(my_id: &str, pyfile_path: &str) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
+    // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
     main.call(store, ()).map_err(|e| e.to_string())?;
 
     #[cfg(feature = "log")]

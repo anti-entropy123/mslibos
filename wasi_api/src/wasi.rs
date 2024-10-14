@@ -665,7 +665,7 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
             let result_write = unsafe { core::slice::from_raw_parts(&result_void, cap as _) };
             #[cfg(feature = "log")]
             println!("[ERR] fd_readdir: cap: {:?}, result_write.len(): {:?}", cap, result_write.len());
-            mem.store(cur_buf as usize, cap as usize, result_write)?;
+            mem.store(cur_buf as usize, cap as u32 as usize, result_write)?;
             mem.store(bufused as usize, core::mem::size_of::<u32>(), &buf_len.to_ne_bytes())?;
             #[cfg(feature = "log")]
             println!("[ERR] fd_readdir: store over!");

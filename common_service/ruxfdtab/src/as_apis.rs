@@ -18,6 +18,35 @@ use ruxdriver::init_drivers;
 use ruxfdtable::{FileLike, RuxStat};
 use ruxfs::{fops::OpenOptions, init_blkfs, init_filesystems, prepare_commonfs};
 
+fn convert(ruxstat: RuxStat) -> Stat {
+    return Stat {
+        st_dev: ruxstat.st_dev,
+        st_ino: ruxstat.st_ino,
+        st_nlink: ruxstat.st_nlink,
+        st_mode: ruxstat.st_mode,
+        st_uid: ruxstat.st_uid,
+        st_gid: ruxstat.st_gid,
+        __pad0: ruxstat.__pad0,
+        st_rdev: ruxstat.st_rdev,
+        st_size: ruxstat.st_size as usize,
+        st_blksize: ruxstat.st_blksize,
+        st_blocks: ruxstat.st_blocks,
+        st_atime: TimeSpec {
+            tv_sec: ruxstat.st_atime.tv_sec,
+            tv_nsec: ruxstat.st_atime.tv_nsec,
+        },
+        st_mtime: TimeSpec {
+            tv_sec: ruxstat.st_mtime.tv_sec,
+            tv_nsec: ruxstat.st_mtime.tv_nsec,
+        },
+        st_ctime: TimeSpec {
+            tv_sec: ruxstat.st_ctime.tv_sec,
+            tv_nsec: ruxstat.st_ctime.tv_nsec,
+        },
+        __unused: ruxstat.__unused,
+    }
+}
+
 fn get_fs_image_path() -> PathBuf {
     let image_path = match libos!(fs_image(ms_std::init_context::isolation_ctx().isol_id)) {
         Some(s) => s,
@@ -124,35 +153,6 @@ pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
     Ok(())
 }
 
-fn convert(ruxstat: RuxStat) -> Stat {
-    return Stat {
-        st_dev: ruxstat.st_dev,
-        st_ino: ruxstat.st_ino,
-        st_nlink: ruxstat.st_nlink,
-        st_mode: ruxstat.st_mode,
-        st_uid: ruxstat.st_uid,
-        st_gid: ruxstat.st_gid,
-        __pad0: ruxstat.__pad0,
-        st_rdev: ruxstat.st_rdev,
-        st_size: ruxstat.st_size as usize,
-        st_blksize: ruxstat.st_blksize,
-        st_blocks: ruxstat.st_blocks,
-        st_atime: TimeSpec {
-            tv_sec: ruxstat.st_atime.tv_sec,
-            tv_nsec: ruxstat.st_atime.tv_nsec,
-        },
-        st_mtime: TimeSpec {
-            tv_sec: ruxstat.st_mtime.tv_sec,
-            tv_nsec: ruxstat.st_mtime.tv_nsec,
-        },
-        st_ctime: TimeSpec {
-            tv_sec: ruxstat.st_ctime.tv_sec,
-            tv_nsec: ruxstat.st_ctime.tv_nsec,
-        },
-        __unused: ruxstat.__unused,
-    }
-}
-
 #[no_mangle]
 pub fn stat(fd: Fd) -> FdtabResult<Stat> {
     let _exec = MUST_EXIC.lock();
@@ -168,6 +168,7 @@ pub fn stat(fd: Fd) -> FdtabResult<Stat> {
 
 #[no_mangle]
 pub fn readdir(path: &str) -> FdtabResult<Vec<DirEntry>> {
+    let _exec = MUST_EXIC.lock();
     #[cfg(feature = "log")]
     println!("[DEBUG] ruxfs read_dir: {:?}", path);
 

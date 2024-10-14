@@ -10,6 +10,7 @@ mod data_buffer;
 // mod capis;
 mod types;
 mod wasi;
+pub use wasi::JMP_BUF_MAP;
 
 pub struct LibosCtx {
     pub id: String
