@@ -9,7 +9,6 @@ use std::{
 };
 
 use anyhow::{anyhow, Ok};
-use lazy_static::lazy_static;
 
 use log::info;
 use ms_hostcall::types::{
@@ -33,10 +32,9 @@ use config::IsolationConfig;
 
 use self::config::App;
 
-type IsolTable = HashMap<IsolID, Weak<Isolation>>;
-lazy_static! {
-    pub static ref ISOL_TABLE: Mutex<IsolTable> = Mutex::new(HashMap::new());
-}
+type IsolTable = Vec<Weak<Isolation>>;
+
+pub static ISOL_TABLE: Mutex<IsolTable> = Mutex::new(Vec::new());
 
 fn get_isol_table() -> MutexGuard<'static, IsolTable> {
     ISOL_TABLE.lock().unwrap()
@@ -45,7 +43,7 @@ fn get_isol_table() -> MutexGuard<'static, IsolTable> {
 pub fn get_isol(handle: IsolID) -> anyhow::Result<Arc<Isolation>> {
     let isol_table = get_isol_table();
     Ok(isol_table
-        .get(&handle)
+        .get(handle as usize - 1)
         .ok_or_else(|| anyhow!("isol don't exsit. handle={}", handle))?
         .upgrade()
         .ok_or_else(|| {
@@ -115,7 +113,7 @@ impl Isolation {
             inner: Mutex::new(IsolationInner::default()),
         });
 
-        get_isol_table().insert(isol.id, Arc::downgrade(&isol));
+        get_isol_table().push(Arc::downgrade(&isol));
 
         isol
     }
@@ -279,6 +277,6 @@ impl Isolation {
 
 impl Drop for Isolation {
     fn drop(&mut self) {
-        get_isol_table().remove(&self.id).unwrap();
+        get_isol_table().remove(self.id as usize - 1);
     }
 }
