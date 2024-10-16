@@ -31,6 +31,7 @@ fn func_body(my_id: &str, pyfile_path: &str, mapper_num: u64) -> Result<()> {
     if if_panic != 0 {
         #[cfg(feature = "log")]
         println!("[Info] normal exit. if_panic: {:?}", if_panic);
+        // println!("phase3: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
         return Ok(().into());
     } else {
         wasmtime_wasi_api::JMP_BUF_MAP.lock().insert(my_map_id.to_string(), Arc::new(jmpbuf));
@@ -40,7 +41,7 @@ fn func_body(my_id: &str, pyfile_path: &str, mapper_num: u64) -> Result<()> {
     println!("rust: my_id: {:?}, pyfile_path: {:?}, mapper_num: {:?}", my_id, pyfile_path, mapper_num);
 
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
         my_id.to_string(),
         mapper_num.to_string(),

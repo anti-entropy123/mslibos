@@ -40,7 +40,7 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64) -> Result<()> {
     println!("rust: my_id: {:?}, pyfile_path: {:?}, reducer_num: {:?}", my_id, pyfile_path, reducer_num);
 
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
         my_id.to_string(),
         reducer_num.to_string(),
@@ -60,7 +60,7 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
+    // println!("phase0: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     main.call(store, ()).map_err(|e| e.to_string())?;
 
     #[cfg(feature = "log")]

@@ -30,7 +30,7 @@
         "cpython"
       ],
       "args": {
-        "pyfile_path": "/wasm_bench/alu.py"
+        "pyfile_path": "/wasm_bench/time.py"
       }
     }
   ]

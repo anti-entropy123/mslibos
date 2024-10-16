@@ -853,6 +853,7 @@ dependencies = [
 [[package]]
 name = "wasmtime"
 version = "22.0.0"
+source = "git+https://gitee.com/tju-cloud-computing/wasmtime-as-lib?branch=master#fb45fb8dde6d068abb3ae78bfab78253c9654af5"
 dependencies = [
  "anyhow",
  "bumpalo",
@@ -867,7 +868,6 @@ dependencies = [
  "mach2",
  "memfd",
  "memoffset",
- "ms_std",
  "object",
  "once_cell",
  "paste",
@@ -1048,6 +1048,7 @@ dependencies = [
  "lazy_static",
  "ms_hostcall",
  "ms_std",
+ "sjlj",
  "spin",
  "wasmtime_wasi_api",
 ]

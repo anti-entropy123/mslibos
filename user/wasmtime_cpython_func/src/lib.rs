@@ -40,7 +40,7 @@ fn func_body(pyfile_path: &str, func_num: u64) -> Result<()> {
     println!("rust: pyfile_path: {:?}, func_num: {:?}", pyfile_path, func_num);
 
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
         func_num.to_string(),
     ]);
