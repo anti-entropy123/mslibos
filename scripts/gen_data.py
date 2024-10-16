@@ -1,8 +1,8 @@
-#!/home/dyx/python_env/bin/python3
+#!/usr/bin/python3
 
 import os
 
-workdir = "/home/dyx/mount"
+workdir = "/home/wyj/dyx_workplace/mount"
 
 def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
@@ -37,4 +37,4 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_word_count(3, 10 * 1024 * 1024)
+    gen_word_count(5, 300 * 1024 * 1024)

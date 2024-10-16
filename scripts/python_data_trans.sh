@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKDIR="/home/dyx/workplace/mslibos"
+WORKDIR="/home/wyj/dyx_workplace/mslibos"
 
 # 定义执行次数
 EXECUTIONS=10
