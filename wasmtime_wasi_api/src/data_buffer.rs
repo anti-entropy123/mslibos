@@ -1,11 +1,9 @@
 extern crate alloc;
 use alloc::{string::String, vec::Vec};
 
-use core::mem::forget;
-
 use ms_std::agent::DataBuffer;
 #[cfg(feature = "log")]
-use ms_std::println;
+use ms_std::{println, time::{SystemTime, UNIX_EPOCH}};
 use ms_std_proc_macro::FaasData;
 use wasmtime::Caller;
 
@@ -25,7 +23,10 @@ pub fn buffer_register(
     slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
-    println!("[Debug] buffer_register");
+    {
+        println!("[Debug] buffer_register");
+        println!("[Time] buffer_register: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
+    }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);
@@ -58,7 +59,10 @@ pub fn access_buffer(
     slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
-    println!("[Debug] access_buffer");
+    {
+        println!("[Debug] access_buffer");
+        println!("[Time] access_buffer: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
+    }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);

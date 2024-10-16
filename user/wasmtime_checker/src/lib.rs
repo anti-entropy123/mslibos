@@ -9,11 +9,10 @@ use spin::Mutex;
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, println, libos::libos};
 
-
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;
 
-static CWASM: &[u8] = include_bytes!("../mapper.cwasm");
+static CWASM: &[u8] = include_bytes!("../checker.cwasm");
 
 static INIT_LOCK: Mutex<()> = Mutex::new(());
 
@@ -24,15 +23,15 @@ lazy_static::lazy_static! {
     };
 }
 
-fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
-    #[cfg(feature = "log")]
-
-    println!("rust: my_id: {:?}, reducer_num: {:?}", my_id, reducer_num);
+fn func_body(my_id: &str, sorter_num: u64, merger_num: u64) -> Result<()> {
+    // #[cfg(feature = "log")]
+    println!("rust: my_id: {:?}, sorter_num: {:?}, merger_num: {:?}", my_id, sorter_num, merger_num);
 
     let wasi_args: Vec<String> = Vec::from([
         "fake system path!".to_string(),
         my_id.to_string(),
-        reducer_num.to_string(),
+        sorter_num.to_string(),
+        merger_num.to_string(),
     ]);
     wasmtime_wasi_api::set_wasi_args(my_id, wasi_args);
 
@@ -51,19 +50,20 @@ fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
 
     main.call(store, ()).map_err(|e| e.to_string())?;
 
-    #[cfg(feature = "log")]
-    println!("rust: wasmtime_mapper_{:?} finished!", my_id);
-
     Ok(().into())
 }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
     let my_id = args::get("id").unwrap();
-    let reducer_num: u64 = args::get("reducer_num")
-        .expect("missing arg reducer_num")
+    let sorter_num: u64 = args::get("sorter_num")
+        .expect("missing arg sorter_num")
         .parse()
-        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
+        .unwrap_or_else(|_| panic!("bad arg, sorter_num={}", args::get("sorter_num").unwrap()));
+    let merger_num: u64 = args::get("merger_num")
+        .expect("missing arg merger_num")
+        .parse()
+        .unwrap_or_else(|_| panic!("bad arg, merger_num={}", args::get("merger_num").unwrap()));
 
-    func_body(my_id, reducer_num)
+    func_body(my_id, sorter_num, merger_num)
 }

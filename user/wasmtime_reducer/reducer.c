@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#define MAX_WORD_LENGTH 100
-#define MAX_WORDS 1000
-#define MAX_SLOT_NUM 100
-#define MAX_BUFFER_SIZE 8000
 
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
+
+#define MAX_WORD_LENGTH 20
+#define MAX_WORDS 5000
+#define MAX_SLOT_NUM 100
+#define MAX_BUFFER_SIZE 6000
 
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -31,7 +32,7 @@ int main(int argc, char* argv[]) {
         sprintf(slot, "buffer_%d_%d", id, i);
         slot_name[i] = strdup(slot);
         buffer[i] = (char *)malloc(bufferSize * sizeof(char));
-        if (buffer == NULL) {
+        if (buffer[i] == NULL) {
             printf("alloc mem failed\n");
             return 1;
         }
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    printf("reducer_%d_index: %d\n", id, word_index);
     printf("reducer_%d read success!\n", id);
 
     char output_file[30];
