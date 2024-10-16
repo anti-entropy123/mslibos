@@ -1,4 +1,6 @@
 extern crate alloc;
+use core::mem::forget;
+
 use alloc::{string::String, vec::Vec};
 
 use ms_std::agent::DataBuffer;
