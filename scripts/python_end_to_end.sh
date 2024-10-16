@@ -40,17 +40,17 @@ case $1 in
 
         # 运行项目并提取 "total_dur(ms)" 的值
         case $2 in
-            "c1")
+            "n5")
                 echo "Executing c1"
-                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_c1.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n5.json 2>&1)
                 ;;
-            "c3")
+            "n10")
                 echo "Executing c3"
-                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_c3.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n10.json 2>&1)
                 ;;
-            "c5")
+            "n15")
                 echo "Executing c5"
-                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_c5.json 2>&1)
+                output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n15.json 2>&1)
                 ;;
             *)
                 echo "Unknown command: $2"
