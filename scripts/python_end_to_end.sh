@@ -81,10 +81,10 @@ case $1 in
     cargo build --release --target x86_64-unknown-none && cc \
         -Wl,--gc-sections -nostdlib \
         -Wl,--whole-archive \
-        target/x86_64-unknown-none/release/wasmtime_cpython_wordcount.a \
+        target/x86_64-unknown-none/release/libwasmtime_cpython_wordcount.a \
         -Wl,--no-whole-archive \
         -shared \
-        -o target/x86_64-unknown-none/release/wasmtime_cpython_wordcount.so
+        -o target/x86_64-unknown-none/release/libwasmtime_cpython_wordcount.so
 
     cd $WORKDIR
     ln -s $WORKDIR/user/wasmtime_cpython_wordcount/target/x86_64-unknown-none/release/libwasmtime_cpython_wordcount.so target/release/libwasmtime_cpython_wordcount.so

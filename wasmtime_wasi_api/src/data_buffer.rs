@@ -44,8 +44,8 @@ pub fn buffer_register(
 
     #[cfg(feature = "log")]
     println!("addr={:?}, size={}", buffer_base, buffer_size);
-    #[cfg(feature = "log")]
-    println!("content={}", content);
+    // #[cfg(feature = "log")]
+    // println!("content={}", content);
 
     let mut wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::with_slot(slot_name);
     wasm_buffer.0 = buffer_base;
@@ -69,14 +69,14 @@ pub fn access_buffer(
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);
     let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap();
-    // #[cfg(feature = "log")]
-    // println!(
-    //     "wasm_buffer -> addr={:?}, size={}",
-    //     wasm_buffer.0, wasm_buffer.1
-    // );
+    #[cfg(feature = "log")]
+    println!(
+        "wasm_buffer -> addr={:?}, size={}",
+        wasm_buffer.0, wasm_buffer.1
+    );
 
     if buffer_size as usize != wasm_buffer.1 {
-        panic!("access_buffer's size is different from buffer_register's size")
+        panic!("buffer_size={}, wasm_buffer.1={}, access_buffer's size is different from buffer_register's size", buffer_size, wasm_buffer.1)
     }
     let buffer = unsafe { core::slice::from_raw_parts(wasm_buffer.0, wasm_buffer.1) };
     // #[cfg(feature = "log")]
