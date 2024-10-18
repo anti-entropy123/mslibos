@@ -38,45 +38,7 @@
         "func"
       ],
       "args": {
-        "pyfile_path": "/wasm_bench/wasmtime_sorter.py",
-        "sorter_num": "5",
-        "merger_num": "5"
-      }
-    },
-    {
-      "list": [
-        "func",
-        "func",
-        "func",
-        "func",
-        "func"
-      ],
-      "args": {
-        "pyfile_path": "/wasm_bench/wasmtime_spliter.py",
-        "sorter_num": "5",
-        "merger_num": "5"
-      }
-    },
-    {
-      "list": [
-        "func",
-        "func",
-        "func",
-        "func",
-        "func"
-      ],
-      "args": {
-        "pyfile_path": "/wasm_bench/wasmtime_merger.py",
-        "sorter_num": "5",
-        "merger_num": "5"
-      }
-    },
-    {
-      "list": [
-        "func"
-      ],
-      "args": {
-        "pyfile_path": "/wasm_bench/wasmtime_checker.py",
+        "pyfile_path": "/wasm_bench/parallel_sort.py",
         "sorter_num": "5",
         "merger_num": "5"
       }

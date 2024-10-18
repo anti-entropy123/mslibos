@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::{format, string::{String, ToString}, vec::Vec};
 use spin::Mutex;
+use core::mem::forget;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
@@ -61,7 +62,8 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64) -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     // println!("phase0: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_cpython_mapper_{:?} finished!", my_id);
