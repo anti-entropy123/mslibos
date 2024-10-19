@@ -2,7 +2,7 @@
 
 import os
 
-workdir = "/home/wyj/dyx_workplace/bb"
+workdir = "/home/wyj/dyx_workplace/mount"
 
 def gen_word_count(file_num: int, total_size: int):
     from faker import Faker

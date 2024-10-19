@@ -2,7 +2,6 @@
 
 extern crate alloc;
 
-use alloc::borrow::ToOwned;
 use alloc::sync::Arc;
 use alloc::{format, string::{String, ToString}, vec::Vec};
 use spin::Mutex;
@@ -64,6 +63,7 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64, mapper_num: u64) 
         .map_err(|e| e.to_string())?;
 
     main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_cpython_wordcount_{:?} finished!", my_id);

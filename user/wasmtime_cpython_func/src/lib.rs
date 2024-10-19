@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::{format, string::{String, ToString}, vec::Vec};
 use spin::Mutex;
+use core::mem::forget;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
