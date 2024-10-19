@@ -5,8 +5,10 @@
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_ARRAY_LENGTH 10000
-#define MAX_BUFFER_SIZE 75000
+#define MAX_ARRAY_LENGTH 20000000
+#define MAX_BUFFER_SIZE 200000000
+
+int sorter_array[MAX_ARRAY_LENGTH]; 
 
 int main(int argc, char* argv[]) {
     int id = atoi(argv[1]);
@@ -60,7 +62,6 @@ int main(int argc, char* argv[]) {
     memset(sorter_buffer, 0, bufferSize * sizeof(char));
     sorter_buffer[0] = '\0'; // 初始化为空字符串
     access_buffer(slot_name, strlen(slot_name), sorter_buffer, bufferSize);
-    int sorter_array[MAX_ARRAY_LENGTH]; 
     int sorter_index = 0;
     ptr = sorter_buffer;
     while (sscanf(ptr, "%d", &num) == 1) {
@@ -109,13 +110,17 @@ int main(int argc, char* argv[]) {
         }
         memset(buffer, 0, bufferSize * sizeof(char));
         buffer[0] = '\0'; // 初始化为空字符串
+        ptr = buffer;
         for (int j = 0; j < array_index[i]; j++) {
             char temp[12]; // 临时缓冲区，注意要足够大以容纳最大整数和一个空格
             snprintf(temp, sizeof(temp), "%d ", array[i][j]); // 将整数转换为字符串，并加上空格
-            strcat(buffer, temp); // 追加到 buffer
+            // strcat(buffer, temp); // 追加到 buffer
+            strncpy(ptr, temp, strlen(temp));
+            ptr += strlen(temp);
         }
         // 去掉最后一个多余的空格
-        buffer[strlen(buffer) - 1] = '\0';
+        // buffer[strlen(buffer) - 1] = '\0';
+        *ptr++ = '\0';
         buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
         free(buffer);
         free(array[i]);

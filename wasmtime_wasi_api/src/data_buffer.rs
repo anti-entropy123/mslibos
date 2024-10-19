@@ -22,7 +22,7 @@ impl Default for WasmDataBuffer {
 
 pub fn buffer_register(
     mut caller: Caller<'_, LibosCtx>,
-    slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
+    slot_name_base: i32, slot_name_size: i32, buffer_offset: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
     {
@@ -39,21 +39,21 @@ pub fn buffer_register(
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);
 
-    let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
-    content.resize(buffer_size as usize, 0);
-    memory.read(&caller, buffer_base as usize, &mut content).unwrap();
-    let mut content = String::from_utf8(content).expect("[Err] Not a valid UTF-8 sequence");
+    let content = memory.data_mut(&mut caller)
+                                    .get_mut(buffer_offset as usize..)
+                                    .and_then(|s| s.get_mut(..buffer_size as usize))
+                                    .unwrap();
+
     let buffer_base = content.as_mut_ptr();
 
     #[cfg(feature = "log")]
-    println!("addr={:?}, size={}", buffer_base, buffer_size);
-    // #[cfg(feature = "log")]
-    // println!("content={}", content);
+    println!("base={:?}, addr={:?}, offset={:?}, size={}", base, buffer_base, buffer_offset, buffer_size);
+    #[cfg(feature = "log")]
+    println!("content={:?}", content);
 
     let mut wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::with_slot(slot_name);
     wasm_buffer.0 = buffer_base;
     wasm_buffer.1 = buffer_size as usize;
-    forget(content);
 }
 
 pub fn access_buffer(
@@ -85,7 +85,7 @@ pub fn access_buffer(
         panic!("buffer_size={}, wasm_buffer.1={}, access_buffer's size is different from buffer_register's size", buffer_size, wasm_buffer.1)
     }
     let buffer = unsafe { core::slice::from_raw_parts(wasm_buffer.0, wasm_buffer.1) };
-    // #[cfg(feature = "log")]
-    // println!("buffer: {:?}", buffer);
+    #[cfg(feature = "log")]
+    println!("buffer: {:?}", buffer);
     memory.write(&mut caller, buffer_base as usize, buffer).unwrap();
 }

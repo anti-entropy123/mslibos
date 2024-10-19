@@ -5,6 +5,10 @@
         "libruxfdtab.so"
       ],
       [
+        "time",
+        "libtime.so"
+      ],
+      [
         "stdio",
         "libstdio.so"
       ],

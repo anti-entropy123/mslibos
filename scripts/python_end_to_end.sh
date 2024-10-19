@@ -41,15 +41,15 @@ case $1 in
         # 运行项目并提取 "total_dur(ms)" 的值
         case $2 in
             "n5")
-                echo "Executing c1"
+                echo "Executing n5"
                 output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n5.json 2>&1)
                 ;;
             "n10")
-                echo "Executing c3"
+                echo "Executing n10"
                 output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n10.json 2>&1)
                 ;;
             "n15")
-                echo "Executing c5"
+                echo "Executing n15"
                 output=$(cargo run --release -- --metrics all --files ./isol_config/wasmtime_cpython_functionchain_n15.json 2>&1)
                 ;;
             *)

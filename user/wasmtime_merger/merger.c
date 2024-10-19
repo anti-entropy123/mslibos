@@ -5,8 +5,10 @@
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_ARRAY_LENGTH 10000
-#define MAX_BUFFER_SIZE 75000
+#define MAX_ARRAY_LENGTH 20000000
+#define MAX_BUFFER_SIZE 200000000
+
+int result[MAX_ARRAY_LENGTH];
 
 typedef struct {
     int value;  // 存储的值
@@ -90,7 +92,6 @@ int main(int argc, char* argv[]) {
     }
 
     // merge
-    int result[MAX_ARRAY_LENGTH];
     int resultIndex = 0;
     HeapNode *minHeap = (HeapNode *)malloc(sorter_num * sizeof(HeapNode));
     int heapSize = 0;
@@ -142,13 +143,17 @@ int main(int argc, char* argv[]) {
     }
     memset(buffer, 0, bufferSize * sizeof(char));
     buffer[0] = '\0'; // 初始化为空字符串
+    char *ptr = buffer;
     for (int i = 0; i < resultIndex; i++) {
         char temp[12]; // 临时缓冲区，注意要足够大以容纳最大整数和一个空格
         snprintf(temp, sizeof(temp), "%d ", result[i]); // 将整数转换为字符串，并加上空格
-        strcat(buffer, temp); // 追加到 buffer
+        // strcat(buffer, temp); // 追加到 buffer
+        strncpy(ptr, temp, strlen(temp));
+        ptr += strlen(temp);
     }
     // 去掉最后一个多余的空格
-    buffer[strlen(buffer) - 1] = '\0';
+    // buffer[strlen(buffer) - 1] = '\0';
+    *ptr++ = '\0';
     buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
     free(buffer);
     

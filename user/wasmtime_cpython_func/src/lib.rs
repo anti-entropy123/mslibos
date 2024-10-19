@@ -59,7 +59,7 @@ fn func_body(pyfile_path: &str, func_num: u64) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
+    // println!("phase0: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     main.call(store, ()).map_err(|e| e.to_string())?;
 
     #[cfg(feature = "log")]

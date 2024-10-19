@@ -41,11 +41,14 @@ fn func_body(my_id: &str, mapper_num: u64) -> Result<()> {
     let mut store = Store::new(&engine, LibosCtx{id: my_id.to_string()});
     let instance = linker.instantiate(&mut store, &module)?;
 
+    let mut memory = instance.get_memory(&mut store, "memory").unwrap();
+    let pages = memory.grow(&mut store, 20000).unwrap();
+
     let main = instance
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_mapper_{:?} finished!", my_id);
