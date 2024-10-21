@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::{format, string::{String, ToString}, vec::Vec};
 use spin::Mutex;
+use core::mem::forget;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
@@ -40,7 +41,7 @@ fn func_body(pyfile_path: &str, func_num: u64) -> Result<()> {
     println!("rust: pyfile_path: {:?}, func_num: {:?}", pyfile_path, func_num);
 
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
         func_num.to_string(),
     ]);
@@ -60,7 +61,8 @@ fn func_body(pyfile_path: &str, func_num: u64) -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_cpython_func_{:?} finished!", my_id);

@@ -99,7 +99,7 @@ where
 
             Self {
                 inner: ManuallyDrop::new(inner),
-                used: true,
+                used: false,
             }
         })
     }

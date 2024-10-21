@@ -1,4 +1,6 @@
 extern crate alloc;
+use core::mem::forget;
+
 use alloc::{string::String, vec::Vec};
 
 use ms_std::agent::DataBuffer;
@@ -20,7 +22,7 @@ impl Default for WasmDataBuffer {
 
 pub fn buffer_register(
     mut caller: Caller<'_, LibosCtx>,
-    slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
+    slot_name_base: i32, slot_name_size: i32, buffer_offset: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
     {
@@ -35,17 +37,22 @@ pub fn buffer_register(
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
-    println!("buffer_register: slot_name={}", slot_name);
+    println!("slot_name={}", slot_name);
 
-    let buffer_base = memory.data_mut(&mut caller)
-                                    .get_mut(buffer_base as usize..)
-                                    .and_then(|s| s.get_mut(..buffer_size as usize))
-                                    .unwrap()
-                                    .as_mut_ptr();
-
+    let data = memory.data_mut(&mut caller);
+    let content = data
+                                .get_mut(buffer_offset as usize..)
+                                .and_then(|s| s.get_mut(..buffer_size as usize))
+                                .unwrap();
+    let buffer_base = content.as_mut_ptr();
+    
+    #[cfg(feature = "log")]
+    {
+        let base = data.as_mut_ptr();
+        println!("base={:?}, addr={:?}, offset={:?}, size={}", base, buffer_base, buffer_offset, buffer_size);
+    }
     // #[cfg(feature = "log")]
-    // println!("content={}", content);
-    // forget(content);
+    // println!("content={:?}", content);
 
     let mut wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::with_slot(slot_name);
     wasm_buffer.0 = buffer_base;
@@ -54,7 +61,7 @@ pub fn buffer_register(
 
 pub fn access_buffer(
     mut caller: Caller<'_, LibosCtx>,
-    slot_name_base: i32, slot_name_size: i32, buffer_base: i32, buffer_size: i32,
+    slot_name_base: i32, slot_name_size: i32, buffer_offset: i32, buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
     {
@@ -69,19 +76,29 @@ pub fn access_buffer(
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
-    println!("access_buffer: slot_name={}", slot_name);
-    let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap();
-    // #[cfg(feature = "log")]
-    // println!(
-    //     "wasm_buffer -> addr={:?}, size={}",
-    //     wasm_buffer.0, wasm_buffer.1
-    // );
+    println!("slot_name={}", slot_name);
+    let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap_or_else(|| {
+        #[cfg(feature = "log")]
+        println!("[Err] access_buffer didn't find the slot_name, return a empty buffer!");
+        let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        content.resize(buffer_size as usize, 0);
+        let mut buffer: DataBuffer<WasmDataBuffer> = DataBuffer::new();
+        buffer.0 = content.as_mut_ptr();
+        buffer.1 = buffer_size as usize;
+        buffer
+    });
+    
+    #[cfg(feature = "log")]
+    println!(
+        "wasm_buffer -> addr={:?}, size={}",
+        wasm_buffer.0, wasm_buffer.1
+    );
 
     if buffer_size as usize != wasm_buffer.1 {
-        panic!("access_buffer's size is different from buffer_register's size")
+        panic!("buffer_size={}, wasm_buffer.1={}, access_buffer's size is different from buffer_register's size", buffer_size, wasm_buffer.1)
     }
     let buffer = unsafe { core::slice::from_raw_parts(wasm_buffer.0, wasm_buffer.1) };
     // #[cfg(feature = "log")]
     // println!("buffer: {:?}", buffer);
-    memory.write(&mut caller, buffer_base as usize, buffer).unwrap();
+    memory.write(&mut caller, buffer_offset as usize, buffer).unwrap();
 }

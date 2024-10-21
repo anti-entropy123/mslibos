@@ -5,6 +5,7 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::{format, string::{String, ToString}, vec::Vec};
 use spin::Mutex;
+use core::mem::forget;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
@@ -31,6 +32,7 @@ fn func_body(my_id: &str, pyfile_path: &str, mapper_num: u64) -> Result<()> {
     if if_panic != 0 {
         #[cfg(feature = "log")]
         println!("[Info] normal exit. if_panic: {:?}", if_panic);
+        // println!("phase3: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
         return Ok(().into());
     } else {
         wasmtime_wasi_api::JMP_BUF_MAP.lock().insert(my_map_id.to_string(), Arc::new(jmpbuf));
@@ -40,7 +42,7 @@ fn func_body(my_id: &str, pyfile_path: &str, mapper_num: u64) -> Result<()> {
     println!("rust: my_id: {:?}, pyfile_path: {:?}, mapper_num: {:?}", my_id, pyfile_path, mapper_num);
 
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
         my_id.to_string(),
         mapper_num.to_string(),
@@ -61,7 +63,8 @@ fn func_body(my_id: &str, pyfile_path: &str, mapper_num: u64) -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_cpython_reducer_{:?} finished!", my_id);
