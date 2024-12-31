@@ -1,0 +1,45 @@
+{
+    "services": [
+      [
+        "fdtab",
+        "libruxfdtab.so"
+      ],
+      [
+        "stdio",
+        "libstdio.so"
+      ],
+      [
+        "mm",
+        "libmm.so"
+      ],
+      [
+        "time",
+        "libtime.so"
+      ],
+      [
+        "fatfs",
+        "libfatfs.so"
+      ]
+    ],
+    "apps": [
+      [
+        "mapper",
+        "libwasmtime_mapper.so"
+      ],
+      [
+        "reducer",
+        "libwasmtime_reducer.so"
+      ]
+    ],
+    "fs_image": "fs_images/fatfs_large.img",
+    "groups": [
+      {
+        "list": [
+          "mapper"
+        ],
+        "args": {
+          "reducer_num": "1"
+        }
+      }
+    ]
+  }

@@ -1,14 +1,17 @@
 extern crate alloc;
 
-use core::{mem::forget, slice};
+#[cfg(feature = "log")]
+use  ms_std::println;
+#[cfg(feature = "log")]
+use alloc::format;
 use alloc::{borrow::ToOwned, string::String, vec::Vec};
-use spin::{Mutex, MutexGuard};
+use core::{mem::forget, slice};
 use hashbrown::HashMap;
+use spin::{Mutex, MutexGuard};
 
 use ms_hostcall::{fdtab::FdtabResult, types::{OpenFlags, OpenMode, Stat, Fd, DirEntry}};
 use ms_std::{
     libos::libos,
-    println,
     time::{SystemTime, UNIX_EPOCH},
 };
 use tinywasm::{FuncContext, MemoryStringExt};
@@ -683,7 +686,6 @@ pub fn fd_readdir(mut ctx: FuncContext<'_>, args: (i32, i32, i32, i64, i32)) -> 
     forget(entries);
     Ok(0)
 }
-
 
 pub fn fd_seek(mut _ctx: FuncContext<'_>, _args: (i32, i64, i32, i32)) -> tinywasm::Result<i32> {
     #[cfg(feature = "log")]

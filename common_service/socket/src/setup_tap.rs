@@ -168,7 +168,7 @@ fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
     }
 
     // println!("the sudo passwd: {}", passwd);
-    assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
+    // assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
     for mut comd in commands {
         // println!("The next cmd: {:?}", comd);
         let mut child = comd

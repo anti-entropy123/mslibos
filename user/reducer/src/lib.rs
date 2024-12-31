@@ -9,6 +9,7 @@ pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     args, println,
+    time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
 
@@ -31,6 +32,7 @@ pub fn main() -> Result<()> {
         .unwrap_or_else(|_| panic!("bad arg, mapper_num={}", args::get("mapper_num").unwrap()));
 
     let mut counter: HashMap<String, u32> = HashMap::new();
+    println!("access_start: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     for i in 0..mapper_num {
         // println!("need databuffer slot={}-{}", i, reducer_id);
         let mapper_result: DataBuffer<Mapper2Reducer> =
@@ -42,6 +44,7 @@ pub fn main() -> Result<()> {
             counter.insert(word.to_owned(), old_count + count);
         }
     }
+    println!("access_end: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
 
     // for (word, count) in counter {
     //     println!("{}:{}", word, count);

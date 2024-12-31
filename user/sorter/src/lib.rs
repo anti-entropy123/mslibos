@@ -2,7 +2,7 @@
 
 use alloc::{format, string::String, vec::Vec};
 
-use ms_std::{args, prelude::*};
+use ms_std::{args, prelude::*,time::{SystemTime, UNIX_EPOCH}};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -17,6 +17,7 @@ struct VecArg {
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    println!("com_start1: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     let my_id = args::get("id").unwrap();
     let sorter_num: usize = {
         let n = args::get("sorter_num").unwrap();
@@ -26,7 +27,7 @@ pub fn main() -> Result<()> {
         let n = args::get("merger_num").unwrap();
         n.parse().unwrap()
     };
-
+    
     let input: DataBuffer<Reader2Sorter> =
         DataBuffer::from_buffer_slot(format!("input-part-{}", my_id)).unwrap();
 
@@ -42,8 +43,9 @@ pub fn main() -> Result<()> {
                 .map_err(|_| format!("parse Int failed, num={}", num))?,
         )
     }
-
+    
     array.array.sort();
+    
     if my_id.eq("0") {
         // let mut pivots: DataBuffer<VecArg> = ;
         let pivots: Vec<_> = (0..merger_num - 1)
@@ -59,6 +61,6 @@ pub fn main() -> Result<()> {
             pivots_buffer.array = pivots.clone();
         }
     }
-
+    println!("com_end1: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     Ok(().into())
 }
