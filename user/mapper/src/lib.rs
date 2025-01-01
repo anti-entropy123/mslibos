@@ -41,18 +41,11 @@ pub fn getidx(word: &str, reducer_num: u64) -> u64 {
     hash_val
 }
 
-#[allow(clippy::result_unit_err)]
-#[no_mangle]
-pub fn main() -> Result<()> {
-    let my_id = args::get("id").unwrap();
-    let reducer_num: u64 = args::get("reducer_num")
-        .expect("missing arg reducer_num")
-        .parse()
-        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
-
+fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     // let reader: DataBuffer<Reader2Mapper> =
     //     DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
     // println!("access_buffer_long={}", reader.content.len());
+
     let file_name = format!("fake_data_{}.txt", my_id);
     let mut f = File::open(&file_name)?;
     let mut content = String::new();
@@ -121,4 +114,16 @@ pub fn main() -> Result<()> {
     );
 
     Ok(().into())
+}
+
+#[allow(clippy::result_unit_err)]
+#[no_mangle]
+pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
+    let reducer_num: u64 = args::get("reducer_num")
+        .expect("missing arg reducer_num")
+        .parse()
+        .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
+
+    mapper_func(my_id, reducer_num)
 }

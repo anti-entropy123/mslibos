@@ -27,7 +27,7 @@ impl Default for MyComplexData {
 
 #[no_mangle]
 #[allow(clippy::result_unit_err)]
-pub fn main() -> Result<MyComplexData> {
+pub fn main() -> Result<()> {
     println!("func b");
     let func_b_start = SystemTime::now();
     let data = DataBuffer::<MyComplexData>::from_buffer_slot("Conference".to_owned());
@@ -35,11 +35,12 @@ pub fn main() -> Result<MyComplexData> {
         for i in 0..buffer.data.len() {
             let _ = unsafe { core::ptr::read_volatile((&buffer.data[i]) as *const u64) };
         }
+        core::mem::forget(buffer);
         println!(
             "phase34_dur={}",
             SystemTime::now().duration_since(func_b_start).as_nanos()
         );
-        Ok(buffer)
+        Ok(().into())
     } else {
         Err("buffer is none")?
     }
