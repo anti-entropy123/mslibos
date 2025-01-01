@@ -11,15 +11,16 @@ bitflags! {
     pub struct ProtFlags: u32 {
         const READ = 1;
         const WRITE = 2;
-        // const EXEC = 3;
+        const EXEC = 4;
     }
 }
 
 pub type BufferAllocFunc = fn(&str, Layout, u64) -> MMResult<usize>;
 pub type AccessBufferFunc = fn(&str) -> Option<(usize, u64)>;
 pub type BufferDeallocFunc = fn(usize, Layout);
-pub type MemmapFunc = fn(usize, ProtFlags, Fd) -> MMResult<usize>;
-pub type MemunmapFunc = fn(&mut [u8]) -> MMResult<()>;
+pub type MemmapFunc = fn(usize, usize, ProtFlags, Fd) -> MMResult<usize>;
+pub type MemunmapFunc = fn(&mut [u8], bool) -> MMResult<()>;
+pub type MprotectFunc = fn(usize, usize, ProtFlags) -> MMResult<()>;
 
 pub type MMResult<T> = Result<T, MMError>;
 

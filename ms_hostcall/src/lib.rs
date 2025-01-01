@@ -16,6 +16,8 @@ pub mod mm;
 pub mod mmap_file_backend;
 #[cfg(feature = "socket")]
 pub mod socket;
+#[cfg(feature = "signal")]
+pub mod signal;
 pub mod types;
 
 use alloc::{borrow::ToOwned, string::String};
@@ -97,6 +99,8 @@ pub enum CommonHostCall {
     Mmap,
     #[display(fmt = "libos_munmap")]
     Munmap,
+    #[display(fmt = "libos_mprotect")]
+    Mprotect,
 
     #[display(fmt = "register_file_backend")]
     RegisterFileBackend,
@@ -109,6 +113,9 @@ pub enum CommonHostCall {
     GetTime,
     #[display(fmt = "host_nanosleep")]
     NanoSleep,
+
+    #[display(fmt = "libos_sigaction")]
+    SigAction,
 }
 
 #[derive(Debug, Display)]
@@ -158,11 +165,14 @@ impl HostCallID {
                 | CommonHostCall::AccessBuffer
                 | CommonHostCall::BufferDealloc
                 | CommonHostCall::Mmap
-                | CommonHostCall::Munmap => "mm".to_owned(),
+                | CommonHostCall::Munmap
+                | CommonHostCall::Mprotect => "mm".to_owned(),
 
                 CommonHostCall::RegisterFileBackend
                 | CommonHostCall::FilePageFaultHandler
                 | CommonHostCall::UnregisterFileBackend => "mmap_file_backend".to_owned(),
+
+                CommonHostCall::SigAction => "signal".to_owned(),
 
                 CommonHostCall::GetTime | CommonHostCall::NanoSleep => "time".to_owned(),
             },

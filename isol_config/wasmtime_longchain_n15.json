@@ -1,0 +1,208 @@
+{
+    "services": [
+      [
+        "fdtab",
+        "libruxfdtab.so"
+      ],
+      [
+        "stdio",
+        "libstdio.so"
+      ],
+      [
+        "mm",
+        "libmm.so"
+      ],
+      [
+        "time",
+        "libtime.so"
+      ],
+      [
+        "fatfs",
+        "libfatfs.so"
+      ]
+    ],
+    "apps": [
+      [
+        "func1",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func2",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func3",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func4",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func5",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func6",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func7",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func8",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func9",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func10",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func11",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func12",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func13",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func14",
+        "libwasmtime_func.so"
+      ],
+      [
+        "func15",
+        "libwasmtime_func.so"
+      ]
+    ],
+    "groups": [
+      {
+        "list": [
+          "func1"
+        ],
+        "args": {
+          "func_num": "0"
+        }
+      },
+      {
+        "list": [
+          "func2"
+        ],
+        "args": {
+          "func_num": "1"
+        }
+      },
+      {
+        "list": [
+          "func3"
+        ],
+        "args": {
+          "func_num": "2"
+        }
+      },
+      {
+        "list": [
+          "func4"
+        ],
+        "args": {
+          "func_num": "3"
+        }
+      },
+      {
+        "list": [
+          "func5"
+        ],
+        "args": {
+          "func_num": "4"
+        }
+      },
+      {
+        "list": [
+          "func6"
+        ],
+        "args": {
+          "func_num": "5"
+        }
+      },
+      {
+        "list": [
+          "func7"
+        ],
+        "args": {
+          "func_num": "6"
+        }
+      },
+      {
+        "list": [
+          "func8"
+        ],
+        "args": {
+          "func_num": "7"
+        }
+      },
+      {
+        "list": [
+          "func9"
+        ],
+        "args": {
+          "func_num": "8"
+        }
+      },
+      {
+        "list": [
+          "func10"
+        ],
+        "args": {
+          "func_num": "9"
+        }
+      },
+      {
+        "list": [
+          "func11"
+        ],
+        "args": {
+          "func_num": "10"
+        }
+      },
+      {
+        "list": [
+          "func12"
+        ],
+        "args": {
+          "func_num": "11"
+        }
+      },
+      {
+        "list": [
+          "func13"
+        ],
+        "args": {
+          "func_num": "12"
+        }
+      },
+      {
+        "list": [
+          "func14"
+        ],
+        "args": {
+          "func_num": "13"
+        }
+      },
+      {
+        "list": [
+          "func15"
+        ],
+        "args": {
+          "func_num": "14"
+        }
+      }
+    ]
+  }

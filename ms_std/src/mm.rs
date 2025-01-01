@@ -28,7 +28,7 @@ impl Mmap {
         let file = ManuallyDrop::new(file);
         let length = file.metadata()?.st_size;
         let aligned_length = (length + PAGE_SIZE - 1) & (!PAGE_SIZE + 1);
-        let ptr = libos!(mmap(aligned_length, ProtFlags::READ, file.as_raw_fd()))?;
+        let ptr = libos!(mmap(0, aligned_length, ProtFlags::READ, file.as_raw_fd()))?;
 
         Ok(Mmap { ptr, length })
     }
@@ -43,6 +43,6 @@ impl AsRef<[u8]> for Mmap {
 impl Drop for Mmap {
     fn drop(&mut self) {
         let region = unsafe { slice::from_raw_parts_mut(self.ptr as *mut u8, self.length) };
-        libos!(munmap(region)).expect("munmap failed")
+        libos!(munmap(region, true)).expect("munmap failed")
     }
 }

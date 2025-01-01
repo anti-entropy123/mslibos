@@ -1,7 +1,7 @@
 #![no_std]
 use alloc::{format, vec::Vec};
 
-use ms_std::{args, prelude::*, println};
+use ms_std::{args, prelude::*, println,time::{SystemTime, UNIX_EPOCH}};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -11,6 +11,7 @@ struct VecArg {
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    println!("com_start2: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     let my_id = args::get("id").unwrap();
 
     let numbers: DataBuffer<VecArg> =
@@ -34,6 +35,7 @@ pub fn main() -> Result<()> {
             .map(|part| part.len())
             .collect::<Vec<usize>>()
     );
+    println!("com_end2: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
 
     Ok(().into())
 }

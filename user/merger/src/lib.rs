@@ -1,7 +1,7 @@
 #![no_std]
 use alloc::{format, vec::Vec};
 
-use ms_std::{args, prelude::*};
+use ms_std::{args, prelude::*,time::{SystemTime, UNIX_EPOCH}};
 use ms_std_proc_macro::FaasData;
 
 #[derive(Default, FaasData)]
@@ -11,6 +11,7 @@ struct VecArg {
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    println!("com_start3: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     let my_id = args::get("id").unwrap();
     let sorter_num: u32 = {
         let m = args::get("sorter_num").unwrap();
@@ -28,7 +29,7 @@ pub fn main() -> Result<()> {
 
     merged_result.array = merge_partitions(partitions.iter().map(|buffer| &buffer.array).collect());
     // println!("merged_result: {:?}", merged_result);
-
+    println!("com_end3: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
     Ok(().into())
 }
 

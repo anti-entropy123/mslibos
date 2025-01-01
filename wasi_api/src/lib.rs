@@ -123,11 +123,6 @@ pub fn import_all() -> tinywasm::Result<Imports> {
         )?
         .define(
             "wasi_snapshot_preview1",
-            "fd_read",
-            Extern::typed_func(wasi::fd_read),
-        )?
-        .define(
-            "wasi_snapshot_preview1",
             "fd_readdir",
             Extern::typed_func(wasi::fd_readdir),
         )?

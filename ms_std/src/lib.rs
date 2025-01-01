@@ -50,7 +50,7 @@ cfg_if::cfg_if! {
             #[panic_handler]
             fn panic_handler(_info: &PanicInfo) -> ! {
                 let panic_addr = isolation_ctx().panic_handler;
-
+                crate::println!("panic_handler: {:?}", _info);
                 let host_panic_handler: unsafe extern "C" fn() -> ! =
                     unsafe { core::mem::transmute(panic_addr) };
                 unsafe { host_panic_handler() }

@@ -7,10 +7,12 @@ def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
 
     fake = Faker()
+    # 设置种子
+    Faker.seed(42)  # 使用固定的种子值
     one_size = int(total_size / file_num)
 
     for i in range(file_num):
-        file_name = f'fake_data_{i}.txt'
+        file_name = f'./image_content/fake_data_{i}.txt'
         with open(file_name, 'w') as f:
             while True:
                 f.write(fake.text(10_000))
@@ -21,10 +23,11 @@ def gen_word_count(file_num: int, total_size: int):
 
 def gen_parallel_sort(file_num: int, total_size: int):
     import random
+    random.seed(42) 
 
     one_size = int(total_size / file_num)
     for i in range(file_num):
-        file_name = f'part-{i}'
+        file_name = f'./image_content/sort_data_{i}.txt'
         first = True
 
         with open(file_name, 'w') as f:
@@ -43,4 +46,5 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_parallel_sort(1, 5*1024*1024)
+    # gen_word_count(3, 10 * 1024 * 1024)
+    gen_parallel_sort(3, 25 * 1024 * 1024)
