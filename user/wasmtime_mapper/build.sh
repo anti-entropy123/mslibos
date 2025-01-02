@@ -11,7 +11,7 @@ cargo build --target x86_64-unknown-none --release && cc \
   -shared \
   -o target/x86_64-unknown-none/release/libwasmtime_mapper.so
 
-ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_mapper/target/x86_64-unknown-none/release/libwasmtime_mapper.so /home/wyj/alloy_stack/mslibos/target/release/libwasmtime_mapper.so
+ln -s /home/wyj/dyx_workplace/mslibos/user/wasmtime_mapper/target/x86_64-unknown-none/release/libwasmtime_mapper.so /home/wyj/dyx_workplace/mslibos/target/release/libwasmtime_mapper.so
 
 # cargo build --target x86_64-unknown-none && cc \
 #   -Wl,--gc-sections -nostdlib \
@@ -21,4 +21,4 @@ ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_mapper/target/x86_64-unknown-n
 #   -shared \
 #   -o target/x86_64-unknown-none/debug/libwasmtime_mapper.so
 
-# ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_mapper/target/x86_64-unknown-none/debug/libwasmtime_mapper.so /home/wyj/alloy_stack/mslibos/target/debug/libwasmtime_mapper.so
+# ln -s /home/wyj/dyx_workplace/mslibos/user/wasmtime_mapper/target/x86_64-unknown-none/debug/libwasmtime_mapper.so /home/wyj/dyx_workplace/mslibos/target/debug/libwasmtime_mapper.so

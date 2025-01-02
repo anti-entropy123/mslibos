@@ -9,26 +9,26 @@ __attribute__((import_module("env"), import_name("access_buffer"))) void access_
 // #define MAX_ARRAY_LENGTH 152221
 // #define MAX_BUFFER_SIZE 1024*1024+152221
 
-#define MAX_ARRAY_LENGTH 3805441
-#define MAX_BUFFER_SIZE 25*1024*1024+3805441
-
 // #define MAX_ARRAY_LENGTH 7611001
 // #define MAX_BUFFER_SIZE 50*1024*1024+7611001
 
+#define MAX_ARRAY_LENGTH 3805441
+#define MAX_BUFFER_SIZE 25*1024*1024+3805441
+
 int sorter_array[MAX_ARRAY_LENGTH]; 
 
-void get_time(int num, int phase) {
+void get_time() {
     timeval tv{};
     gettimeofday(&tv, nullptr);
-    printf("%lld.%06lld--%d--%d\n", tv.tv_sec, tv.tv_usec, num, phase);
+    printf("%lld.%06lld\n", tv.tv_sec, tv.tv_usec);
 }
 
 int main(int argc, char* argv[]) {
-    // get_time();
+    get_time();
     int id = atoi(argv[1]);
     int sorter_num = atoi(argv[2]);
     int merger_num = atoi(argv[3]);
-    // get_time();
+    get_time();
     // printf("spliter_%d start!\n", id);
     char slot_name[20];
     int bufferSize = MAX_BUFFER_SIZE;
@@ -38,19 +38,13 @@ int main(int argc, char* argv[]) {
     // access pivot buffer
     int pivot_array[10];
     int pivot_index = 0;
-    int time_num = 5;
     if (merger_num > 1) {
         sprintf(slot_name, "pivot_%d", id);
         char *pivot_buffer;
         pivot_buffer = (char *)malloc(bufferSize * sizeof(char));
         memset(pivot_buffer, 0, bufferSize * sizeof(char));
         pivot_buffer[0] = '\0'; // 初始化为空字符串
-        if (id == 0)
-        get_time(time_num, 0);
         access_buffer(slot_name, strlen(slot_name), pivot_buffer, bufferSize);
-        if (id == 0)
-        get_time(time_num, 1);
-        time_num++;
         ptr = pivot_buffer;
         // printf("pivot_buffer: %s", pivot_buffer);
         while (sscanf(ptr, "%d", &num) == 1) {
@@ -74,16 +68,12 @@ int main(int argc, char* argv[]) {
     sorter_buffer = (char *)malloc(bufferSize * sizeof(char));
     memset(sorter_buffer, 0, bufferSize * sizeof(char));
     sorter_buffer[0] = '\0'; // 初始化为空字符串
-    // get_time();
-    if (id == 0)
-    get_time(8, 0);
+    get_time();
     access_buffer(slot_name, strlen(slot_name), sorter_buffer, bufferSize);
-    if (id == 0)
-    get_time(8, 1);
-    // get_time();
+    get_time();
     int sorter_index = 0;
     ptr = sorter_buffer;
-    // get_time();
+    get_time();
     while (sscanf(ptr, "%d", &num) == 1) {
         sorter_array[sorter_index] = num;
         sorter_index++;
@@ -97,13 +87,13 @@ int main(int argc, char* argv[]) {
     }
     // free(ptr);
     printf("sorter_index: %d\n", sorter_index);
-    // get_time();
+    get_time();
     // free(sorter_buffer);
     // printf("spliter_%d sorter access finished!\n", id);
 
     // trans to merger
     // int array[merger_num][MAX_ARRAY_LENGTH];
-    // get_time();
+    get_time();
     int **array = (int **)malloc(merger_num * sizeof(int*));
     for (int i = 0; i < merger_num; i++) {
         array[i] = (int *)malloc(MAX_ARRAY_LENGTH * sizeof(int));
@@ -123,10 +113,9 @@ int main(int argc, char* argv[]) {
         array_index[row]++;
     }
     printf("merger_index_before_register: %d\n", array_index[0]);
-    // get_time();
-    // get_time();
+    get_time();
+    get_time();
     printf("array0: %d :%d\n", (void*)(array_index), *array_index);
-    time_num = 9;
     for (int i = 0; i < merger_num; i++) {
         printf("i(%d) = %d array0: %d :%d\n", (void*)&i, i, (void*)(array_index), *array_index);
         char slot_name[20];
@@ -150,17 +139,12 @@ int main(int argc, char* argv[]) {
         // 去掉最后一个多余的空格
         // buffer[strlen(buffer) - 1] = '\0';
         *merger_ptr++ = '\0';
-        if (id == 0)
-        get_time(time_num, 0);
         buffer_register(slot_name, strlen(slot_name), merger_buffer, MAX_BUFFER_SIZE);
-        if (id == 0)
-        get_time(time_num, 1);
-        time_num++;
         // buffer_register(slot_name, strlen(slot_name), buffer, bufferSize);
         // free(buffer);
         // free(array[i]);
     }
-    // get_time();
+    get_time();
     // free(array_index);
     // printf("spliter_%d all finished!\n", id);
     // get_time();

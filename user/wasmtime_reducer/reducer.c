@@ -5,13 +5,10 @@
 
 __attribute__((import_module("env"), import_name("access_buffer"))) void access_buffer(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-#define MAX_WORD_LENGTH 50
-#define MAX_WORDS 18000000
-#define MAX_SLOT_NUM 5
-#define MAX_BUFFER_SIZE 500000
-
-int count[MAX_WORDS];
-char *words[MAX_WORDS];
+#define MAX_WORD_LENGTH 20
+#define MAX_WORDS 5000
+#define MAX_SLOT_NUM 100
+#define MAX_BUFFER_SIZE 6000
 
 void to_lowercase(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -23,16 +20,8 @@ int main(int argc, char* argv[]) {
     int mapper_num = atoi(argv[2]);
     printf("reducer.c recieve: id: %d, mapper_num: %d\n", id, mapper_num);
 
-    char **slot_name = (char **)malloc(MAX_SLOT_NUM * sizeof(char*));
-    for (int i = 0; i < MAX_SLOT_NUM; i++) {
-        slot_name[i] = (char *)malloc(20 * sizeof(char));
-    }
-    // char *slot_name[MAX_SLOT_NUM];
-    char **buffer = (char **)malloc(MAX_SLOT_NUM * sizeof(char*));
-    for (int i = 0; i < MAX_SLOT_NUM; i++) {
-        buffer[i] = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
-    }
-    // char *buffer[MAX_SLOT_NUM];
+    char *slot_name[MAX_SLOT_NUM];
+    char *buffer[MAX_SLOT_NUM];
     char slot[20];
     int bufferSize = MAX_BUFFER_SIZE;
     int slot_num = mapper_num;
@@ -51,22 +40,22 @@ int main(int argc, char* argv[]) {
     }
     printf("access success!\n");
 
+    int count[MAX_WORDS] = {0};
+    char *words[MAX_WORDS];
     char word[MAX_WORD_LENGTH];
     int word_index = 0;
-
-    char *ptr[MAX_SLOT_NUM];
+    
     for (int i = 0; i < slot_num; i++) {
-        ptr[i] = buffer[i];
-    }
-    int num;
-    for (int i = 0; i < slot_num; i++) {
-        while (sscanf(ptr[i], "%s: %d\n", word, &num) == 1) {
+        char *line = strtok(buffer[i], "\n");
+        while (line != NULL) {
+            int num = 0;
+            sscanf(line, "%[^:]: %d", word, &num); // 解析每一行
             to_lowercase(word);
             int found = 0;
-            for (int j = 0; j < word_index; j++) {
-                if (strcmp(words[j], word) == 0) {
+            for (int i = 0; i < word_index; i++) {
+                if (strcmp(words[i], word) == 0) {
                     found = 1;
-                    count[j] += num;
+                    count[i] += num;
                     break;
                 }
             }
@@ -75,14 +64,7 @@ int main(int argc, char* argv[]) {
                 count[word_index] += num;
                 word_index++;
             }
-            
-            // 移动指针到下一个char
-            while (*ptr[i] && *ptr[i] != ' ') {
-                ptr[i]++;
-            }
-            if (*ptr[i] == ' ') {
-                ptr[i]++;
-            }
+            line = strtok(NULL, "\n");
         }
     }
 
@@ -96,7 +78,6 @@ int main(int argc, char* argv[]) {
         fprintf(output, "%s %d\n", words[i], count[i]);
         free(words[i]);
     }
-    
     fclose(output);
     
     printf("reducer_%d finished!\n", id);

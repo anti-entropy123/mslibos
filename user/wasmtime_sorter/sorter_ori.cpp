@@ -11,14 +11,14 @@ using namespace std;
 
 __attribute__((import_module("env"), import_name("buffer_register"))) void buffer_register(void *slot_name, int name_size, void *buffer, int buffer_size);
 
-// #define MAX_ARRAY_LENGTH 152221
+// #define MAX_ARRAY_LENGTH 7611020
 // #define MAX_BUFFER_SIZE 1024*1024+152221
-
-#define MAX_ARRAY_LENGTH 3805441
-#define MAX_BUFFER_SIZE 25*1024*1024+3805441
 
 // #define MAX_ARRAY_LENGTH 7611001
 // #define MAX_BUFFER_SIZE 50*1024*1024+7611001
+
+#define MAX_ARRAY_LENGTH 3805441
+#define MAX_BUFFER_SIZE 25*1024*1024+3805441
 
 // 比较函数，用于 qsort
 int compare(const void *a, const void *b) {
@@ -38,18 +38,18 @@ int readfile(FILE *stream) {
   return x;
 }
 
-void get_time(int num, int phase) {
+void get_time() {
     timeval tv{};
     gettimeofday(&tv, nullptr);
-    printf("%lld.%06lld--%d--%d\n", tv.tv_sec, tv.tv_usec, num, phase);
+    printf("%lld.%06lld\n", tv.tv_sec, tv.tv_usec);
 }
 
 int main(int argc, char* argv[]) {
-    // get_time();
+    get_time();
     int id = atoi(argv[1]);
     int sorter_num = atoi(argv[2]);
     int merger_num = atoi(argv[3]);
-    // get_time();
+    get_time();
     // printf("sorter_%d start!\n", id);
     char input_file[30];
     sprintf(input_file, "sort_data_%d.txt", id);
@@ -73,8 +73,7 @@ int main(int argc, char* argv[]) {
     // printf("%ld read start\n", now);
     // write(1, "read start\n", sizeof("read start\n"));
     char number[10];
-    if (id == 0)
-    get_time(0, 0);
+    get_time();
     // while (array[index++] = readfile(file));
     int ch = nc(file), x = 0;
     for (; ch != EOF; ch = nc(file)) {
@@ -83,9 +82,8 @@ int main(int argc, char* argv[]) {
     }
     arrays.push_back(x);
     index = arrays.size();
-    // printf("sorter_index: %d\n", index);
-    if (id == 0)
-    get_time(0, 1);
+    printf("sorter_index: %d\n", index);
+    get_time();
     // time(&now);
     // printf("%ld read finished\n", now);
     // write(1, "read finished\n", sizeof("read finished\n"));
@@ -97,10 +95,10 @@ int main(int argc, char* argv[]) {
     // printf("sorter_%d read finished!\n", id);
     printf("index: %d\n", index);
     fclose(file);
-    // get_time();
+    get_time();
     // qsort(arrays.data(), index, sizeof(int), compare);
     sort(arrays.data(), arrays.data()+index);
-    // get_time();
+    get_time();
     // printf("sorter_%d sort finished!\n", id);
 
     if (merger_num > 1 && id == 0) {
@@ -123,11 +121,7 @@ int main(int argc, char* argv[]) {
             char slot_name[20];
             sprintf(slot_name, "pivot_%d", k);
             // printf("pivotname: %s\n", slot_name);
-            if (id == 0)
-            get_time(k+1, 0);
             buffer_register(slot_name, strlen(slot_name), buffer, MAX_BUFFER_SIZE);
-            if (id == 0)
-            get_time(k+1, 1);
         }
         // free(buffer);
     }
@@ -147,7 +141,7 @@ int main(int argc, char* argv[]) {
     // printf("%ld memset finished\n", now);
     // write(1, "memset finished\n", sizeof("memset finished\n"));
     // buffer[0] = '\0'; // 初始化为空字符串
-    // get_time();
+    get_time();
     char *ptr = buffer;
     for (int i = 0; i < index; i++) {
         char temp[12]; // 临时缓冲区，注意要足够大以容纳最大整数和一个空格
@@ -157,16 +151,12 @@ int main(int argc, char* argv[]) {
         // strcat(buffer, temp); // 追加到 buffer
     }
     *ptr++ = '\0';
-    // get_time();
+    get_time();
     // buffer[strlen(buffer) - 1] = '\0';
     // write(1, "buffer make finished\n", sizeof("buffer make finished\n"));
-    // get_time();
-    if (id == 0)
-    get_time(4, 0);
+    get_time();
     buffer_register(slot_name, strlen(slot_name), buffer, MAX_BUFFER_SIZE);
-    if (id == 0)
-    get_time(4, 1);
-    // get_time();
+    get_time();
     // write(1, "buffer register finished\n", sizeof("buffer register finished\n"));
     // free(buffer);
     // printf("sorter_%d all finished!\n", id);

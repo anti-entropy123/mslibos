@@ -1,4 +1,3 @@
-
 extern crate alloc;
 
 use std::path::PathBuf;
@@ -13,7 +12,7 @@ use crate::{
 };
 use ms_hostcall::{
     fdtab::{FdtabError, FdtabResult},
-    types::{Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec, DirEntry},
+    types::{DirEntry, Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec},
 };
 use ruxdriver::init_drivers;
 use ruxfdtable::{FileLike, RuxStat};
@@ -45,7 +44,7 @@ fn convert(ruxstat: RuxStat) -> Stat {
             tv_nsec: ruxstat.st_ctime.tv_nsec,
         },
         __unused: ruxstat.__unused,
-    }
+    };
 }
 
 fn get_fs_image_path() -> PathBuf {
@@ -163,7 +162,7 @@ pub fn stat(fd: Fd) -> FdtabResult<Stat> {
     let res = convert(stat);
     // #[cfg(feature = "log")]
     // println!("[DEBUG] stat fd: {:?}, stat: {:?}", fd, res);
-    
+
     Ok(res)
 }
 
@@ -181,7 +180,7 @@ pub fn readdir(path: &str) -> FdtabResult<Vec<DirEntry>> {
         let entry = DirEntry {
             dir_path: item.path(),
             entry_name: item.file_name(),
-            entry_type: item.file_type() as u32
+            entry_type: item.file_type() as u32,
         };
         entries.push(entry);
     }

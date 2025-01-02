@@ -19,5 +19,5 @@ cfg-if = "1.0.0"
 [features]
 with_libos = ["ms_std", "ms_hostcall"]
 measure_mem = ["with_libos"]
-# mpk = ["ms_std/mpk"]
+mpk = ["ms_std/mpk"]
 default = ["measure_mem"]

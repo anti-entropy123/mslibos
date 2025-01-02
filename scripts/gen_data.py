@@ -2,18 +2,18 @@
 
 import os
 
+workdir = "/home/wyj/dyx_workplace/mount"
 
 def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
 
     fake = Faker()
-    # 设置种子
-    Faker.seed(42)  # 使用固定的种子值
+    Faker.seed(42)
     one_size = int(total_size / file_num)
 
     for i in range(file_num):
-        file_name = f'./image_content/fake_data_{i}.txt'
-        with open(file_name, 'w') as f:
+        file_name = f'{workdir}/fake_data_{i}.txt'
+        with open(file_name, 'w', encoding='utf-8') as f:
             while True:
                 f.write(fake.text(10_000))
 
@@ -23,28 +23,18 @@ def gen_word_count(file_num: int, total_size: int):
 
 def gen_parallel_sort(file_num: int, total_size: int):
     import random
-    random.seed(42) 
 
     one_size = int(total_size / file_num)
     for i in range(file_num):
-        file_name = f'./image_content/sort_data_{i}.txt'
-        first = True
-
-        with open(file_name, 'w') as f:
-            while True:
-                text = ','.join([str(random.randint(0, 1000000))
-                                for i in range(200)])
-                if not first:
-                    text = ',' + text
-                else:
-                    first = False
-
+        file_name = f'{workdir}/sort_data_{i}.txt'
+        current_size = 0
+        with open(file_name, 'w', encoding='utf-8') as f:
+            while current_size < one_size:
+                text = ' '.join(str(random.randint(0, 1000000)) for i in range(10))
+                text += '\n'
                 f.write(text)
-
-                if os.stat(file_name).st_size > one_size:
-                    break
+                current_size += len(text.encode('utf-8'))  # 更新当前文件大小
 
 
 if __name__ == "__main__":
-    # gen_word_count(3, 10 * 1024 * 1024)
     gen_parallel_sort(3, 25 * 1024 * 1024)
