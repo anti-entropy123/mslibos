@@ -9,11 +9,11 @@ __attribute__((import_module("env"), import_name("access_buffer"))) void access_
 // #define MAX_ARRAY_LENGTH 152221
 // #define MAX_BUFFER_SIZE 1024*1024+152221
 
-#define MAX_ARRAY_LENGTH 3805441
-#define MAX_BUFFER_SIZE 25*1024*1024+3805441
-
 // #define MAX_ARRAY_LENGTH 7611001
 // #define MAX_BUFFER_SIZE 50*1024*1024+7611001
+
+#define MAX_ARRAY_LENGTH 3805441
+#define MAX_BUFFER_SIZE 25*1024*1024+3805441
 
 int result[MAX_ARRAY_LENGTH];
 
@@ -23,10 +23,10 @@ typedef struct {
     int elementIndex; // 元素索引
 } HeapNode;
 
-void get_time(int num, int phase) {
+void get_time() {
     timeval tv{};
     gettimeofday(&tv, nullptr);
-    printf("%lld.%06lld--%d--%d\n", tv.tv_sec, tv.tv_usec, num, phase);
+    printf("%lld.%06lld\n", tv.tv_sec, tv.tv_usec);
 }
 
 // 最小堆的比较函数
@@ -61,7 +61,7 @@ void heapifyDown(HeapNode *minHeap, int heapSize, int index) {
 }
 
 int main(int argc, char* argv[]) {
-    // get_time();
+    get_time();
     int id = atoi(argv[1]);
     int sorter_num = atoi(argv[2]);
     int merger_num = atoi(argv[3]);
@@ -77,7 +77,6 @@ int main(int argc, char* argv[]) {
     int index[sorter_num];
     // int *index = (int *)malloc(sorter_num * sizeof(int));
     memset(index, 0, sizeof(index));
-    int time_num = 12;
     for (int i = 0; i < sorter_num; i++) {
         char slot_name[20];
         sprintf(slot_name, "merger_%d_%d", i, id);
@@ -85,12 +84,7 @@ int main(int argc, char* argv[]) {
         buffer = (char *)malloc(MAX_BUFFER_SIZE * sizeof(char));
         memset(buffer, 0, MAX_BUFFER_SIZE * sizeof(char));
         buffer[0] = '\0'; // 初始化为空字符串
-        if (id == 0)
-        get_time(time_num, 0);
         access_buffer(slot_name, strlen(slot_name), buffer, MAX_BUFFER_SIZE);
-        if (id == 0)
-        get_time(time_num, 1);
-        time_num++;
         char *ptr = buffer;
         int num;
         while (sscanf(ptr, "%d", &num) == 1) {
@@ -168,15 +162,11 @@ int main(int argc, char* argv[]) {
     // buffer[strlen(buffer) - 1] = '\0';
     *ptr++ = '\0';
     printf("result_index: %d\n", resultIndex);
-    if (id == 0)
-    get_time(15, 0);
     buffer_register(slot_name, strlen(slot_name), buffer, MAX_BUFFER_SIZE);
-    if (id == 0)
-    get_time(15, 1);
-    // free(buffer);
+    free(buffer);
     
 
     // printf("merger_%d all finished!\n", id);
-    // get_time();
+    get_time();
     return 0;
 }

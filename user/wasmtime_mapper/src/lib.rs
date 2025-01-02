@@ -7,7 +7,7 @@ use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH}};
+use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos};
 
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
@@ -26,6 +26,7 @@ lazy_static::lazy_static! {
 
 fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
     #[cfg(feature = "log")]
+
     println!("rust: my_id: {:?}, reducer_num: {:?}", my_id, reducer_num);
 
     let wasi_args: Vec<String> = Vec::from([
@@ -44,41 +45,28 @@ fn func_body(my_id: &str, reducer_num: u64) -> Result<()> {
     let mut store = Store::new(&engine, LibosCtx{id: my_id.to_string()});
     let instance = linker.instantiate(&mut store, &module)?;
 
-    // let memory_grow_start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("memory_grow_start_time: {:?}", memory_grow_start_time);
-    let mut memory = instance.get_memory(&mut store, "memory").unwrap();
-    let pages = memory.grow(&mut store, 20000).unwrap();
-    // println!("rust: pages: {}", pages);
+    let memory = instance.get_memory(&mut store, "memory").unwrap();
+    let _pages = memory.grow(&mut store, 20000).unwrap();
 
     let main = instance
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
-    
-    // let start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("start_time: {:?}", start_time);
-    // main.call(store, ()).map_err(|e| e.to_string())?;
+
     main.call(&mut store, ()).map_err(|e| e.to_string())?;
     forget(store);
-
     #[cfg(feature = "log")]
     println!("rust: wasmtime_mapper_{:?} finished!", my_id);
-    let end_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("end_time: {:?}", end_time);
+
     Ok(().into())
 }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    // let main_start_time = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("main_start_time: {:?}", main_start_time);
     let my_id = args::get("id").unwrap();
-    let get_id = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("get_id: {:?}", get_id);
     let reducer_num: u64 = args::get("reducer_num")
         .expect("missing arg reducer_num")
         .parse()
         .unwrap_or_else(|_| panic!("bad arg, reducer_num={}", args::get("reducer_num").unwrap()));
-    // let after_get_args = SystemTime::now().duration_since(UNIX_EPOCH).as_millis();
-    // println!("after_get_args: {:?}", after_get_args);
+
     func_body(my_id, reducer_num)
 }

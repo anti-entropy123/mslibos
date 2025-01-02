@@ -407,7 +407,7 @@ dependencies = [
  "itertools",
  "log",
  "smallvec",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmtime-types",
 ]
 
@@ -1437,30 +1437,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tinywasm"
-version = "0.7.0"
-source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
-dependencies = [
- "libm",
- "tinywasm-parser",
- "tinywasm-types",
-]
-
-[[package]]
-name = "tinywasm-parser"
-version = "0.7.0"
-source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
-dependencies = [
- "tinywasm-types",
- "wasmparser 0.207.0",
-]
-
-[[package]]
-name = "tinywasm-types"
-version = "0.7.0"
-source = "git+https://github.com/anti-entropy123/tinywasm?branch=master#31b2d363cd2f1ae36754fd4934acf02f333af95a"
-
-[[package]]
 name = "tokio"
 version = "1.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1591,38 +1567,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
-name = "wasi_api"
-version = "0.1.0"
-dependencies = [
- "hashbrown 0.14.5",
- "lazy_static",
- "ms_hostcall",
- "ms_std",
- "ms_std_proc_macro",
- "spin 0.9.8",
- "tinywasm",
-]
-
-[[package]]
 name = "wasm-encoder"
 version = "0.209.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b4a05336882dae732ce6bd48b7e11fe597293cb72c13da4f35d7d5f8d53b2a7"
 dependencies = [
  "leb128",
-]
-
-[[package]]
-name = "wasmparser"
-version = "0.207.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e19bb9f8ab07616da582ef8adb24c54f1424c7ec876720b7da9db8ec0626c92c"
-dependencies = [
- "ahash",
- "bitflags 2.6.0",
- "hashbrown 0.14.5",
- "indexmap",
- "semver",
 ]
 
 [[package]]
@@ -1646,7 +1596,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ceca8ae6eaa8c7c87b33c25c53bdf299f8c2a764aee1179402ff7652ef3a6859"
 dependencies = [
  "anyhow",
- "wasmparser 0.209.1",
+ "wasmparser",
 ]
 
 [[package]]
@@ -1679,7 +1629,7 @@ dependencies = [
  "smallvec",
  "sptr",
  "target-lexicon",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmtime-asm-macros",
  "wasmtime-component-macro",
  "wasmtime-component-util",
@@ -1741,7 +1691,7 @@ dependencies = [
  "object 0.36.5",
  "target-lexicon",
  "thiserror",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmtime-environ",
  "wasmtime-versioned-export-macros",
 ]
@@ -1763,7 +1713,7 @@ dependencies = [
  "serde_derive",
  "target-lexicon",
  "wasm-encoder",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmprinter",
  "wasmtime-component-util",
  "wasmtime-types",
@@ -1797,7 +1747,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "smallvec",
- "wasmparser 0.209.1",
+ "wasmparser",
 ]
 
 [[package]]
@@ -1822,7 +1772,7 @@ dependencies = [
  "gimli 0.28.1",
  "object 0.36.5",
  "target-lexicon",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmtime-cranelift",
  "wasmtime-environ",
  "winch-codegen",
@@ -1897,7 +1847,7 @@ dependencies = [
  "regalloc2",
  "smallvec",
  "target-lexicon",
- "wasmparser 0.209.1",
+ "wasmparser",
  "wasmtime-cranelift",
  "wasmtime-environ",
 ]
@@ -2049,7 +1999,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "unicode-xid",
- "wasmparser 0.209.1",
+ "wasmparser",
 ]
 
 [[package]]

@@ -7,7 +7,6 @@ members = [
     "ms_hostcall",
     "ms_std_proc_macro",
     "ms_std",
-    "wasi_api",
     "wasmtime_wasi_api",
 ]
 

@@ -2,8 +2,10 @@
 
 extern crate alloc;
 
+use alloc::sync::Arc;
 use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
+use core::mem::forget;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
 use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
@@ -26,8 +28,18 @@ fn func_body(my_id: &str, pyfile_path: &str) -> Result<()> {
     #[cfg(feature = "log")]
     println!("rust: my_id: {:?}, pyfile_path: {:?}", my_id, pyfile_path);
 
+    let mut jmpbuf = sjlj::JumpBuf::new();
+    let if_panic = unsafe { sjlj::setjmp(&mut jmpbuf) };
+    if if_panic != 0 {
+        #[cfg(feature = "log")]
+        println!("[Info] normal exit. if_panic: {:?}", if_panic);
+        return Ok(().into());
+    } else {
+        wasmtime_wasi_api::JMP_BUF_MAP.lock().insert(my_id.to_string(), Arc::new(jmpbuf));
+    }
+
     let wasi_args: Vec<String> = Vec::from([
-        "fake system path!".to_string(),
+        "python.wasm".to_string(),
         pyfile_path.to_string(),
     ]);
     wasmtime_wasi_api::set_wasi_args(my_id, wasi_args);
@@ -45,8 +57,9 @@ fn func_body(my_id: &str, pyfile_path: &str) -> Result<()> {
         .get_typed_func::<(), ()>(&mut store, "_start")
         .map_err(|e| e.to_string())?;
 
-    println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
-    main.call(store, ()).map_err(|e| e.to_string())?;
+    // println!("{}", SystemTime::now().duration_since(UNIX_EPOCH).as_nanos());
+    main.call(&mut store, ()).map_err(|e| e.to_string())?;
+    forget(store);
 
     #[cfg(feature = "log")]
     println!("rust: wasmtime_cpython_{:?} finished!", my_id);

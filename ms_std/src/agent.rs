@@ -7,12 +7,7 @@ use alloc::{
 };
 use ms_hostcall::Verify;
 
-use crate::{libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
-
-pub static mut PHASE31: u128 = 0;
-pub static mut PHASE32: u128 = 0;
-pub static mut PHASE33: u128 = 0;
-pub static mut PHASE34: u128 = 0;
+use crate::{libos::libos, println};
 
 pub type FaaSFuncResult<T> = Result<DataBuffer<T>, FaaSFuncError>;
 
@@ -92,29 +87,19 @@ where
     }
 
     pub fn from_buffer_slot(slot: String) -> Option<Self> {
-        unsafe {
-            PHASE31 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
-        }
         let buffer_meta: Option<(usize, u64)> = libos!(access_buffer(&slot));
-        unsafe {
-            PHASE32 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
-        }
+
         buffer_meta.map(|(raw_ptr, fingerprint)| {
             if fingerprint != T::__fingerprint() {
                 println!("wrong data type, {}, {}", fingerprint, T::__fingerprint());
                 panic!("");
             };
-            unsafe {
-                PHASE33 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
-            }
 
             let inner = unsafe { Box::from_raw(raw_ptr as *mut T) };
-            unsafe {
-                PHASE34 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
-            }
+
             Self {
                 inner: ManuallyDrop::new(inner),
-                used: true,
+                used: false,
             }
         })
     }

@@ -11,7 +11,7 @@ cargo build --target x86_64-unknown-none --release && cc \
   -shared \
   -o target/x86_64-unknown-none/release/libwasmtime_reducer.so
 
-ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_reducer/target/x86_64-unknown-none/release/libwasmtime_reducer.so /home/wyj/alloy_stack/mslibos/target/release/libwasmtime_reducer.so
+ln -s /home/wyj/dyx_workplace/mslibos/user/wasmtime_reducer/target/x86_64-unknown-none/release/libwasmtime_reducer.so /home/wyj/dyx_workplace/mslibos/target/release/libwasmtime_reducer.so
 
 
 # cargo build --target x86_64-unknown-none && cc \
@@ -22,4 +22,4 @@ ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_reducer/target/x86_64-unknown-
 #   -shared \
 #   -o target/x86_64-unknown-none/debug/libwasmtime_reducer.so
 
-# ln -s /home/wyj/alloy_stack/mslibos/user/wasmtime_reducer/target/x86_64-unknown-none/debug/libwasmtime_reducer.so /home/wyj/alloy_stack/mslibos/target/debug/libwasmtime_reducer.so
+# ln -s /home/wyj/dyx_workplace/mslibos/user/wasmtime_reducer/target/x86_64-unknown-none/debug/libwasmtime_reducer.so /home/wyj/dyx_workplace/mslibos/target/debug/libwasmtime_reducer.so

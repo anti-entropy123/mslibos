@@ -28,7 +28,7 @@ pub fn addrinfo(name: &str) -> SmoltcpResult<Ipv4Addr> {
     let mut iface = acquire_iface()?;
 
     let (dns_handle, query) = {
-        let servers = &[Ipv4Address::new(8, 8, 8, 8).into()];
+        let servers = &[Ipv4Address::new(114, 114, 114, 114).into()];
         let dns_socket = dns::Socket::new(servers, vec![]);
 
         let mut sockets = acquire_sockets()?;

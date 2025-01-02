@@ -17,7 +17,8 @@ __attribute__((import_module("env"), import_name("access_buffer"))) void access_
 void get_time() {
     timeval tv{};
     gettimeofday(&tv, nullptr);
-    printf("%lld.%06lld\n", tv.tv_sec, tv.tv_usec);
+    
+    printf("%lld.%06ld\n", (long long)tv.tv_sec, tv.tv_usec);
 }
 
 string words[MAX_WORDS];
@@ -31,15 +32,12 @@ int main(int argc, char* argv[]) {
     string slot_name[MAX_SLOT_NUM];
     string buffer[MAX_SLOT_NUM];
 
-    printf("start data_trans\n");
-    get_time();
     for (int i = 0; i < slot_num; ++i) {
         slot_name[i] = "buffer_" + to_string(i) + "_" + to_string(id);
         buffer[i] = string(MAX_BUFFER_SIZE, 0);
         access_buffer((void*)slot_name[i].c_str(), slot_name[i].length(), (void*)buffer[i].c_str(), buffer[i].size());
     }
-    printf("finish data_trans\n");
-    get_time();
+
     unordered_map<string, int> word_map;
 
     for (int i = 0; i < slot_num; i++) {

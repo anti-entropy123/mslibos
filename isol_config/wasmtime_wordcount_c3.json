@@ -5,16 +5,16 @@
         "libruxfdtab.so"
       ],
       [
+        "time",
+        "libtime.so"
+      ],
+      [
         "stdio",
         "libstdio.so"
       ],
       [
         "mm",
         "libmm.so"
-      ],
-      [
-        "time",
-        "libtime.so"
       ],
       [
         "fatfs",
@@ -31,7 +31,7 @@
         "libwasmtime_reducer.so"
       ]
     ],
-    "fs_image": "fs_images/new_image.img",
+    "fs_image": "fs_images/fatfs.img",
     "groups": [
       {
         "list": [
