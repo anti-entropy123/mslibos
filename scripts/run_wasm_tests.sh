@@ -1,7 +1,8 @@
 #!/bin/bash
 
 declare -A test_groups=(
-    [wasm_test]="wasmtime_cpython wasmtime_wordcount"
+    [wasm_c]="wasmtime_wordcount"
+    [wasm_py]="wasmtime_cpython wasmtime_cpython_wordcount_c3"
 )
 
 passed_count=0
