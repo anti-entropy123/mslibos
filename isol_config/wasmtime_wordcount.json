@@ -19,6 +19,10 @@
     [
       "signal",
       "libsignal.so"
+    ],
+    [
+      "time",
+      "libtime.so"
     ]
   ],
   "apps": [

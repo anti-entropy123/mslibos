@@ -1,6 +1,7 @@
 target
 tinywasm
 wasmtime-as-lib
+image_content
 
 .VSCodeCounter
 .gdbinit
