@@ -1,11 +1,13 @@
 extern crate alloc;
-use core::mem::forget;
 
 use alloc::{string::String, vec::Vec};
 
 use ms_std::agent::DataBuffer;
 #[cfg(feature = "log")]
-use ms_std::{println, time::{SystemTime, UNIX_EPOCH}};
+use ms_std::{
+    println,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use ms_std_proc_macro::FaasData;
 use wasmtime::Caller;
 
@@ -22,18 +24,26 @@ impl Default for WasmDataBuffer {
 
 pub fn buffer_register(
     mut caller: Caller<'_, LibosCtx>,
-    slot_name_base: i32, slot_name_size: i32, buffer_offset: i32, buffer_size: i32,
+    slot_name_base: i32,
+    slot_name_size: i32,
+    buffer_offset: i32,
+    buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
     {
         println!("[Debug] buffer_register");
-        println!("[Time] buffer_register: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
+        println!(
+            "[Time] buffer_register: {}",
+            SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
+        );
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);
     slot_name.resize(slot_name_size as usize, 0);
-    memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
+    memory
+        .read(&caller, slot_name_base as usize, &mut slot_name)
+        .unwrap();
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
@@ -41,15 +51,18 @@ pub fn buffer_register(
 
     let data = memory.data_mut(&mut caller);
     let content = data
-                                .get_mut(buffer_offset as usize..)
-                                .and_then(|s| s.get_mut(..buffer_size as usize))
-                                .unwrap();
+        .get_mut(buffer_offset as usize..)
+        .and_then(|s| s.get_mut(..buffer_size as usize))
+        .unwrap();
     let buffer_base = content.as_mut_ptr();
-    
+
     #[cfg(feature = "log")]
     {
         let base = data.as_mut_ptr();
-        println!("base={:?}, addr={:?}, offset={:?}, size={}", base, buffer_base, buffer_offset, buffer_size);
+        println!(
+            "base={:?}, addr={:?}, offset={:?}, size={}",
+            base, buffer_base, buffer_offset, buffer_size
+        );
     }
     // #[cfg(feature = "log")]
     // println!("content={:?}", content);
@@ -61,33 +74,42 @@ pub fn buffer_register(
 
 pub fn access_buffer(
     mut caller: Caller<'_, LibosCtx>,
-    slot_name_base: i32, slot_name_size: i32, buffer_offset: i32, buffer_size: i32,
+    slot_name_base: i32,
+    slot_name_size: i32,
+    buffer_offset: i32,
+    buffer_size: i32,
 ) {
     #[cfg(feature = "log")]
     {
         println!("[Debug] access_buffer");
-        println!("[Time] access_buffer: {}", SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64);
+        println!(
+            "[Time] access_buffer: {}",
+            SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
+        );
     }
 
     let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
     let mut slot_name: Vec<u8> = Vec::with_capacity(slot_name_size as usize);
     slot_name.resize(slot_name_size as usize, 0);
-    memory.read(&caller, slot_name_base as usize, &mut slot_name).unwrap();
+    memory
+        .read(&caller, slot_name_base as usize, &mut slot_name)
+        .unwrap();
     let slot_name = String::from_utf8(slot_name).expect("[Err] Not a valid UTF-8 sequence");
 
     #[cfg(feature = "log")]
     println!("slot_name={}", slot_name);
-    let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name).unwrap_or_else(|| {
-        #[cfg(feature = "log")]
-        println!("[Err] access_buffer didn't find the slot_name, return a empty buffer!");
-        let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
-        content.resize(buffer_size as usize, 0);
-        let mut buffer: DataBuffer<WasmDataBuffer> = DataBuffer::new();
-        buffer.0 = content.as_mut_ptr();
-        buffer.1 = buffer_size as usize;
-        buffer
-    });
-    
+    let wasm_buffer: DataBuffer<WasmDataBuffer> = DataBuffer::from_buffer_slot(slot_name)
+        .unwrap_or_else(|| {
+            #[cfg(feature = "log")]
+            println!("[Err] access_buffer didn't find the slot_name, return a empty buffer!");
+            let mut content: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+            content.resize(buffer_size as usize, 0);
+            let mut buffer: DataBuffer<WasmDataBuffer> = DataBuffer::new();
+            buffer.0 = content.as_mut_ptr();
+            buffer.1 = buffer_size as usize;
+            buffer
+        });
+
     #[cfg(feature = "log")]
     println!(
         "wasm_buffer -> addr={:?}, size={}",
@@ -100,5 +122,7 @@ pub fn access_buffer(
     let buffer = unsafe { core::slice::from_raw_parts(wasm_buffer.0, wasm_buffer.1) };
     // #[cfg(feature = "log")]
     // println!("buffer: {:?}", buffer);
-    memory.write(&mut caller, buffer_offset as usize, buffer).unwrap();
+    memory
+        .write(&mut caller, buffer_offset as usize, buffer)
+        .unwrap();
 }

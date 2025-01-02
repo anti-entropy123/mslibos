@@ -34,7 +34,7 @@ fn func_body() -> Result<()> {
     let mut store = Store::new(&engine, LibosCtx{id: "0".to_string()});
     let instance = linker.instantiate(&mut store, &module)?;
     
-    let mut memory = instance.get_memory(&mut store, "memory").unwrap();
+    let memory = instance.get_memory(&mut store, "memory").unwrap();
     let pages = memory.grow(&mut store, 20000).unwrap();
     println!("rust: pages: {}", pages);
 

@@ -3,15 +3,19 @@
 extern crate alloc;
 
 use alloc::sync::Arc;
-use alloc::{format, string::{String, ToString}, vec::Vec};
-use spin::Mutex;
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
 use core::mem::forget;
+use spin::Mutex;
 
 use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos, println, time::{SystemTime, UNIX_EPOCH},};
+use ms_std::{agent::FaaSFuncResult as Result, args, libos::libos};
 
-use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;
+use wasmtime_wasi_api::{wasmtime, LibosCtx};
 
 const CWASM: &[u8] = include_bytes!("../python.cwasm");
 
@@ -34,11 +38,16 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64, mapper_num: u64) 
         println!("[Info] normal exit. if_panic: {:?}", if_panic);
         return Ok(().into());
     } else {
-        wasmtime_wasi_api::JMP_BUF_MAP.lock().insert(my_map_id.to_string(), Arc::new(jmpbuf));
+        wasmtime_wasi_api::JMP_BUF_MAP
+            .lock()
+            .insert(my_map_id.to_string(), Arc::new(jmpbuf));
     }
 
     #[cfg(feature = "log")]
-    println!("rust: my_id: {:?}, pyfile_path: {:?}, reducer_num: {:?}, mapper_num: {:?}", my_id, pyfile_path, reducer_num, mapper_num);
+    println!(
+        "rust: my_id: {:?}, pyfile_path: {:?}, reducer_num: {:?}, mapper_num: {:?}",
+        my_id, pyfile_path, reducer_num, mapper_num
+    );
 
     let wasi_args: Vec<String> = Vec::from([
         "python.wasm".to_string(),
@@ -55,7 +64,12 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64, mapper_num: u64) 
     let (engine, module, linker) = wasmtime_wasi_api::build_wasm(CWASM);
     drop(lock);
 
-    let mut store = Store::new(&engine, LibosCtx{id: my_map_id.to_string()});
+    let mut store = Store::new(
+        &engine,
+        LibosCtx {
+            id: my_map_id.to_string(),
+        },
+    );
     let instance = linker.instantiate(&mut store, &module)?;
 
     let main = instance
@@ -70,7 +84,6 @@ fn func_body(my_id: &str, pyfile_path: &str, reducer_num: u64, mapper_num: u64) 
 
     Ok(().into())
 }
-
 
 #[no_mangle]
 pub fn main() -> Result<()> {
