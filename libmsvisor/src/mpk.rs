@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{arch::asm, ffi::c_void};
 
 use nix::{
@@ -5,12 +6,38 @@ use nix::{
     libc::{size_t, syscall, SYS_pkey_alloc, SYS_pkey_mprotect},
 };
 
-use core::slice;
-use std::alloc::{self, Layout};
-use nix::libc;
+use crate::{logger, utils};
+
+pub const LIBOS_PKEY: i32 = 0x1;
+
+fn _pkey_alloc() -> i32 {
+    unsafe { syscall(SYS_pkey_alloc, 0, 0) as i32 }
+}
+
+pub fn must_init_all_pkeys() {
+    for i in 0..16 {
+        let pkey = _pkey_alloc();
+        if pkey < 0 {
+            panic!("pkey_alloc failed at {}", i);
+        }
+        if pkey == LIBOS_PKEY {
+            return;
+        }
+    }
+}
+
+// 0 -> default.
+// 1..=13 -> user function.
+// 14 -> DataBuffer.
+// 15 -> backlist.
+static PKEY_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 pub fn pkey_alloc() -> i32 {
-    unsafe { syscall(SYS_pkey_alloc, 0, 0) as i32 }
+    let previous_pkey = PKEY_COUNTER.fetch_add(1, Ordering::SeqCst);
+    if previous_pkey == 13 {
+        panic!("No more pkeys available");
+    }
+    (previous_pkey + 1) as i32
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -72,6 +99,33 @@ pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
     } else {
         Err("Invalid PKEY")
     }
+}
+
+pub fn set_libs_with_pkey(lib_abs_paths: &[&str], pkey: i32) -> Result<(), anyhow::Error> {
+    let segments = utils::parse_memory_segments()?;
+    for segment in segments {
+        if let Some(path) = segment.clone().path {
+            if lib_abs_paths.iter().any(|need| path.contains(need)) {
+                pkey_mprotect(
+                    segment.start_addr as *mut c_void,
+                    segment.length,
+                    segment.perm,
+                    pkey,
+                )
+                .unwrap();
+                logger::info!(
+                    "{} (0x{:x}, 0x{:x}) set mpk success with pkey {}, right {:?}.",
+                    segment.path.unwrap(),
+                    segment.start_addr,
+                    segment.start_addr + segment.length,
+                    LIBOS_PKEY,
+                    segment.perm
+                );
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[test]

@@ -77,7 +77,6 @@ impl Service {
             Service::RustService(_) => todo!(),
         }
     }
-
 }
 
 // impl Drop for Service {

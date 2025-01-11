@@ -29,4 +29,4 @@ namespace = []
 serviceV2 = ["nix/mman"]
 enable_mpk = []
 
-# default = ["namespace", "enable_mpk"]
+default = ["enable_mpk"]

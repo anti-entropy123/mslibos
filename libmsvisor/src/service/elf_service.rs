@@ -18,7 +18,7 @@ use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, MetricEvent, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE, SERVICE_STACK_SIZE,
 };
-use nix::libc::RTLD_DI_LMID;
+use nix::libc::{self, Dl_info, RTLD_DI_LMID};
 use thiserror::Error;
 
 #[cfg(feature = "enable_mpk")]
@@ -125,17 +125,21 @@ pub struct ElfService {
     path: String,
     lib: Arc<Library>,
     metric: Arc<SvcMetricBucket>,
+    #[cfg(feature = "enable_mpk")]
+    pkey: i32,
 }
 
 impl ElfService {
     pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         metric.mark(MetricEvent::SvcInit);
         logger::debug!("ELFService::new, name={name}");
+        let pkey = mpk::pkey_alloc();
         Self {
             name: name.to_owned(),
             path: path.to_owned(),
             lib,
             metric,
+            pkey,
         }
     }
 
@@ -173,6 +177,7 @@ impl ElfService {
                 "mov r11, r13",
                 "mov [r12+8], rsp",
                 "mov rsp, r12",
+                // PKRU register, 01 01 01 01 ..... 11 00
                 "mov eax, 0x5555555c",
                 "xor rcx, rcx",
                 "mov rdx, rcx",
@@ -182,11 +187,9 @@ impl ElfService {
                 in("r13") rust_main,
             );
 
-            // 复原 rsp 寄存器的值
-            asm!("mov rsp, [rsp+8]");
-
             // 恢复寄存器
             asm!(
+                "mov rsp, [rsp+8]",
                 "mov rcx, [rsp+8]",
                 "mov rdx, [rsp+16]",
                 "mov rsi, [rsp+24]",
@@ -395,5 +398,4 @@ impl WithLibOSService {
     pub fn namespace(&self) -> Namespace {
         self.elf.namespace()
     }
-
 }

@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Mutex};
+use std::{fs, path::PathBuf, sync::Mutex};
 
 use lazy_static::lazy_static;
 use nix::libc;
@@ -100,8 +100,9 @@ pub struct MemorySegment {
     pub path: Option<String>,
 }
 
-pub fn parse_memory_segments(input: &str) -> io::Result<Vec<MemorySegment>> {
-    let lines = input.lines().collect::<Vec<_>>();
+pub fn parse_memory_segments() -> io::Result<Vec<MemorySegment>> {
+    let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
+    let lines = maps_str.lines().collect::<Vec<_>>();
     let mut segments = Vec::new();
 
     for line in lines {
