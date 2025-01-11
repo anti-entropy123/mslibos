@@ -69,6 +69,14 @@ impl Service {
             Service::RustService(svc) => svc.name.to_owned(),
         }
     }
+    pub fn path(&self) -> &str {
+        match self {
+            Service::ELFService(svc) => svc.path.as_str(),
+            Service::WithLibOSService(svc) => svc.path(),
+            #[cfg(feature = "serviceV2")]
+            Service::RustService(svc) => svc.path.to_owned(),
+        }
+    }
     pub fn namespace(&self) -> Namespace {
         match self {
             Service::ELFService(svc) => svc.namespace(),

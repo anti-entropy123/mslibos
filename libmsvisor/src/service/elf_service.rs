@@ -122,7 +122,7 @@ impl Default for UserStack {
 pub struct ElfService {
     pub name: String,
     #[allow(dead_code)]
-    path: String,
+    pub path: String,
     lib: Arc<Library>,
     metric: Arc<SvcMetricBucket>,
     #[cfg(feature = "enable_mpk")]
@@ -327,6 +327,10 @@ impl WithLibOSService {
     #[inline]
     pub fn name(&self) -> String {
         self.elf.name.clone()
+    }
+
+    pub fn path(&self) -> &str {
+        self.elf.path.as_str()
     }
 
     pub fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {

@@ -129,11 +129,11 @@ impl Isolation {
             } else {
                 self.service_or_load(svc_name)?;
             }
-            if self.app_names.contains(svc_name) {
-                self.app_or_load(svc_name)?;
-            } else {
-                self.service_or_load(svc_name)?;
-            }
+            // if self.app_names.contains(svc_name) {
+            //     self.app_or_load(svc_name)?;
+            // } else {
+            //     self.service_or_load(svc_name)?;
+            // }
         }
 
         Ok(())
@@ -222,7 +222,7 @@ impl Isolation {
         #[cfg(feature = "enable_mpk")]
         {
             let this_proc_name = std::env::current_exe()?;
-            
+
             let mut black_list = BLACKLIST.clone();
             black_list.push(
                 this_proc_name
