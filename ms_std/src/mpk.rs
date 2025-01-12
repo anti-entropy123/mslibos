@@ -15,33 +15,33 @@ pub fn pkey_read() -> u32 {
     result
 }
 
-#[inline]
-pub fn pkey_write(pkru: u32) {
-    // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
-    // otherwise, a general-protection exception (#GP) occurs.
-    let eax = pkru;
-    let ecx = 0;
-    let edx = 0;
+// #[inline]
+// pub fn pkey_write(pkru: u32) {
+//     // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
+//     // otherwise, a general-protection exception (#GP) occurs.
+//     let eax = pkru;
+//     let ecx = 0;
+//     let edx = 0;
 
-    unsafe {
-        asm!(
-            "wrpkru",
-            in("eax") eax,
-            in("ecx") ecx,
-            in("edx") edx,
-        )
-    };
-}
+//     unsafe {
+//         asm!(
+//             "wrpkru",
+//             in("eax") eax,
+//             in("ecx") ecx,
+//             in("edx") edx,
+//         )
+//     };
+// }
 
-#[inline]
-pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
-    if (0..16).contains(&pkey) {
-        let mask: u32 = 0b11 << (2 * pkey);
-        let mut pkru = pkey_read();
-        pkru = (pkru & !mask) | (rights << (2 * pkey));
-        pkey_write(pkru);
-        Ok(())
-    } else {
-        Err("Invalid PKEY")
-    }
-}
+// #[inline]
+// pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
+//     if (0..16).contains(&pkey) {
+//         let mask: u32 = 0b11 << (2 * pkey);
+//         let mut pkru = pkey_read();
+//         pkru = (pkru & !mask) | (rights << (2 * pkey));
+//         pkey_write(pkru);
+//         Ok(())
+//     } else {
+//         Err("Invalid PKEY")
+//     }
+// }

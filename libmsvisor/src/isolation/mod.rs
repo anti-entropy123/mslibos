@@ -12,24 +12,24 @@ use anyhow::{anyhow, Ok};
 
 use lazy_static::lazy_static;
 use log::info;
-use ms_hostcall::types::{
-    IsolationID as IsolID,
-    MetricEvent::{IsolBegin, IsolEnd, Mem},
-    ServiceName,
+use ms_hostcall::{
+    mpk::LIBOS_PKEY,
+    types::{
+        IsolationID as IsolID,
+        MetricEvent::{IsolBegin, IsolEnd, Mem},
+        ServiceName,
+    },
 };
 
 #[cfg(feature = "enable_mpk")]
-use std::{env, ffi::c_void, fs};
-
+use crate::mpk;
 use crate::{
     logger,
     metric::MetricBucket,
-    mpk::{must_init_all_pkeys, LIBOS_PKEY},
+    mpk::must_init_all_pkeys,
     service::{Service, ServiceLoader},
     utils::gen_new_id,
 };
-#[cfg(feature = "enable_mpk")]
-use crate::{mpk, utils};
 use config::IsolationConfig;
 
 use self::config::App;
@@ -230,7 +230,7 @@ impl Isolation {
                     .ok_or(anyhow!("this proc name to str failed"))?,
             );
 
-            mpk::set_libs_with_pkey(&black_list, mpk::LIBOS_PKEY)?;
+            mpk::set_libs_with_pkey(&black_list, LIBOS_PKEY)?;
         }
 
         #[cfg(feature = "namespace")]

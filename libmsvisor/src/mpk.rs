@@ -1,14 +1,13 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{arch::asm, ffi::c_void};
 
+use ms_hostcall::mpk::LIBOS_PKEY;
 use nix::{
     errno::Errno,
     libc::{size_t, syscall, SYS_pkey_alloc, SYS_pkey_mprotect},
 };
 
 use crate::{logger, utils};
-
-pub const LIBOS_PKEY: i32 = 0x1;
 
 fn _pkey_alloc() -> i32 {
     unsafe { syscall(SYS_pkey_alloc, 0, 0) as i32 }
@@ -20,7 +19,7 @@ pub fn must_init_all_pkeys() {
         if pkey < 0 {
             panic!("pkey_alloc failed at {}", i);
         }
-        if pkey == LIBOS_PKEY {
+        if pkey == ms_hostcall::mpk::LIBOS_PKEY {
             return;
         }
     }
@@ -70,36 +69,36 @@ pub fn pkey_read() -> u32 {
     result
 }
 
-#[inline]
-pub fn pkey_write(pkru: u32) {
-    // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
-    // otherwise, a general-protection exception (#GP) occurs.
-    let eax = pkru;
-    let ecx = 0;
-    let edx = 0;
+// #[inline]
+// pub fn pkey_write(pkru: u32) {
+//     // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
+//     // otherwise, a general-protection exception (#GP) occurs.
+//     let eax = pkru;
+//     let ecx = 0;
+//     let edx = 0;
 
-    unsafe {
-        asm!(
-            "wrpkru",
-            in("eax") eax,
-            in("ecx") ecx,
-            in("edx") edx,
-        )
-    };
-}
+//     unsafe {
+//         asm!(
+//             "wrpkru",
+//             in("eax") eax,
+//             in("ecx") ecx,
+//             in("edx") edx,
+//         )
+//     };
+// }
 
-#[inline]
-pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
-    if (0..16).contains(&pkey) {
-        let mask: u32 = 0b11 << (2 * pkey);
-        let mut pkru = pkey_read();
-        pkru = (pkru & !mask) | (rights << (2 * pkey));
-        pkey_write(pkru);
-        Ok(())
-    } else {
-        Err("Invalid PKEY")
-    }
-}
+// #[inline]
+// pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
+//     if (0..16).contains(&pkey) {
+//         let mask: u32 = 0b11 << (2 * pkey);
+//         let mut pkru = pkey_read();
+//         pkru = (pkru & !mask) | (rights << (2 * pkey));
+//         pkey_write(pkru);
+//         Ok(())
+//     } else {
+//         Err("Invalid PKEY")
+//     }
+// }
 
 pub fn set_libs_with_pkey(lib_abs_paths: &[&str], pkey: i32) -> Result<(), anyhow::Error> {
     let segments = utils::parse_memory_segments()?;

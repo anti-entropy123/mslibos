@@ -25,7 +25,6 @@ find user -name 'Cargo.toml' \
     -not -path 'user/load_all/Cargo.toml' \
     -not -path 'user/simple_http/Cargo.toml' \
     -not -path 'user/never_stop/Cargo.toml' \
-    -not -path 'user/hello_world/Cargo.toml' \
     -not -path 'user/tinywasm*/Cargo.toml' \
     -not -path 'user/wasmtime*/Cargo.toml' | \
     xargs -I {} bash -c "cargo build $feature_arg --manifest-path {} $release_flag"

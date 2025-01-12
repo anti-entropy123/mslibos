@@ -27,6 +27,6 @@ heapless = "0.8"
 [features]
 namespace = []
 serviceV2 = ["nix/mman"]
-enable_mpk = []
+enable_mpk = ["ms_hostcall/enable_mpk"]
 
 default = ["enable_mpk"]

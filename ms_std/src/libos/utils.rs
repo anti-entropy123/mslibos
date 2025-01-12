@@ -103,11 +103,11 @@ pub macro libos_with_switch_mpk {
             use core::arch::asm;
             use crate::mpk;
             let pkru = mpk::pkey_read();
-            let is_privilege_level = (pkru & 0b1100 == 0);
-            // grant access to libos. 01 01 01 ... ... 00 00
+            let is_privilege_level = (pkru & 0b1100_0000_0000_0000_0000_0000_0000_0000 == 0);
+            // grant access to libos. 00 00 11 ... ... 11 00
             unsafe{
                 asm!(
-                    "mov eax, 0x55555550",
+                    "mov eax, 0x0FFFFFFC",
                     "xor rcx, rcx",
                     "mov rdx, rcx",
                     "wrpkru"
@@ -122,10 +122,10 @@ pub macro libos_with_switch_mpk {
             let res = $name($($arg_name),*);
 
             if !is_privilege_level {
-                // drop permission to libos. 01 01 01 ... ... 11 00
+                // drop permission to libos. 11 00 11 ... ... 11 00
                 unsafe{
                     asm!(
-                        "mov eax, 0x5555555c",
+                        "mov eax, 0xCFFFFFFC",
                         "xor rcx, rcx",
                         "mov rdx, rcx",
                         "wrpkru"

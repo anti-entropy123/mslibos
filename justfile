@@ -2,11 +2,12 @@
 set positional-arguments
 
 enable_mpk := "1"
+cmd_flag := if enable_mpk == "1" { "mpk" } else { "" }
 feature_flag := if enable_mpk == "1" { "--features mpk" } else { "" }
 
 all_rust: 
     # ./scripts/build_user.sh 
-    ./scripts/build_user.sh {{ if enable_mpk == "1" { "mpk" } else { "" } }}
+    ./scripts/build_user.sh {{ cmd_flag }}
 
 cc_flags_p1 := "-Wl,--gc-sections -nostdlib -Wl,--whole-archive"
 cc_flags_p2 := "-Wl,--no-whole-archive -shared"
@@ -73,6 +74,9 @@ c_checker_so:
             target/{{target}}/debug/libwasmtime_checker.a \
             {{cc_flags_p2}} \
             -o target/{{target}}/debug/libwasmtime_checker.so
+
+run_rust_test:
+    ./scripts/run_tests.sh {{ cmd_flag }}
 
 wasmtime_parallel_sort: c_sorter_so c_spliter_so c_merger_so c_checker_so
     @echo "make symbol link: wasmtime_parallel_sort"

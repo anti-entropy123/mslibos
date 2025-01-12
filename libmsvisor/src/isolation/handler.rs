@@ -3,6 +3,7 @@ use std::mem::transmute;
 
 use log::info;
 use ms_hostcall::{
+    mpk::LIBOS_PKEY,
     types::{FsImageFunc, IsolationID, MetricEvent, MetricFunc, NetdevName},
     CommonHostCall, HostCallID,
 };
@@ -10,7 +11,7 @@ use ms_hostcall::{
 use crate::{
     isolation::get_isol,
     logger,
-    mpk::{self, LIBOS_PKEY},
+    mpk::{self},
 };
 
 /// # Safety

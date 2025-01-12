@@ -103,7 +103,8 @@ pub extern "C" fn rust_main() -> u64 {
     unsafe {
         asm!(
             "wrpkru",
-            in("rax") 0x55555550,
+            // return to msvisor. grant privilege. 
+            in("rax") 0x0,
             in("rcx") 0,
             in("rdx") 0,
         );
