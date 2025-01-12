@@ -29,12 +29,15 @@ impl Service {
         lib: Arc<Library>,
         metric: Arc<SvcMetricBucket>,
         with_libos: bool,
+        pkey: i32,
     ) -> Self {
         logger::debug!("Service::new, name={name}");
+        let elf = ElfService::new(name, path, lib, metric, pkey);
+
         if with_libos {
-            Self::WithLibOSService(WithLibOSService::new(name, path, lib, metric))
+            Self::WithLibOSService(WithLibOSService::new(elf))
         } else {
-            Self::ELFService(ElfService::new(name, path, lib, metric))
+            Self::ELFService(elf)
         }
     }
     fn init(&self, isol_id: IsolationID) -> anyhow::Result<()> {
@@ -45,7 +48,7 @@ impl Service {
             Service::RustService(svc) => svc.init(isol_id),
         }
     }
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> anyhow::Result<()> {
         match self {
             Service::ELFService(svc) => svc.run(args),
             Service::WithLibOSService(svc) => svc.run(args),
@@ -85,6 +88,7 @@ impl Service {
             Service::RustService(_) => todo!(),
         }
     }
+    #[cfg(feature = "enable_mpk")]
     pub fn pkey(&self) -> i32 {
         match self {
             Service::ELFService(svc) => svc.pkey,

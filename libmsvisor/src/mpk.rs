@@ -30,14 +30,23 @@ pub fn must_init_all_pkeys() {
 // 1..=13 -> user function.
 // 14 -> DataBuffer.
 // 15 -> backlist.
+#[cfg(feature = "pkey_per_func")]
 static PKEY_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-pub fn pkey_alloc() -> i32 {
-    let previous_pkey = PKEY_COUNTER.fetch_add(1, Ordering::SeqCst);
-    if previous_pkey == 13 {
-        panic!("No more pkeys available");
+pub fn must_pkey_alloc() -> i32 {
+    #[cfg(feature = "pkey_per_func")]
+    {
+        let previous_pkey = PKEY_COUNTER.fetch_add(1, Ordering::SeqCst);
+        if previous_pkey == 13 {
+            panic!("No more pkeys available");
+        }
+        (previous_pkey + 1) as i32
     }
-    (previous_pkey + 1) as i32
+    #[cfg(not(feature = "pkey_per_func"))]
+    {
+        const FUNC_PKEY: i32 = 1;
+        FUNC_PKEY
+    }
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]

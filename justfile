@@ -2,8 +2,19 @@
 set positional-arguments
 
 enable_mpk := "1"
-cmd_flag := if enable_mpk == "1" { "mpk" } else { "" }
-feature_flag := if enable_mpk == "1" { "--features mpk" } else { "" }
+enable_pkey_per_func := "1"
+
+cmd_flag := if enable_pkey_per_func == "1" { 
+    "pkey_per_func" 
+} else if enable_mpk == "1" { 
+    "mpk" 
+} else { "" }
+
+feature_flag := if enable_pkey_per_func == "1" { 
+    "--features pkey_per_func" 
+} else if enable_mpk == "1" { 
+    "--features mpk" 
+} else { "" }
 
 all_rust: 
     # ./scripts/build_user.sh 

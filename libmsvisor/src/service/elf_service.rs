@@ -10,6 +10,7 @@ use std::{
     sync::Arc,
 };
 
+use anyhow::anyhow;
 use lazy_static::lazy_static;
 use libloading::{Library, Symbol};
 
@@ -18,7 +19,7 @@ use ms_hostcall::{
     types::{DropHandlerFunc, IsolationID, MetricEvent, ServiceName},
     IsolationContext, SERVICE_HEAP_SIZE, SERVICE_STACK_SIZE,
 };
-use nix::libc::RTLD_DI_LMID;
+use nix::libc::{PF_KEY, RTLD_DI_LMID};
 use thiserror::Error;
 
 #[cfg(feature = "enable_mpk")]
@@ -72,6 +73,28 @@ impl ServiceHeap {
     fn c_ptr(&self) -> NonNull<c_void> {
         NonNull::new(self.0.as_ptr() as usize as *mut std::ffi::c_void).unwrap()
     }
+
+    #[cfg(feature = "enable_mpk")]
+    fn must_mprotect(&self, pkey: i32) {
+        use nix::libc;
+
+        let heap_start = self.0.as_ptr() as usize;
+        mpk::pkey_mprotect(
+            heap_start as *mut c_void,
+            SERVICE_HEAP_SIZE,
+            libc::PROT_READ | libc::PROT_WRITE,
+            pkey,
+        )
+        .expect("heap set mpk failed.");
+
+        logger::info!(
+            "service heap (0x{:x}, 0x{:x}) set mpk success with pkey {}, right {:?}.",
+            heap_start,
+            heap_start + SERVICE_HEAP_SIZE,
+            pkey,
+            libc::PROT_READ | libc::PROT_WRITE
+        );
+    }
 }
 
 #[derive(Debug)]
@@ -111,6 +134,29 @@ impl UserStack {
             args_list.push(ArgsItem::from_kv(k, v)).unwrap()
         }
     }
+
+    #[cfg(feature = "enable_mpk")]
+    fn mprotect(&self, pkey: i32) -> anyhow::Result<()> {
+        use nix::libc;
+
+        let stack_start = self.0.as_ptr() as usize;
+        mpk::pkey_mprotect(
+            stack_start as *mut c_void,
+            SERVICE_STACK_SIZE,
+            libc::PROT_READ | libc::PROT_WRITE,
+            pkey,
+        )?;
+
+        logger::info!(
+            "user stack (0x{:x}, 0x{:x}) set mpk success with pkey {}, right {:?}.",
+            stack_start,
+            stack_start + SERVICE_STACK_SIZE,
+            pkey,
+            libc::PROT_READ | libc::PROT_WRITE
+        );
+
+        Ok(())
+    }
 }
 
 impl Default for UserStack {
@@ -130,15 +176,22 @@ pub struct ElfService {
 }
 
 impl ElfService {
-    pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
+    pub fn new(
+        name: &str,
+        path: &str,
+        lib: Arc<Library>,
+        metric: Arc<SvcMetricBucket>,
+        pkey: i32,
+    ) -> Self {
         metric.mark(MetricEvent::SvcInit);
         logger::debug!("ELFService::new, name={name}");
-        let pkey = mpk::pkey_alloc();
+        // let pkey = mpk::pkey_alloc();
         Self {
             name: name.to_owned(),
             path: path.to_owned(),
             lib,
             metric,
+            #[cfg(feature = "enable_mpk")]
             pkey,
         }
     }
@@ -163,8 +216,9 @@ impl ElfService {
         #[cfg(feature = "enable_mpk")]
         let ret: Result<(), String> = unsafe {
             // PKRU register, 11(libos) 00(data_buffer) 11 11 .. 00(function) ... 11 00(default)
-            let pkru: u32 =
-                mpk::grant_func_perm(0xCFFFFFFC, self.pkey).expect("can't generate pkru");
+            let pkru: u32 = mpk::grant_func_perm(0xCFFFFFFC, self.pkey)
+                .map_err(|e| format!("can't generate pkru: {e}"))?;
+
             asm!(
                 // 保存 caller-saved 寄存器 rcx, rdx, rsi, rdi, r8, r9, r10, r11
                 "sub rsp, 0x90",
@@ -260,18 +314,23 @@ impl ElfService {
         })
     }
 
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> anyhow::Result<()> {
         self.metric.mark(MetricEvent::SvcRun);
-        let rust_main: RustMainFuncSybmol = self.symbol("rust_main").ok_or("missing main?")?;
+        let rust_main: RustMainFuncSybmol =
+            self.symbol("rust_main").ok_or(anyhow!("missing main?"))?;
         let rust_main = unsafe { transmute(*rust_main as usize) };
 
         let stack = UserStack::new();
         stack.write_args(args);
+        #[cfg(feature = "enable_mpk")]
+        stack.mprotect(self.pkey)?;
 
-        let ret = self.invoke_elf_symbol(rust_main, stack);
+        self.invoke_elf_symbol(rust_main, stack)
+            .map_err(|e| anyhow!(e))?;
+
         self.metric.mark(MetricEvent::SvcEnd);
 
-        ret
+        Ok(())
     }
 
     pub fn namespace(&self) -> Namespace {
@@ -315,11 +374,13 @@ pub struct WithLibOSService {
 }
 
 impl WithLibOSService {
-    pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
-        Self {
-            elf: ElfService::new(name, path, lib, metric),
-            heap: ServiceHeap::new(),
-        }
+    pub fn new(elf_svc: ElfService) -> Self {
+        let heap = ServiceHeap::new();
+
+        #[cfg(feature = "enable_mpk")]
+        heap.must_mprotect(elf_svc.pkey);
+
+        Self { elf: elf_svc, heap }
     }
 
     fn should_set_context(&self) -> bool {
@@ -397,7 +458,7 @@ impl WithLibOSService {
         self.elf.symbol(symbol)
     }
 
-    pub fn run(&self, args: &BTreeMap<String, String>) -> Result<(), String> {
+    pub fn run(&self, args: &BTreeMap<String, String>) -> anyhow::Result<()> {
         self.elf.run(args)
     }
 

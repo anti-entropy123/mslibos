@@ -22,11 +22,11 @@ use ms_hostcall::{
 };
 
 #[cfg(feature = "enable_mpk")]
-use crate::mpk;
+use crate::{mpk, mpk::must_init_all_pkeys};
+
 use crate::{
     logger,
     metric::MetricBucket,
-    mpk::must_init_all_pkeys,
     service::{Service, ServiceLoader},
     utils::gen_new_id,
 };

@@ -8,11 +8,10 @@ use ms_hostcall::{
     CommonHostCall, HostCallID,
 };
 
-use crate::{
-    isolation::get_isol,
-    logger,
-    mpk::{self},
-};
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
+
+use crate::{isolation::get_isol, logger};
 
 /// # Safety
 /// This is unsafe because it it be a callback function used to lookup the address of

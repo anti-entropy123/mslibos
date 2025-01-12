@@ -177,6 +177,7 @@ name = "reducer"
 version = "0.1.0"
 dependencies = [
  "hashbrown",
+ "heapless",
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",

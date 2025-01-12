@@ -1,6 +1,14 @@
 #![no_std]
+
+use core::str::FromStr;
+
 use alloc::{borrow::ToOwned, format, string::String, vec::Vec};
+
 use hashbrown::HashMap;
+
+#[cfg(feature = "pkey_per_func")]
+use heapless::FnvIndexMap;
+
 pub use ms_hostcall::Verify;
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
@@ -21,12 +29,18 @@ extern crate alloc;
 
 #[derive(FaasData)]
 struct Mapper2Reducer {
+    #[cfg(feature = "pkey_per_func")]
+    shuffle: heapless::FnvIndexMap<heapless::String<32>, u32, 1024>,
+    #[cfg(not(feature = "pkey_per_func"))]
     shuffle: HashMap<String, u32>,
 }
 
 impl Default for Mapper2Reducer {
     fn default() -> Self {
         Self {
+            #[cfg(feature = "pkey_per_func")]
+            shuffle: FnvIndexMap::new(),
+            #[cfg(not(feature = "pkey_per_func"))]
             shuffle: HashMap::new(),
         }
     }
@@ -69,8 +83,10 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
         // .filter(|word| word.chars().all(char::is_alphanumeric));
 
         for word in words {
-            let old_count = *counter.entry(word).or_insert(0u32);
-            counter.insert(word, old_count + 1);
+            for word in word.split('.') {
+                let old_count = *counter.entry(word).or_insert(0u32);
+                counter.insert(word, old_count + 1);
+            }
         }
     }
     println!(
@@ -99,6 +115,11 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     for (word, count) in counter {
         let shuffle_idx = getidx(word, reducer_num);
 
+        #[cfg(feature = "pkey_per_func")]
+        let word = heapless::String::from_str(word).unwrap();
+        #[cfg(not(feature = "pkey_per_func"))]
+        let word = word.to_owned();
+
         data_buffers
             .get_mut(shuffle_idx as usize)
             .unwrap_or_else(|| {
@@ -106,7 +127,8 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
                 panic!()
             })
             .shuffle
-            .insert(word.to_owned(), count);
+            .insert(word, count)
+            .map(|e| "insert failed");
     }
     println!(
         "register_end: {}",
