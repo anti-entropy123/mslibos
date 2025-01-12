@@ -10,7 +10,7 @@ crate-type = ["rlib"]
 [features]
 panic_def = []
 alloc_def = []
-mpk = []
+mpk = ["ms_hostcall/enable_mpk"]
 
 default = ["mpk"]
 

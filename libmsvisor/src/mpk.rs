@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{arch::asm, ffi::c_void};
 
+use anyhow::{anyhow, Ok};
 use ms_hostcall::mpk::LIBOS_PKEY;
 use nix::{
     errno::Errno,
@@ -87,18 +88,14 @@ pub fn pkey_read() -> u32 {
 //     };
 // }
 
-// #[inline]
-// pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
-//     if (0..16).contains(&pkey) {
-//         let mask: u32 = 0b11 << (2 * pkey);
-//         let mut pkru = pkey_read();
-//         pkru = (pkru & !mask) | (rights << (2 * pkey));
-//         pkey_write(pkru);
-//         Ok(())
-//     } else {
-//         Err("Invalid PKEY")
-//     }
-// }
+pub fn grant_func_perm(pkru: u32, pkey: i32) -> anyhow::Result<u32> {
+    if (0..16).contains(&pkey) {
+        let mask: u32 = 0b11 << (2 * pkey);
+        Ok(pkru & !mask)
+    } else {
+        Err(anyhow!("Invalid pkey: {}", pkey))
+    }
+}
 
 pub fn set_libs_with_pkey(lib_abs_paths: &[&str], pkey: i32) -> Result<(), anyhow::Error> {
     let segments = utils::parse_memory_segments()?;
@@ -110,14 +107,14 @@ pub fn set_libs_with_pkey(lib_abs_paths: &[&str], pkey: i32) -> Result<(), anyho
                     segment.length,
                     segment.perm,
                     pkey,
-                )
-                .unwrap();
+                )?;
+
                 logger::info!(
                     "{} (0x{:x}, 0x{:x}) set mpk success with pkey {}, right {:?}.",
                     segment.path.unwrap(),
                     segment.start_addr,
                     segment.start_addr + segment.length,
-                    LIBOS_PKEY,
+                    pkey,
                     segment.perm
                 );
             }

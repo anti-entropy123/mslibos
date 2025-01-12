@@ -129,11 +129,6 @@ impl Isolation {
             } else {
                 self.service_or_load(svc_name)?;
             }
-            // if self.app_names.contains(svc_name) {
-            //     self.app_or_load(svc_name)?;
-            // } else {
-            //     self.service_or_load(svc_name)?;
-            // }
         }
 
         Ok(())
@@ -151,6 +146,10 @@ impl Isolation {
                 info!("[service] first load {}.", name);
                 let svc = self.loader.load_service(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&svc));
+
+                #[cfg(feature = "enable_mpk")]
+                mpk::set_libs_with_pkey(&[svc.path()], LIBOS_PKEY)?;
+
                 Ok(svc)
             }
         }
@@ -164,6 +163,10 @@ impl Isolation {
                 info!("[app] first load {}.", name);
                 let app = self.loader.load_app(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&app));
+
+                #[cfg(feature = "enable_mpk")]
+                mpk::set_libs_with_pkey(&[app.path()], app.pkey())?;
+
                 app
             }
         };

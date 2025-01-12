@@ -1,5 +1,7 @@
 use core::arch::asm;
 
+use ms_hostcall::mpk::LIBOS_PKEY;
+
 pub fn pkey_read() -> u32 {
     // Reads the value of PKRU into EAX and clears EDX. ECX must be 0 when RDPKRU is executed; otherwise, a general-protection exception (#GP) occurs.
     let result: u32;
@@ -13,6 +15,16 @@ pub fn pkey_read() -> u32 {
         )
     };
     result
+}
+
+pub fn grant_libos_perm(pkru: u32) -> u32 {
+    let mask: u32 = 0b11 << (2 * LIBOS_PKEY);
+    pkru & !mask
+}
+
+pub fn drop_libos_perm(pkru: u32) -> u32 {
+    let mask: u32 = 0b11 << (2 * LIBOS_PKEY);
+    pkru | mask
 }
 
 // #[inline]

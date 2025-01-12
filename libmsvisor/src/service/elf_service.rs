@@ -126,20 +126,20 @@ pub struct ElfService {
     lib: Arc<Library>,
     metric: Arc<SvcMetricBucket>,
     #[cfg(feature = "enable_mpk")]
-    _pkey: i32,
+    pub pkey: i32,
 }
 
 impl ElfService {
     pub fn new(name: &str, path: &str, lib: Arc<Library>, metric: Arc<SvcMetricBucket>) -> Self {
         metric.mark(MetricEvent::SvcInit);
         logger::debug!("ELFService::new, name={name}");
-        let _pkey = mpk::pkey_alloc();
+        let pkey = mpk::pkey_alloc();
         Self {
             name: name.to_owned(),
             path: path.to_owned(),
             lib,
             metric,
-            _pkey,
+            pkey,
         }
     }
 
@@ -162,8 +162,11 @@ impl ElfService {
 
         #[cfg(feature = "enable_mpk")]
         let ret: Result<(), String> = unsafe {
+            // PKRU register, 11(libos) 00(data_buffer) 11 11 .. 00(function) ... 11 00(default)
+            let pkru: u32 =
+                mpk::grant_func_perm(0xCFFFFFFC, self.pkey).expect("can't generate pkru");
             asm!(
-                // 保存 caller-saved 寄存器 rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+                // 保存 caller-saved 寄存器 rcx, rdx, rsi, rdi, r8, r9, r10, r11
                 "sub rsp, 0x90",
                 "mov [rsp+8], rcx",
                 "mov [rsp+16], rdx",
@@ -177,12 +180,11 @@ impl ElfService {
                 "mov r11, r13",
                 "mov [r12+8], rsp",
                 "mov rsp, r12",
-                // PKRU register, 11 00 11 11 ..... 11 00
-                "mov eax, 0xCFFFFFFC",
                 "xor rcx, rcx",
                 "mov rdx, rcx",
                 "wrpkru",
                 "call r11",
+                in("rax") pkru,
                 in("r12") (user_stack_top-16),
                 in("r13") rust_main,
             );
@@ -401,5 +403,10 @@ impl WithLibOSService {
 
     pub fn namespace(&self) -> Namespace {
         self.elf.namespace()
+    }
+
+    #[cfg(feature = "enable_mpk")]
+    pub fn pkey(&self) -> i32 {
+        self.elf.pkey
     }
 }

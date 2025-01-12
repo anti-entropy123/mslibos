@@ -85,6 +85,14 @@ impl Service {
             Service::RustService(_) => todo!(),
         }
     }
+    pub fn pkey(&self) -> i32 {
+        match self {
+            Service::ELFService(svc) => svc.pkey,
+            Service::WithLibOSService(svc) => svc.pkey(),
+            #[cfg(feature = "serviceV2")]
+            Service::RustService(_) => todo!(),
+        }
+    }
 }
 
 // impl Drop for Service {

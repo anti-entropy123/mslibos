@@ -44,8 +44,6 @@ pub unsafe extern "C" fn find_host_call(isol_id: IsolationID, hc_id: HostCallID)
             let service = isol.service_or_load(&svc_name).unwrap_or_else(|e| {
                 panic!("need find: {}, need load: {}, err: {}", hc_id, svc_name, e)
             });
-            #[cfg(feature = "enable_mpk")]
-            mpk::set_libs_with_pkey(&[service.path()], LIBOS_PKEY).expect("mpk protect failed.");
 
             let symbol = service
                 .interface::<fn()>(&hc_id.to_string())
