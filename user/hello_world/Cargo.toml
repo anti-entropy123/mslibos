@@ -20,4 +20,6 @@ cfg-if = "1.0.0"
 with_libos = ["ms_std", "ms_hostcall"]
 measure_mem = ["with_libos"]
 mpk = ["ms_std/mpk"]
+pkey_per_func = ["mpk"]
+
 default = ["with_libos"]

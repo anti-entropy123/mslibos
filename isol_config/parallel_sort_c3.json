@@ -43,7 +43,7 @@
       "libchecker.so"
     ]
   ],
-  "fs_image": "fs_images/new_image.img",
+  "fs_image": "fs_images/fatfs.img",
   "groups": [
     {
       "list": [
@@ -98,14 +98,6 @@
       ],
       "args": {
         "sorter_num": "3"
-      }
-    },
-    {
-      "list": [
-        "checker"
-      ],
-      "args": {
-        "merger_num": "3"
       }
     }
   ]

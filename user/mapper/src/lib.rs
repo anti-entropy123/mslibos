@@ -2,7 +2,11 @@
 
 use core::str::FromStr;
 
-use alloc::{borrow::ToOwned, format, string::String, vec::Vec};
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
 
 use hashbrown::HashMap;
 
@@ -118,18 +122,15 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
         #[cfg(feature = "pkey_per_func")]
         let word = heapless::String::from_str(word).unwrap();
         #[cfg(not(feature = "pkey_per_func"))]
-        let word = word.to_owned();
+        let word = word.to_string();
 
-        data_buffers
-            .get_mut(shuffle_idx as usize)
-            .unwrap_or_else(|| {
-                println!("vec get_mut failed, idx={}", shuffle_idx);
-                panic!()
-            })
-            .shuffle
-            .insert(word, count)
-            .map(|e| "insert failed");
+        if let Some(buffer) = data_buffers.get_mut(shuffle_idx as usize) {
+            let _ = buffer.shuffle.insert(word, count);
+        } else {
+            panic!("vec get_mut failed, idx={}", shuffle_idx)
+        }
     }
+
     println!(
         "register_end: {}",
         SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
