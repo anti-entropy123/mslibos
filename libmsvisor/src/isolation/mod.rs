@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{anyhow, Ok};
 
+use lazy_static::lazy_static;
 use log::info;
 use ms_hostcall::types::{
     IsolationID as IsolID,
@@ -18,7 +19,9 @@ use ms_hostcall::types::{
 };
 
 #[cfg(feature = "enable_mpk")]
-use std::{env, ffi::c_void, fs};
+use crate::{mpk, mpk::must_init_all_pkeys};
+#[cfg(feature = "enable_mpk")]
+use ms_hostcall::mpk::LIBOS_PKEY;
 
 use crate::{
     logger,
@@ -26,8 +29,6 @@ use crate::{
     service::{Service, ServiceLoader},
     utils::gen_new_id,
 };
-#[cfg(feature = "enable_mpk")]
-use crate::{mpk, utils};
 use config::IsolationConfig;
 
 use self::config::App;
@@ -74,9 +75,8 @@ pub struct Isolation {
     app_names: Vec<ServiceName>,
     groups: Vec<Vec<App>>,
     fs_image: Option<String>,
-    #[cfg(feature = "enable_mpk")]
-    _pkey: i32,
-
+    // #[cfg(feature = "enable_mpk")]
+    // _pkey: i32,
     inner: Mutex<IsolationInner>,
 }
 
@@ -84,6 +84,9 @@ impl Isolation {
     pub fn new(config: &IsolationConfig) -> Arc<Self> {
         let new_id = gen_new_id();
         logger::info!("start build isolation_{new_id}");
+
+        #[cfg(feature = "enable_mpk")]
+        must_init_all_pkeys();
 
         let metric = Arc::from(MetricBucket::new());
         metric.mark(IsolBegin);
@@ -107,9 +110,8 @@ impl Isolation {
                 .map(|group| group.to_isolation())
                 .collect(),
             fs_image: config.fs_image.clone(),
-            #[cfg(feature = "enable_mpk")]
-            _pkey: mpk::pkey_alloc(),
-
+            // #[cfg(feature = "enable_mpk")]
+            // _pkey: 0,
             inner: Mutex::new(IsolationInner::default()),
         });
 
@@ -121,11 +123,6 @@ impl Isolation {
     pub fn preload(&self, config: &IsolationConfig) -> Result<(), anyhow::Error> {
         for service in config.all_modules() {
             let svc_name = &service.0;
-            if self.app_names.contains(svc_name) {
-                self.app_or_load(svc_name)?;
-            } else {
-                self.service_or_load(svc_name)?;
-            }
             if self.app_names.contains(svc_name) {
                 self.app_or_load(svc_name)?;
             } else {
@@ -148,6 +145,10 @@ impl Isolation {
                 info!("[service] first load {}.", name);
                 let svc = self.loader.load_service(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&svc));
+
+                #[cfg(feature = "enable_mpk")]
+                mpk::set_libs_with_pkey(&[svc.path()], LIBOS_PKEY)?;
+
                 Ok(svc)
             }
         }
@@ -161,6 +162,10 @@ impl Isolation {
                 info!("[app] first load {}.", name);
                 let app = self.loader.load_app(name)?;
                 isol_inner.modules.insert(name.to_owned(), Arc::clone(&app));
+
+                #[cfg(feature = "enable_mpk")]
+                mpk::set_libs_with_pkey(&[app.path()], app.pkey())?;
+
                 app
             }
         };
@@ -218,43 +223,18 @@ impl Isolation {
         self.metric.mark(Mem);
         #[cfg(feature = "enable_mpk")]
         {
-            let maps_str = fs::read_to_string("/proc/self/maps").unwrap();
-            let segments = utils::parse_memory_segments(&maps_str).unwrap();
-            let black_list = [
-                std::env::current_exe()
-                    .unwrap()
+            let this_proc_name = std::env::current_exe()?;
+
+            let mut black_list = BLACKLIST.clone();
+            black_list.push(
+                this_proc_name
                     .to_str()
-                    .unwrap()
-                    .to_owned(),
-                "/usr/lib/x86_64-linux-gnu/libc.so.6".to_owned(),
-                "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2".to_owned(),
-                "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1".to_owned(),
-                "[heap]".to_owned(),
-                "[stack]".to_owned(),
-                "[vdso]".to_owned(),
-                "[vvar]".to_owned(),
-            ];
-            for segment in segments {
-                if let Some(path) = segment.clone().path {
-                    if black_list.iter().any(|need| path.contains(need)) {
-                        mpk::pkey_mprotect(
-                            segment.start_addr as *mut c_void,
-                            segment.length,
-                            segment.perm,
-                            0x1,
-                        )
-                        .unwrap();
-                        logger::info!(
-                            "{} (0x{:x}, 0x{:x}) set mpk success with right {:?}.",
-                            segment.path.unwrap(),
-                            segment.start_addr,
-                            segment.start_addr + segment.length,
-                            segment.perm
-                        );
-                    }
-                }
-            }
+                    .ok_or(anyhow!("this proc name to str failed"))?,
+            );
+
+            mpk::set_libs_with_pkey(&black_list, LIBOS_PKEY)?;
         }
+
         #[cfg(feature = "namespace")]
         self.service_or_load(&"libc".to_owned())
             .map_err(|e| anyhow!("namespace feature, load libc failed: {e}"))?;
@@ -279,4 +259,16 @@ impl Drop for Isolation {
     fn drop(&mut self) {
         get_isol_table().remove(self.id as usize - 1);
     }
+}
+
+lazy_static! {
+    static ref BLACKLIST: Vec<&'static str> = vec![
+        "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "[heap]",
+        "[stack]",
+        "[vdso]",
+        "[vvar]",
+    ];
 }

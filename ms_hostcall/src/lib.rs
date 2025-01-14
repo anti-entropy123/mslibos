@@ -14,10 +14,12 @@ pub mod fdtab;
 pub mod mm;
 #[cfg(feature = "mmap_file_backend")]
 pub mod mmap_file_backend;
-#[cfg(feature = "socket")]
-pub mod socket;
+#[cfg(feature = "enable_mpk")]
+pub mod mpk;
 #[cfg(feature = "signal")]
 pub mod signal;
+#[cfg(feature = "socket")]
+pub mod socket;
 pub mod types;
 
 use alloc::{borrow::ToOwned, string::String};

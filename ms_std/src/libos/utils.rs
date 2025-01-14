@@ -103,13 +103,16 @@ pub macro libos_with_switch_mpk {
             use core::arch::asm;
             use crate::mpk;
             let pkru = mpk::pkey_read();
-            let is_user_level = (pkru & 0b1100 != 0);
+            let is_privilege_level = (pkru >> 30 == 0);
+            // grant access to libos. 00 00 11 ... ... 11 00
+            let pkru = mpk::grant_libos_perm(pkru);
             unsafe{
                 asm!(
-                    "mov eax, 0x55555550",
+                    // "mov eax, 0x0FFFFFFC",
                     "xor rcx, rcx",
                     "mov rdx, rcx",
-                    "wrpkru"
+                    "wrpkru",
+                    in("rax") pkru,
                 );
             }
 
@@ -117,16 +120,18 @@ pub macro libos_with_switch_mpk {
                 let mut table = USER_HOST_CALL.lock();
                 unsafe { core::mem::transmute(table.get_or_find(hostcall_id!($name))) }
             }
-            let $name = binding();    
+            let $name = binding();
             let res = $name($($arg_name),*);
 
-            if is_user_level {
+            if !is_privilege_level {
+                let pkru = mpk::drop_libos_perm(pkru);
+                // drop permission to libos. 11 00 11 ... ... 11 00
                 unsafe{
                     asm!(
-                        "mov eax, 0x5555555c",
+                        // "mov eax, 0xCFFFFFFC",
                         "xor rcx, rcx",
                         "mov rdx, rcx",
-                        "wrpkru"
+                        in("rax") pkru,
                     );
                 }
             }

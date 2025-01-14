@@ -5,6 +5,11 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
+#[cfg(feature = "enable_mpk")]
+use ms_hostcall::mpk::LIBOS_PKEY;
+
 use anyhow::anyhow;
 use libloading::Library;
 use ms_hostcall::types::{IsolationID, MetricEvent, ServiceName};
@@ -59,7 +64,7 @@ impl ServiceLoader {
         self
     }
 
-    fn load(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
+    fn load(&self, name: &ServiceName, pkey: i32) -> Result<Arc<Service>, anyhow::Error> {
         let lib_path = self
             .registered
             .get(name)
@@ -94,6 +99,7 @@ impl ServiceLoader {
             lib,
             metric,
             self.with_libos,
+            pkey,
         );
         self.namespace.get_or_init(|| service.namespace());
 
@@ -102,12 +108,31 @@ impl ServiceLoader {
     }
 
     pub fn load_app(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
-        self.load(name)
+        let pkey;
+        #[cfg(feature = "enable_mpk")]
+        {
+            pkey = mpk::must_pkey_alloc();
+        }
+        #[cfg(not(feature = "enable_mpk"))]
+        {
+            pkey = 0;
+        }
+        self.load(name, pkey)
     }
 
     pub fn load_service(&self, name: &ServiceName) -> Result<Arc<Service>, anyhow::Error> {
         self.metric.mark(MetricEvent::LoadService);
-        self.load(name)
+        let pkey;
+        #[cfg(feature = "enable_mpk")]
+        {
+            pkey = LIBOS_PKEY;
+        }
+        #[cfg(not(feature = "enable_mpk"))]
+        {
+            pkey = 0;
+        }
+
+        self.load(name, pkey)
     }
 }
 
@@ -197,7 +222,10 @@ fn load_dynlib(filename: &PathBuf, lmid: Option<Lmid_t>) -> anyhow::Result<Libra
 
 #[test]
 fn service_drop_test() {
-    use crate::{metric::MetricBucket, service::elf_service::WithLibOSService};
+    use crate::{
+        metric::MetricBucket,
+        service::elf_service::{ElfService, WithLibOSService},
+    };
     // std::env::set_var("RUST_LOG", "INFO");
     // logger::init();
 
@@ -206,12 +234,14 @@ fn service_drop_test() {
 
     let lib = Arc::from(load_dynlib(&path, None).unwrap());
 
-    let socket = WithLibOSService::new(
+    let elf = ELFService::new(
         "socket",
         path.to_str().unwrap(),
         lib,
         bucket.new_svc_metric("socket".to_owned(), path.to_string_lossy().to_string()),
+        0,
     );
+    let socket = WithLibOSService::new(elf);
 
     drop(socket)
 }

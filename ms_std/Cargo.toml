@@ -10,9 +10,9 @@ crate-type = ["rlib"]
 [features]
 panic_def = []
 alloc_def = []
-mpk = []
+mpk = ["ms_hostcall/enable_mpk"]
 
-default = [] 
+default = []
 
 [dependencies]
 ms_hostcall = { workspace = true, features = [

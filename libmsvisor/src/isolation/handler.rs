@@ -7,6 +7,11 @@ use ms_hostcall::{
     CommonHostCall, HostCallID,
 };
 
+#[cfg(feature = "enable_mpk")]
+use crate::mpk;
+#[cfg(feature = "enable_mpk")]
+use ms_hostcall::mpk::LIBOS_PKEY;
+
 use crate::{isolation::get_isol, logger};
 
 /// # Safety
@@ -69,6 +74,10 @@ fn fs_image_handler(isol_id: IsolationID) -> Option<String> {
         .expect("isol don't exist?")
         .fs_image
         .clone()
+        .map(|image| {
+            info!("fs_image_handler: will use image: {}", image);
+            image
+        })
 }
 
 fn spwan_fault_thread_handler(isol_id: IsolationID) -> Result<(), String> {

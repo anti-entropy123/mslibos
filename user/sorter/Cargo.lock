@@ -170,6 +170,7 @@ checksum = "836fa6a3e1e547f9a2c4040802ec865b5d85f4014efe00555d7090a3dcaa1090"
 name = "sorter"
 version = "0.1.0"
 dependencies = [
+ "heapless",
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",

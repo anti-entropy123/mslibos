@@ -1,16 +1,52 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{arch::asm, ffi::c_void};
 
+use anyhow::{anyhow, Ok};
+use ms_hostcall::mpk::LIBOS_PKEY;
 use nix::{
     errno::Errno,
     libc::{size_t, syscall, SYS_pkey_alloc, SYS_pkey_mprotect},
 };
 
-use core::slice;
-use std::alloc::{self, Layout};
-use nix::libc;
+use crate::{logger, utils};
 
-pub fn pkey_alloc() -> i32 {
+fn _pkey_alloc() -> i32 {
     unsafe { syscall(SYS_pkey_alloc, 0, 0) as i32 }
+}
+
+pub fn must_init_all_pkeys() {
+    for i in 0..16 {
+        let pkey = _pkey_alloc();
+        if pkey < 0 {
+            panic!("pkey_alloc failed at {}", i);
+        }
+        if pkey == ms_hostcall::mpk::LIBOS_PKEY {
+            return;
+        }
+    }
+}
+
+// 0 -> default.
+// 1..=13 -> user function.
+// 14 -> DataBuffer.
+// 15 -> backlist.
+#[cfg(feature = "pkey_per_func")]
+static PKEY_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+pub fn must_pkey_alloc() -> i32 {
+    #[cfg(feature = "pkey_per_func")]
+    {
+        let previous_pkey = PKEY_COUNTER.fetch_add(1, Ordering::SeqCst);
+        if previous_pkey == 13 {
+            panic!("No more pkeys available");
+        }
+        (previous_pkey + 1) as i32
+    }
+    #[cfg(not(feature = "pkey_per_func"))]
+    {
+        const FUNC_PKEY: i32 = 1;
+        FUNC_PKEY
+    }
 }
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -43,35 +79,58 @@ pub fn pkey_read() -> u32 {
     result
 }
 
-#[inline]
-pub fn pkey_write(pkru: u32) {
-    // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
-    // otherwise, a general-protection exception (#GP) occurs.
-    let eax = pkru;
-    let ecx = 0;
-    let edx = 0;
+// #[inline]
+// pub fn pkey_write(pkru: u32) {
+//     // Writes the value of EAX into PKRU. ECX and EDX must be 0 when WRPKRU is executed;
+//     // otherwise, a general-protection exception (#GP) occurs.
+//     let eax = pkru;
+//     let ecx = 0;
+//     let edx = 0;
 
-    unsafe {
-        asm!(
-            "wrpkru",
-            in("eax") eax,
-            in("ecx") ecx,
-            in("edx") edx,
-        )
-    };
-}
+//     unsafe {
+//         asm!(
+//             "wrpkru",
+//             in("eax") eax,
+//             in("ecx") ecx,
+//             in("edx") edx,
+//         )
+//     };
+// }
 
-#[inline]
-pub fn pkey_set(pkey: i32, rights: u32) -> Result<(), &'static str> {
+pub fn grant_func_perm(pkru: u32, pkey: i32) -> anyhow::Result<u32> {
     if (0..16).contains(&pkey) {
         let mask: u32 = 0b11 << (2 * pkey);
-        let mut pkru = pkey_read();
-        pkru = (pkru & !mask) | (rights << (2 * pkey));
-        pkey_write(pkru);
-        Ok(())
+        Ok(pkru & !mask)
     } else {
-        Err("Invalid PKEY")
+        Err(anyhow!("Invalid pkey: {}", pkey))
     }
+}
+
+pub fn set_libs_with_pkey(lib_abs_paths: &[&str], pkey: i32) -> Result<(), anyhow::Error> {
+    let segments = utils::parse_memory_segments()?;
+    for segment in segments {
+        if let Some(path) = segment.clone().path {
+            if lib_abs_paths.iter().any(|need| path.contains(need)) {
+                pkey_mprotect(
+                    segment.start_addr as *mut c_void,
+                    segment.length,
+                    segment.perm,
+                    pkey,
+                )?;
+
+                logger::info!(
+                    "{} (0x{:x}, 0x{:x}) set mpk success with pkey {}, right {:?}.",
+                    segment.path.unwrap(),
+                    segment.start_addr,
+                    segment.start_addr + segment.length,
+                    pkey,
+                    segment.perm
+                );
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[test]

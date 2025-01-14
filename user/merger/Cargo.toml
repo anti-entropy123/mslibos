@@ -12,7 +12,9 @@ crate-type = ["dylib"]
 ms_std = { path = "../../ms_std", features = ["alloc_def", "unwinding"] }
 ms_hostcall = { path = "../../ms_hostcall" }
 ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
+heapless = "0.8.0"
 
 [features]
 mpk = ["ms_std/mpk"]
+pkey_per_func = ["mpk"]
 default = []

@@ -23,5 +23,6 @@ tokio = { version = "1.32.0", features = [
 namespace = ["libmsvisor/namespace"]
 multi_workflow = ["tokio", "namespace"]
 mpk = ["libmsvisor/enable_mpk"]
+pkey_per_func = ["mpk", "libmsvisor/pkey_per_func"]
 
-default = ["namespace"] 
+default = ["namespace"]

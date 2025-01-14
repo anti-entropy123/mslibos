@@ -2,7 +2,7 @@
 
 import os
 
-workdir = "/home/wyj/dyx_workplace/mount"
+workdir = "image_content"
 
 def gen_word_count(file_num: int, total_size: int):
     from faker import Faker
@@ -30,11 +30,12 @@ def gen_parallel_sort(file_num: int, total_size: int):
         current_size = 0
         with open(file_name, 'w', encoding='utf-8') as f:
             while current_size < one_size:
-                text = ' '.join(str(random.randint(0, 1000000)) for i in range(10))
-                text += '\n'
+                text = ','.join(str(random.randint(0, 1000000)) for i in range(10))
+                text += ','
                 f.write(text)
                 current_size += len(text.encode('utf-8'))  # 更新当前文件大小
-
+            
+            f.write('1')
 
 if __name__ == "__main__":
-    gen_parallel_sort(3, 25 * 1024 * 1024)
+    gen_parallel_sort(1, 50 * 1024 * 1024)
