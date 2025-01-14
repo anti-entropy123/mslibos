@@ -30,10 +30,7 @@ impl FaaSFuncError {
     }
 }
 
-#[cfg(all(feature = "refer-based", feature = "file-based"))]
-compile_error!("Features 'refer-based' and 'file-based' cannot be enabled at the same time.");
-
-#[cfg(feature = "refer-based")]
+#[cfg(not(feature = "file-based"))]
 mod refer_based_impl {
     use core::{alloc::Layout, borrow::Borrow, mem::ManuallyDrop};
 
@@ -301,7 +298,7 @@ mod file_based_impl {
     }
 }
 
-#[cfg(feature = "refer-based")]
+#[cfg(not(feature = "file-based"))]
 pub use refer_based_impl::*;
 
 #[cfg(feature = "file-based")]

@@ -39,7 +39,6 @@ serde_json = { version = "1.0.135", default-features = false, features = [
 panic_def = []
 alloc_def = []
 mpk = ["ms_hostcall/enable_mpk"]
-refer-based = []
 file-based = []
 
-default = ["file-based"]
+default = []
