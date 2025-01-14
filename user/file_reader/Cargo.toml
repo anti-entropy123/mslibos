@@ -18,4 +18,4 @@ heapless = "0.8.0"
 mpk = ["ms_std/mpk"]
 pkey_per_func = ["mpk"]
 
-default = ["pkey_per_func"]
+default = []

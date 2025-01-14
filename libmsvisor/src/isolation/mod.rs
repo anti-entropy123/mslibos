@@ -12,17 +12,16 @@ use anyhow::{anyhow, Ok};
 
 use lazy_static::lazy_static;
 use log::info;
-use ms_hostcall::{
-    mpk::LIBOS_PKEY,
-    types::{
-        IsolationID as IsolID,
-        MetricEvent::{IsolBegin, IsolEnd, Mem},
-        ServiceName,
-    },
+use ms_hostcall::types::{
+    IsolationID as IsolID,
+    MetricEvent::{IsolBegin, IsolEnd, Mem},
+    ServiceName,
 };
 
 #[cfg(feature = "enable_mpk")]
 use crate::{mpk, mpk::must_init_all_pkeys};
+#[cfg(feature = "enable_mpk")]
+use ms_hostcall::mpk::LIBOS_PKEY;
 
 use crate::{
     logger,

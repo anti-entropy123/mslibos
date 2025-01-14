@@ -3,13 +3,14 @@ use std::mem::transmute;
 
 use log::info;
 use ms_hostcall::{
-    mpk::LIBOS_PKEY,
     types::{FsImageFunc, IsolationID, MetricEvent, MetricFunc, NetdevName},
     CommonHostCall, HostCallID,
 };
 
 #[cfg(feature = "enable_mpk")]
 use crate::mpk;
+#[cfg(feature = "enable_mpk")]
+use ms_hostcall::mpk::LIBOS_PKEY;
 
 use crate::{isolation::get_isol, logger};
 
