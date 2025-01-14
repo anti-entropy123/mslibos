@@ -27,7 +27,21 @@ release_flag := if enable_release == "1" {
 } else { "" }
 
 pass_args:
-    cargo build --manifest-path user/func_a/Cargo.toml && cargo build --manifest-path user/func_b/Cargo.toml
+    cargo build --manifest-path user/func_a/Cargo.toml && \
+        cargo build --manifest-path user/func_b/Cargo.toml
+
+map_reduce:
+    cargo build --manifest-path user/mapper/Cargo.toml && \
+        cargo build --manifest-path user/reducer/Cargo.toml
+
+parallel_sort:
+    for func in file_reader sorter splitter merger; do \
+    if ! cargo build --manifest-path user/$func/Cargo.toml; then \
+    echo "build $func failed."; \
+    exit 1; \
+    fi; \
+    done
+
 
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}

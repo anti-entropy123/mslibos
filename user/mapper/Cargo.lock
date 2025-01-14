@@ -79,6 +79,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
 dependencies = [
  "ahash",
+ "serde",
 ]
 
 [[package]]
@@ -131,6 +132,7 @@ dependencies = [
  "ms_hostcall",
  "ms_std",
  "ms_std_proc_macro",
+ "serde",
 ]
 
 [[package]]

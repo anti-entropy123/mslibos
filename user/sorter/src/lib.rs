@@ -8,16 +8,17 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, FaasData)]
+#[derive(Default, FaasData, Serialize, Deserialize)]
 struct Reader2Sorter {
     #[cfg(feature = "pkey_per_func")]
-    raw_data: heapless::String<{ 110 * 1024 * 1024 }>,
+    content: heapless::String<{ 110 * 1024 * 1024 }>,
     #[cfg(not(feature = "pkey_per_func"))]
-    raw_data: String,
+    content: String,
 }
 
-#[derive(Default, FaasData)]
+#[derive(Default, FaasData, Serialize, Deserialize)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     array: heapless::Vec<u32, { 20 * 1024 * 1024 }>,
@@ -53,12 +54,12 @@ pub fn main() -> Result<()> {
     println!(
         "sorter: input-part-{}, input length={}",
         my_id,
-        input.raw_data.len()
+        input.content.len()
     );
 
     let mut buffer: DataBuffer<VecArg> =
         DataBuffer::with_slot(format!("sorter-resp-part-{}", my_id));
-    for num in input.raw_data.split(',') {
+    for num in input.content.split(',') {
         let num = num.trim();
         if num.is_empty() {
             continue;

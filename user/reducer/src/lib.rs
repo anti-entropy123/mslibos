@@ -14,10 +14,11 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+use serde::{Deserialize, Serialize};
 
 extern crate alloc;
 
-#[derive(FaasData)]
+#[derive(FaasData, Serialize, Deserialize, Default)]
 struct Mapper2Reducer {
     #[cfg(feature = "pkey_per_func")]
     shuffle: heapless::FnvIndexMap<heapless::String<32>, u32, 1024>,

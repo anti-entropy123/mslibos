@@ -42,4 +42,4 @@ mpk = ["ms_hostcall/enable_mpk"]
 refer-based = []
 file-based = []
 
-default = ["refer-based"]
+default = ["file-based"]

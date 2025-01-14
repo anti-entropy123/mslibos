@@ -223,7 +223,7 @@ mod file_based_impl {
 
             let mut result = Self {
                 inner: Default::default(),
-                slot,
+                slot: slot.clone(),
                 used: true,
             };
 
@@ -231,7 +231,8 @@ mod file_based_impl {
             content
                 .read_to_end(&mut buffer)
                 .expect("read imd file failed.");
-            result.inner = serde_json::from_slice(&buffer).expect("deserialize failed.");
+            result.inner =
+                serde_json::from_slice(&buffer).expect(&format!("deserialize {} failed.", &slot));
 
             Some(result)
         }
