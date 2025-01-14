@@ -2,7 +2,7 @@
 set positional-arguments
 
 enable_mpk := "0"
-enable_pkey_per_func := "1"
+enable_pkey_per_func := "0"
 
 enable_release := "0"
 
@@ -26,8 +26,11 @@ release_flag := if enable_release == "1" {
     "--release" 
 } else { "" }
 
-all_rust: 
-    # ./scripts/build_user.sh 
+all_libos:
+    ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
+
+all_rust:
+    just all_libos
     ./scripts/build_user.sh {{ release_flag }} {{ cmd_flag }}
 
 cc_flags_p1 := "-Wl,--gc-sections -nostdlib -Wl,--whole-archive"
@@ -97,6 +100,7 @@ c_checker_so:
             -o target/{{target}}/debug/libwasmtime_checker.so
 
 run_rust_test:
+    just all_libos
     just all_rust
     ./scripts/run_tests.sh {{ cmd_flag }}
 

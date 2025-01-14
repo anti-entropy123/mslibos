@@ -132,7 +132,7 @@ pub fn smol_send(handle: SockFd, data: &[u8]) -> SmoltcpResult<()> {
 
 #[no_mangle]
 pub fn smol_recv(handle: SockFd, buf: &mut [u8]) -> SmoltcpResult<Size> {
-    // println!("smol_recv");
+    println!("smol_recv");
     let mut iface = acquire_iface()?;
     let mut sockets = acquire_sockets()?;
 
