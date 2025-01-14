@@ -7,12 +7,6 @@ edition = "2021"
 [lib]
 crate-type = ["rlib"]
 
-[features]
-panic_def = []
-alloc_def = []
-mpk = ["ms_hostcall/enable_mpk"]
-
-default = []
 
 [dependencies]
 ms_hostcall = { workspace = true, features = [
@@ -33,3 +27,19 @@ linked_list_allocator = "0.10.5"
 spin = "0.9.8"
 thiserror-no-std = "2.0.2"
 heapless = "0.8"
+serde = { version = "1.0.217", default-features = false, features = [
+    # "derive",
+    # "serde_derive",
+] }
+serde_json = { version = "1.0.135", default-features = false, features = [
+    "alloc",
+] }
+
+[features]
+panic_def = []
+alloc_def = []
+mpk = ["ms_hostcall/enable_mpk"]
+refer-based = []
+file-based = []
+
+default = ["refer-based"]

@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use alloc::borrow::ToOwned;
+use alloc::{borrow::ToOwned, vec::Vec};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
@@ -13,15 +13,15 @@ use ms_std_proc_macro::FaasData;
 // const DATA_SIZE: usize = 1024 * 1024 * 256 / 8;
 const DATA_SIZE: usize = 1024 * 1024 * 16 / 8;
 
-#[derive(FaasData)]
+#[derive(FaasData, serde::Serialize, serde::Deserialize)]
 struct VecArg {
-    data: [u64; DATA_SIZE],
+    data: Vec<u64>,
 }
 
 impl Default for VecArg {
     fn default() -> Self {
         Self {
-            data: [0; DATA_SIZE],
+            data: Vec::with_capacity(DATA_SIZE),
         }
     }
 }
@@ -35,17 +35,17 @@ pub fn main() -> Result<()> {
         *val = (idx % (u64::MAX - 1) as usize) as u64
     }
 
-    let register_start = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
-    let result = DataBuffer::<VecArg>::from_buffer_slot("Conference".to_owned());
+    // let register_start = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
+    // let result = DataBuffer::<VecArg>::from_buffer_slot("Conference".to_owned());
 
-    if let Some(buffer) = result {
-        for i in 0..buffer.data.len() {
-            let _ = unsafe { core::ptr::read_volatile((&buffer.data[i]) as *const u64) };
-        }
-    }
-    let access_end2 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
+    // if let Some(buffer) = result {
+    //     for i in 0..buffer.data.len() {
+    //         let _ = unsafe { core::ptr::read_volatile((&buffer.data[i]) as *const u64) };
+    //     }
+    // }
+    // let access_end2 = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
 
-    println!("phase34_dur={}", access_end2 - register_start);
+    // println!("phase34_dur={}", access_end2 - register_start);
 
     Ok(().into())
 }
