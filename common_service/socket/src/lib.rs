@@ -88,7 +88,8 @@ lazy_static! {
         iface.update_ip_addrs(|ip_addrs| {
             ip_addrs
                 .push(IpCidr::new(
-                    IpAddress::v4(192, 168, 69, init_context::isolation_ctx().isol_id as u8),
+                    // IpAddress::v4(192, 168, 69, init_context::isolation_ctx().isol_id as u8),
+                    IpAddress::v4(192, 168, 69, 1),
                     24,
                 ))
                 .unwrap();
