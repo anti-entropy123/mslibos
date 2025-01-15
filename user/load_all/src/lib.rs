@@ -17,9 +17,6 @@ pub fn main() -> Result<()> {
     println!("Hello, world! id: {}", args::get("id").unwrap());
 
     libos!(addrinfo("localhost")).unwrap();
-    if let Err(e) = File::open(".") {
-        println!("{:#?}", e);
-    }
 
     Ok(().into())
 }
