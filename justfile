@@ -3,7 +3,7 @@ set positional-arguments
 
 enable_mpk := "0"
 enable_pkey_per_func := "0"
-enable_file_buffer := "1"
+enable_file_buffer := "0"
 
 enable_release := "1"
 
@@ -53,6 +53,14 @@ parallel_sort:
     for func in file_reader sorter splitter merger; do \
     just rust_func $func; \
     done
+
+long_chain:
+    for name in time fdtab stdio mm; do \
+    just libos $name; \
+    done
+
+    just rust_func array_sum
+    
 
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
@@ -132,8 +140,6 @@ c_checker_so:
             {{cc_flags_p2}} \
             -o target/{{target}}/debug/libwasmtime_checker.so
 
-
-
 wasmtime_parallel_sort: c_sorter_so c_spliter_so c_merger_so c_checker_so
     @echo "make symbol link: wasmtime_parallel_sort"
     @-rm target/debug/libwasmtime_sorter.so
@@ -179,3 +185,12 @@ cpython_parallel_sort: cpython_parallel_sort_so
 all_py_wasm: cpython_wordcount cpython_parallel_sort
 
 all_wasm: all_c_wasm all_py_wasm
+
+measure_avg isol_file:
+    #!/bin/bash
+    for (( i=1; i<=10; i++ )); do \
+        output=$(cargo run {{ release_flag }} {{feature_flag}} -- --files {{ isol_file }} --metrics total-dur 2>&1); \
+        total_dur=$(echo "$output" | grep -o '"total_dur(ms)": [0-9.]*' | awk -F': ' '{print $2}'); \
+        total_dur_rounded=$(printf "%.3f\n" "$total_dur") ;\
+        echo "$total_dur_rounded ," ;\
+    done ;
