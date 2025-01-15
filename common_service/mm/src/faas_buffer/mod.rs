@@ -37,8 +37,12 @@ pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> 
 
 #[no_mangle]
 pub fn access_buffer(slot: &str) -> Option<(usize, u64)> {
-    // *RAW_P.lock().take()
-    BUFFER_REGISTER.lock().get(slot).take().copied()
+    let mut register = BUFFER_REGISTER.lock();
+    // ms_std::println!("buffer register: ");
+    // for (k, v) in register.iter() {
+    //     ms_std::println!("  {}: {:?}", k, v);
+    // }
+    register.remove(slot)
 }
 
 #[no_mangle]

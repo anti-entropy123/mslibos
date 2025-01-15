@@ -26,12 +26,34 @@ release_flag := if enable_release == "1" {
     "--release" 
 } else { "" }
 
+pass_args:
+    cargo build --manifest-path user/func_a/Cargo.toml && \
+        cargo build --manifest-path user/func_b/Cargo.toml
+
+map_reduce:
+    cargo build --manifest-path user/mapper/Cargo.toml && \
+        cargo build --manifest-path user/reducer/Cargo.toml
+
+parallel_sort:
+    for func in file_reader sorter splitter merger; do \
+    if ! cargo build --manifest-path user/$func/Cargo.toml; then \
+    echo "build $func failed."; \
+    exit 1; \
+    fi; \
+    done
+
+
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
 
 all_rust:
     just all_libos
     ./scripts/build_user.sh {{ release_flag }} {{ cmd_flag }}
+
+run_rust_test:
+    just all_libos
+    just all_rust
+    ./scripts/run_tests.sh {{ cmd_flag }}
 
 cc_flags_p1 := "-Wl,--gc-sections -nostdlib -Wl,--whole-archive"
 cc_flags_p2 := "-Wl,--no-whole-archive -shared"
@@ -99,10 +121,7 @@ c_checker_so:
             {{cc_flags_p2}} \
             -o target/{{target}}/debug/libwasmtime_checker.so
 
-run_rust_test:
-    just all_libos
-    just all_rust
-    ./scripts/run_tests.sh {{ cmd_flag }}
+
 
 wasmtime_parallel_sort: c_sorter_so c_spliter_so c_merger_so c_checker_so
     @echo "make symbol link: wasmtime_parallel_sort"

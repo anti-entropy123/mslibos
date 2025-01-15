@@ -15,8 +15,10 @@ ms_std_proc_macro = { path = "../../ms_std_proc_macro" }
 
 hashbrown = { version = "=0.14.3", default-features = false, features = [
     "ahash",
+    "serde",
 ] }
 heapless = { version = "0.8.0", default-features = false }
+serde = { version = "1.0.217", default-features = false, features = ["derive"] }
 
 [features]
 mpk = ["ms_std/mpk"]

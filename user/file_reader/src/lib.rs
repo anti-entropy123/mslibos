@@ -10,9 +10,10 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+use serde::{Deserialize, Serialize};
 // use ms_std_proc_macro::FaasData;
 
-#[derive(Default, FaasData)]
+#[derive(Default, FaasData, Serialize, Deserialize)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     content: heapless::String<{ 110 * 1024 * 1024 }>,

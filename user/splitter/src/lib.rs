@@ -8,8 +8,9 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, FaasData)]
+#[derive(Default, FaasData, Serialize, Deserialize)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     array: heapless::Vec<u32, { 20 * 1024 * 1024 }>,

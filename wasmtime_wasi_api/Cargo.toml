@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ms_std = { path = "../ms_std", default-features = false }
-ms_hostcall = { path = "../ms_hostcall", default-features = false, features = ["signal"]  }
+ms_std = { path = "../ms_std", default-features = false, features = [] }
+ms_hostcall = { path = "../ms_hostcall", default-features = false, features = [
+    "signal",
+] }
 ms_std_proc_macro = { path = "../ms_std_proc_macro" }
 spin = "0.9.8"
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }

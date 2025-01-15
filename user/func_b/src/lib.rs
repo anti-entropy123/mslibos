@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use alloc::borrow::ToOwned;
+use alloc::{borrow::ToOwned, vec::Vec};
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
@@ -12,15 +12,15 @@ use ms_std_proc_macro::FaasData;
 
 const DATA_SIZE: usize = 1024 * 1024 * 16 / 8;
 
-#[derive(FaasData)]
-pub struct MyComplexData {
-    data: [u64; DATA_SIZE],
+#[derive(FaasData, serde::Serialize, serde::Deserialize)]
+struct MyComplexData {
+    data: Vec<u64>,
 }
 
 impl Default for MyComplexData {
     fn default() -> Self {
         Self {
-            data: [0; DATA_SIZE],
+            data: Vec::with_capacity(DATA_SIZE),
         }
     }
 }
