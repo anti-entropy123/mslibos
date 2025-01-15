@@ -18,4 +18,6 @@ serde = { version = "1.0.217", default-features = false, features = ["derive"] }
 [features]
 mpk = ["ms_std/mpk"]
 pkey_per_func = ["mpk"]
+file-based = ["ms_std/file-based"]
+
 default = []

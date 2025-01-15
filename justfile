@@ -3,6 +3,7 @@ set positional-arguments
 
 enable_mpk := "0"
 enable_pkey_per_func := "0"
+enable_file_buffer := "1"
 
 enable_release := "1"
 
@@ -27,7 +28,7 @@ release_flag := if enable_release == "1" {
 } else { "" }
 
 rust_func func_name:
-    cargo build {{ release_flag }} {{ feature_flag }} --manifest-path user/{{ func_name }}/Cargo.toml
+    cargo build {{ release_flag }} {{ feature_flag }} {{ if enable_file_buffer == "1" { "--features file-based" } else { "" } }} --manifest-path user/{{ func_name }}/Cargo.toml
 
 libos lib_name:
     cargo build {{ release_flag }} {{ if enable_mpk == "1" { "--features mpk" } else { "" } }} --manifest-path common_service/{{ lib_name }}/Cargo.toml
