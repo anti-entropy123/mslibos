@@ -23,63 +23,7 @@
     ],
     "apps": [
         [
-            "array_sum0",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum1",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum2",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum3",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum4",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum5",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum6",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum7",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum8",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum9",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum10",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum11",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum12",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum13",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum14",
+            "array_sum",
             "libarray_sum.so"
         ]
     ],
