@@ -7,7 +7,7 @@ enable_file_buffer := "0"
 
 enable_release := "1"
 
-cmd_flag := if enable_mpk == "1" {
+mpk_flag := if enable_mpk == "1" {
     if enable_pkey_per_func == "1" { 
         "pkey_per_func" 
     } else { 
@@ -15,23 +15,21 @@ cmd_flag := if enable_mpk == "1" {
     } 
 } else { "" }
 
-feature_flag := if enable_mpk == "1" {
-    if enable_pkey_per_func == "1" { 
-        "--features pkey_per_func" 
-    } else { 
-        "--features mpk"
-    } 
-} else { "" }
+mpk_feature_flag := if mpk_flag == "" { "" } else { "--features {{mpk_flag}}" }
+
+buffer_feature_flag := if enable_file_buffer == "1" { "--features file-based" } else { "" }
 
 release_flag := if enable_release == "1" { 
     "--release" 
 } else { "" }
 
 rust_func func_name:
-    cargo build {{ release_flag }} {{ feature_flag }} {{ if enable_file_buffer == "1" { "--features file-based" } else { "" } }} --manifest-path user/{{ func_name }}/Cargo.toml
+    cargo build {{ release_flag }} {{ mpk_feature_flag }} {{ buffer_feature_flag }} \
+        --manifest-path user/{{ func_name }}/Cargo.toml
 
 libos lib_name:
-    cargo build {{ release_flag }} {{ if enable_mpk == "1" { "--features mpk" } else { "" } }} --manifest-path common_service/{{ lib_name }}/Cargo.toml
+    cargo build {{ release_flag }} {{ if enable_mpk == "1" { "--features mpk" } else { "" } }} \
+        --manifest-path common_service/{{ lib_name }}/Cargo.toml
 
 pass_args:
     just rust_func func_a
@@ -60,19 +58,18 @@ long_chain:
     done
 
     just rust_func array_sum
-    
 
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
 
 all_rust:
     just all_libos
-    ./scripts/build_user.sh {{ release_flag }} {{ cmd_flag }}
+    ./scripts/build_user.sh {{ release_flag }} {{ mpk_flag }}
 
 run_rust_test:
     just all_libos
     just all_rust
-    ./scripts/run_tests.sh {{ cmd_flag }}
+    ./scripts/run_tests.sh {{ mpk_flag }}
 
 cc_flags_p1 := "-Wl,--gc-sections -nostdlib -Wl,--whole-archive"
 cc_flags_p2 := "-Wl,--no-whole-archive -shared"
@@ -82,7 +79,7 @@ c_mapper_so:
     @echo "c_mapper.so"
     cd user/wasmtime_mapper \
         && cargo build \
-            --target {{target}} {{feature_flag}}  \
+            --target {{target}} {{mpk_feature_flag}}  \
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_mapper.a \
             {{cc_flags_p2}} \
@@ -91,7 +88,7 @@ c_mapper_so:
 c_reducer_so:
     @echo "c_reducer.so"
     cd user/wasmtime_reducer \
-        && cargo build --target {{target}} {{feature_flag}} \
+        && cargo build --target {{target}} {{mpk_feature_flag}} \
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_reducer.a \
             {{cc_flags_p2}} \
@@ -107,7 +104,7 @@ wasmtime_wordcount: c_mapper_so c_reducer_so
 c_sorter_so:
     @echo "c_sorter.so"
     cd user/wasmtime_sorter \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_sorter.a \
             {{cc_flags_p2}} \
@@ -116,7 +113,7 @@ c_sorter_so:
 c_spliter_so:
     @echo "c_spliter.so"
     cd user/wasmtime_spliter \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_spliter.a \
             {{cc_flags_p2}} \
@@ -125,7 +122,7 @@ c_spliter_so:
 c_merger_so:
     @echo "c_merger.so"
     cd user/wasmtime_merger \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_merger.a \
             {{cc_flags_p2}} \
@@ -134,7 +131,7 @@ c_merger_so:
 c_checker_so:
     @echo "c_checker.so"
     cd user/wasmtime_checker \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_checker.a \
             {{cc_flags_p2}} \
@@ -157,7 +154,7 @@ all_c_wasm: wasmtime_wordcount wasmtime_parallel_sort
 cpython_wordcount_so:
     @echo "cpython_wordcount.so"
     cd user/wasmtime_cpython_wordcount \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_cpython_wordcount.a \
             {{cc_flags_p2}} \
@@ -171,7 +168,7 @@ cpython_wordcount: cpython_wordcount_so
 cpython_parallel_sort_so:
     @echo "cpython_parallel_sort.so"
     cd user/wasmtime_cpython_parallel_sort \
-        && cargo build --target {{target}} {{feature_flag}}\
+        && cargo build --target {{target}} {{mpk_feature_flag}}\
         && cc {{cc_flags_p1}} \
             target/{{target}}/debug/libwasmtime_cpython_parallel_sort.a \
             {{cc_flags_p2}} \
@@ -189,7 +186,7 @@ all_wasm: all_c_wasm all_py_wasm
 measure_avg isol_file:
     #!/bin/bash
     for (( i=1; i<=10; i++ )); do \
-        output=$(cargo run {{ release_flag }} {{feature_flag}} -- --files {{ isol_file }} --metrics total-dur 2>&1); \
+        output=$(cargo run {{ release_flag }} {{mpk_feature_flag}} -- --files {{ isol_file }} --metrics total-dur 2>&1); \
         total_dur=$(echo "$output" | grep -o '"total_dur(ms)": [0-9.]*' | awk -F': ' '{print $2}'); \
         total_dur_rounded=$(printf "%.3f\n" "$total_dur") ;\
         echo "$total_dur_rounded ," ;\

@@ -11,7 +11,7 @@ use std::{
 use anyhow::{anyhow, Ok};
 
 use lazy_static::lazy_static;
-use log::info;
+use log::{info, warn};
 use ms_hostcall::types::{
     IsolationID as IsolID,
     MetricEvent::{IsolBegin, IsolEnd, Mem},
@@ -98,6 +98,10 @@ impl Isolation {
             config.with_libos.unwrap_or(true),
         )
         .register(config);
+
+        if let Some(image) = &config.fs_image {
+            warn!("will use a non default file system image: {}", image)
+        }
 
         let isol = Arc::from(Self {
             id: new_id,
