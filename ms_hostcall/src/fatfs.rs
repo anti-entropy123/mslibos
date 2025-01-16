@@ -13,6 +13,7 @@ pub type FatfsStatFunc = fn(Fd) -> FatfsResult<Stat>;
 pub type FatfsResult<T> = Result<T, FatfsError>;
 
 #[derive(Debug, Error)]
+#[repr(C)]
 pub enum FatfsError {
     #[error("std::io::error, {0}")]
     HostIOErr(String),
@@ -20,4 +21,6 @@ pub enum FatfsError {
     AcquireLockErr(String),
     #[error("bad input fd: {0}, do not exist")]
     BadInputFd(Fd),
+    #[error("Unknown.")]
+    Unknown,
 }

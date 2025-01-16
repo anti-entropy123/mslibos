@@ -6,6 +6,7 @@ use ms_hostcall::{
 use crate::{
     io::{Read, Write},
     libos::libos,
+    println,
 };
 
 pub struct File {
@@ -24,7 +25,9 @@ impl File {
     pub fn open(p: &str) -> Result<Self, FdtabError> {
         let mode = OpenMode::RD;
         let flags = OpenFlags::empty();
+        // println!("open file: {}", p);
         let raw_fd = libos!(open(p, flags, mode))?;
+        // println!("open file: {} ok", p);
 
         Ok(File { raw_fd })
     }

@@ -13,6 +13,14 @@
       "libmm.so"
     ],
     [
+      "mmap_file_backend",
+      "libmmap_file_backend.so"
+    ],
+    [
+      "socket",
+      "libsocket.so"
+    ],
+    [
       "time",
       "libtime.so"
     ],
@@ -23,20 +31,26 @@
   ],
   "apps": [
     [
-      "file_reader",
-      "libfile_reader.so"
-    ],
-    [
       "mapper",
       "libmapper.so"
     ],
     [
       "reducer",
       "libreducer.so"
+    ],
+    [
+      "load_all",
+      "libload_all.so"
     ]
   ],
   "fs_image": "fs_images/fatfs.img",
   "groups": [
+    {
+      "list": [
+        "load_all"
+      ],
+      "args": {}
+    },
     {
       "list": [
         "mapper",
