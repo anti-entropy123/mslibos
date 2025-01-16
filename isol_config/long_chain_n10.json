@@ -23,106 +23,90 @@
     ],
     "apps": [
         [
-            "array_sum0",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum1",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum2",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum3",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum4",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum5",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum6",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum7",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum8",
-            "libarray_sum.so"
-        ],
-        [
-            "array_sum9",
+            "array_sum",
             "libarray_sum.so"
         ]
     ],
     "groups": [
         {
             "list": [
-                "array_sum0"
+                "array_sum"
             ],
-            "args": {"array_num": "0"}
+            "args": {
+                "n": "0"
+            }
         },
         {
             "list": [
-                "array_sum1"
+                "array_sum"
             ],
-            "args": {"array_num": "1"}
+            "args": {
+                "n": "1"
+            }
         },
         {
             "list": [
-                "array_sum2"
+                "array_sum"
             ],
-            "args": {"array_num": "2"}
+            "args": {
+                "n": "2"
+            }
         },
         {
             "list": [
-                "array_sum3"
+                "array_sum"
             ],
-            "args": {"array_num": "3"}
+            "args": {
+                "n": "3"
+            }
         },
         {
             "list": [
-                "array_sum4"
+                "array_sum"
             ],
-            "args": {"array_num": "4"}
+            "args": {
+                "n": "4"
+            }
         },
         {
             "list": [
-                "array_sum5"
+                "array_sum"
             ],
-            "args": {"array_num": "5"}
+            "args": {
+                "n": "5"
+            }
         },
         {
             "list": [
-                "array_sum6"
+                "array_sum"
             ],
-            "args": {"array_num": "6"}
+            "args": {
+                "n": "6"
+            }
         },
         {
             "list": [
-                "array_sum7"
+                "array_sum"
             ],
-            "args": {"array_num": "7"}
+            "args": {
+                "n": "7"
+            }
         },
         {
             "list": [
-                "array_sum8"
+                "array_sum"
             ],
-            "args": {"array_num": "8"}
+            "args": {
+                "n": "8"
+            }
         },
         {
             "list": [
-                "array_sum9"
+                "array_sum"
             ],
-            "args": {"array_num": "9"}
+            "args": {
+                "n": "9"
+            }
         }
     ]
 }
