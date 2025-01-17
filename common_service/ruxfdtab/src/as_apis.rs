@@ -14,9 +14,14 @@ use ms_hostcall::{
     fdtab::{FdtabError, FdtabResult},
     types::{DirEntry, Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec},
 };
+
+#[cfg(feature = "use-ramdisk")]
 use ruxdriver::init_drivers;
+#[cfg(feature = "use-ramdisk")]
+use ruxfs::init_blkfs;
+
 use ruxfdtable::{FileLike, RuxStat};
-use ruxfs::{fops::OpenOptions, init_blkfs, init_filesystems, prepare_commonfs};
+use ruxfs::{fops::OpenOptions, init_filesystems, init_tempfs, prepare_commonfs};
 
 fn convert(ruxstat: RuxStat) -> Stat {
     return Stat {
@@ -63,10 +68,15 @@ fn get_fs_image_path() -> PathBuf {
 }
 
 fn init() {
+    #[cfg(feature = "use-ramdisk")]
     let all_devices = init_drivers(get_fs_image_path().to_str().unwrap());
     #[cfg(feature = "log")]
     println!("block devices nums: {}", all_devices.block.len());
+
+    #[cfg(feature = "use-ramdisk")]
     let mount_point = init_blkfs(all_devices.block);
+    #[cfg(not(feature = "use-ramdisk"))]
+    let mount_point = init_tempfs();
     let mut mount_points = vec![mount_point];
     prepare_commonfs(&mut mount_points);
     init_filesystems(mount_points);
