@@ -14,7 +14,6 @@ dependencies = [
 [[package]]
 name = "arm_gic"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "tock-registers",
 ]
@@ -22,7 +21,6 @@ dependencies = [
 [[package]]
 name = "arm_pl011"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "tock-registers",
 ]
@@ -36,7 +34,6 @@ checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
 [[package]]
 name = "axerrno"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "log",
 ]
@@ -44,7 +41,6 @@ dependencies = [
 [[package]]
 name = "axfs_devfs"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axfs_vfs",
  "log",
@@ -54,7 +50,6 @@ dependencies = [
 [[package]]
 name = "axfs_ramfs"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axfs_vfs",
  "log",
@@ -64,7 +59,6 @@ dependencies = [
 [[package]]
 name = "axfs_vfs"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
  "bitflags 2.6.0",
@@ -74,7 +68,6 @@ dependencies = [
 [[package]]
 name = "axio"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
 ]
@@ -82,7 +75,6 @@ dependencies = [
 [[package]]
 name = "axlog"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "cfg-if",
  "crate_interface",
@@ -93,7 +85,6 @@ dependencies = [
 [[package]]
 name = "axsync"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "ruxtask",
  "spinlock",
@@ -138,7 +129,6 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 [[package]]
 name = "capability"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
  "bitflags 2.6.0",
@@ -189,7 +179,6 @@ dependencies = [
 [[package]]
 name = "driver_block"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "driver_common",
  "fscommon",
@@ -199,12 +188,10 @@ dependencies = [
 [[package]]
 name = "driver_common"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 
 [[package]]
 name = "dtb"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "fdt-rs",
  "lazy_init",
@@ -213,7 +200,6 @@ dependencies = [
 [[package]]
 name = "dw_apb_uart"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "tock-registers",
 ]
@@ -275,7 +261,6 @@ dependencies = [
 [[package]]
 name = "flatten_objects"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "bitmaps",
 ]
@@ -349,7 +334,6 @@ dependencies = [
 [[package]]
 name = "lazy_init"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 
 [[package]]
 name = "lazy_static"
@@ -477,7 +461,6 @@ dependencies = [
 [[package]]
 name = "page_table_entry"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "aarch64-cpu",
  "bitflags 2.6.0",
@@ -495,7 +478,6 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 [[package]]
 name = "percpu"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "cfg-if",
  "percpu_macros",
@@ -506,7 +488,6 @@ dependencies = [
 [[package]]
 name = "percpu_macros"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -534,7 +515,6 @@ dependencies = [
 [[package]]
 name = "ratio"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 
 [[package]]
 name = "raw-cpuid"
@@ -592,7 +572,6 @@ checksum = "955d28af4278de8121b7ebeb796b6a45735dc01436d898801014aced2773a3d6"
 [[package]]
 name = "ruxconfig"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "serde",
  "toml_edit",
@@ -601,7 +580,6 @@ dependencies = [
 [[package]]
 name = "ruxdriver"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "cfg-if",
  "driver_block",
@@ -627,7 +605,6 @@ dependencies = [
 [[package]]
 name = "ruxfdtable"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
  "axio",
@@ -640,7 +617,6 @@ dependencies = [
 [[package]]
 name = "ruxfs"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
  "axfs_devfs",
@@ -661,7 +637,6 @@ dependencies = [
 [[package]]
 name = "ruxhal"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "aarch64-cpu",
  "arm_gic",
@@ -696,7 +671,6 @@ dependencies = [
 [[package]]
 name = "ruxtask"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "axerrno",
  "cfg-if",
@@ -797,7 +771,6 @@ dependencies = [
 [[package]]
 name = "spinlock"
 version = "0.1.0"
-source = "git+https://github.com/anti-entropy123/ruxos/#69217283ca94c10d6b084be7a71a35b63b29f2b5"
 dependencies = [
  "cfg-if",
  "kernel_guard",
