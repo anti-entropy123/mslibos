@@ -40,10 +40,27 @@ fn init_input_file() {
         .write_str(include_str!("../../../image_content/fake_data_4.txt"))
         .unwrap();
 
+    let content = include_str!("../../../image_content/sort_data_0.txt");
     File::create("sort_data_0.txt")
         .unwrap()
-        .write_str(include_str!("../../../image_content/sort_data_0.txt"))
+        .write_str(content)
         .unwrap();
+
+    let start = SystemTime::now();
+    let mut array: Vec<i32> = Vec::new();
+    for num in content.split(',') {
+        let num = num.trim();
+        if num.is_empty() {
+            continue;
+        }
+        let num = num.parse().unwrap();
+        array.push(num);
+    }
+    println!(
+        "split {} numbers cost {}ms",
+        array.len(),
+        SystemTime::elapsed(&start).as_millis()
+    );
 
     File::create("sort_data_1.txt")
         .unwrap()
