@@ -13,7 +13,8 @@ use ms_std_proc_macro::FaasData;
 use serde::{Deserialize, Serialize};
 // use ms_std_proc_macro::FaasData;
 
-#[derive(Default, FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(Default, FaasData)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     content: heapless::String<{ 110 * 1024 * 1024 }>,

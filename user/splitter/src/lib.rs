@@ -10,7 +10,8 @@ use ms_std::{
 use ms_std_proc_macro::FaasData;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(Default, FaasData)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     array: heapless::Vec<u32, { 20 * 1024 * 1024 }>,

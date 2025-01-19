@@ -1,8 +1,8 @@
 
 set positional-arguments
 
-enable_mpk := "0"
-enable_pkey_per_func := "0"
+enable_mpk := "1"
+enable_pkey_per_func := "1"
 enable_file_buffer := "0"
 
 enable_release := "1"
@@ -15,7 +15,7 @@ mpk_flag := if enable_mpk == "1" {
     } 
 } else { "" }
 
-mpk_feature_flag := if mpk_flag == "" { "" } else { "--features {{mpk_flag}}" }
+mpk_feature_flag := if mpk_flag == "" { "" } else { "--features " + mpk_flag }
 
 buffer_feature_flag := if enable_file_buffer == "1" { "--features file-based" } else { "" }
 
