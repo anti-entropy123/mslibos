@@ -109,14 +109,6 @@
       "args": {
         "sorter_num": "3"
       }
-    },
-    {
-      "list": [
-        "checker"
-      ],
-      "args": {
-        "merger_num": "3"
-      }
     }
   ]
 }

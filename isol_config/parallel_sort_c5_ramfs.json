@@ -127,14 +127,6 @@
       "args": {
         "sorter_num": "5"
       }
-    },
-    {
-      "list": [
-        "checker"
-      ],
-      "args": {
-        "merger_num": "5"
-      }
     }
   ]
 }
