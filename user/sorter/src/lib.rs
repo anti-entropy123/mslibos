@@ -4,6 +4,8 @@ use alloc::{format, string::String, vec::Vec};
 
 use ms_std::{
     args,
+    fs::File,
+    io::Read,
     prelude::*,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -50,13 +52,27 @@ pub fn main() -> Result<()> {
         n.parse().unwrap()
     };
 
-    let start = SystemTime::now();
+    ///////////// file_reader ////////////////
+    // let mut input_file = File::open(&format!("sort_data_{}.txt", my_id)).unwrap();
+    // let mut content = String::new();
+    // input_file.read_to_string(&mut content).unwrap();
+
+    // let mut input: DataBuffer<Reader2Sorter> =
+    //     DataBuffer::with_slot(format!("input-part-{}", my_id));
+
+    // input.content = content;
+    // drop(input);
+    /////////////////////////////////////////
+
     let input: DataBuffer<Reader2Sorter> =
         DataBuffer::from_buffer_slot(format!("input-part-{}", my_id)).unwrap();
+    let content = input.content.as_str();
 
     let mut buffer: DataBuffer<VecArg> =
         DataBuffer::with_slot(format!("sorter-resp-part-{}", my_id));
-    for num in input.content.split(',') {
+
+    let start = SystemTime::now();
+    for num in content.split(',') {
         let num = num.trim();
         if num.is_empty() {
             continue;

@@ -59,6 +59,9 @@ long_chain:
 
     just rust_func array_sum
 
+simple_file:
+    just rust_func simple_file
+
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
 

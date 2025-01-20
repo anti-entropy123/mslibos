@@ -49,6 +49,7 @@ pub fn main() -> Result<()> {
             DataBuffer::with_slot(format!("splitter-{}-resp-part-{}", my_id, idx));
         #[cfg(feature = "pkey_per_func")]
         {
+            part.array.resize(partition.len(), 0).unwrap();
             for (idx, item) in part.array.iter_mut().enumerate() {
                 *item = partition[idx];
             }
