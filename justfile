@@ -194,3 +194,6 @@ measure_avg isol_file:
         total_dur_rounded=$(printf "%.3f\n" "$total_dur") ;\
         echo "$total_dur_rounded ," ;\
     done ;
+
+gen_data:
+    sudo ./scripts/gen_data.py

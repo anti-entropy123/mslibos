@@ -27,11 +27,12 @@ struct Pivots {
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
     println!(
-        "com_start2: {}",
+        "splitter id: {}, com_start2: {}",
+        my_id,
         SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
     );
-    let my_id = args::get("id").unwrap();
 
     let numbers: DataBuffer<VecArg> =
         DataBuffer::from_buffer_slot(format!("sorter-resp-part-{}", my_id)).unwrap();
