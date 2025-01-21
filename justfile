@@ -1,8 +1,8 @@
 
 set positional-arguments
 
-enable_mpk := "1"
-enable_pkey_per_func := "1"
+enable_mpk := "0"
+enable_pkey_per_func := "0"
 enable_file_buffer := "0"
 
 enable_release := "1"

@@ -32,29 +32,6 @@ extern crate alloc;
 //     content: String,
 // }
 
-fn get_input_from_mem(filename: &str) -> &'static str {
-    match filename {
-        "fake_data_0.txt" => {
-            include_str!("../../../image_content/fake_data_0.txt")
-        }
-        "fake_data_1.txt" => {
-            include_str!("../../../image_content/fake_data_1.txt")
-        }
-        "fake_data_2.txt" => {
-            include_str!("../../../image_content/fake_data_2.txt")
-        }
-        "fake_data_3.txt" => {
-            include_str!("../../../image_content/fake_data_3.txt")
-        }
-        "fake_data_4.txt" => {
-            include_str!("../../../image_content/fake_data_4.txt")
-        }
-        _ => {
-            panic!("unknown filename")
-        }
-    }
-}
-
 #[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
 #[derive(FaasData)]
 struct Mapper2Reducer {
@@ -172,3 +149,26 @@ pub fn main() -> Result<()> {
 
     mapper_func(my_id, reducer_num)
 }
+
+// fn get_input_from_mem(filename: &str) -> &'static str {
+//     match filename {
+//         "fake_data_0.txt" => {
+//             include_str!("../../../image_content/fake_data_0.txt")
+//         }
+//         "fake_data_1.txt" => {
+//             include_str!("../../../image_content/fake_data_1.txt")
+//         }
+//         "fake_data_2.txt" => {
+//             include_str!("../../../image_content/fake_data_2.txt")
+//         }
+//         "fake_data_3.txt" => {
+//             include_str!("../../../image_content/fake_data_3.txt")
+//         }
+//         "fake_data_4.txt" => {
+//             include_str!("../../../image_content/fake_data_4.txt")
+//         }
+//         _ => {
+//             panic!("unknown filename")
+//         }
+//     }
+// }

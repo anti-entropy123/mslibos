@@ -14,74 +14,74 @@ use ms_std::{
     time::SystemTime,
 };
 
-fn init_input_file() {
-    File::create("fake_data_0.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/fake_data_0.txt"))
-        .unwrap();
+// fn init_input_file() {
+//     File::create("fake_data_0.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/fake_data_0.txt"))
+//         .unwrap();
 
-    File::create("fake_data_1.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/fake_data_1.txt"))
-        .unwrap();
+//     File::create("fake_data_1.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/fake_data_1.txt"))
+//         .unwrap();
 
-    File::create("fake_data_2.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/fake_data_2.txt"))
-        .unwrap();
+//     File::create("fake_data_2.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/fake_data_2.txt"))
+//         .unwrap();
 
-    File::create("fake_data_3.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/fake_data_3.txt"))
-        .unwrap();
+//     File::create("fake_data_3.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/fake_data_3.txt"))
+//         .unwrap();
 
-    File::create("fake_data_4.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/fake_data_4.txt"))
-        .unwrap();
+//     File::create("fake_data_4.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/fake_data_4.txt"))
+//         .unwrap();
 
-    let content = include_str!("../../../image_content/sort_data_0.txt");
-    File::create("sort_data_0.txt")
-        .unwrap()
-        .write_str(content)
-        .unwrap();
+//     let content = include_str!("../../../image_content/sort_data_0.txt");
+//     File::create("sort_data_0.txt")
+//         .unwrap()
+//         .write_str(content)
+//         .unwrap();
 
-    let start = SystemTime::now();
-    let mut array: Vec<i32> = Vec::new();
-    for num in content.split(',') {
-        let num = num.trim();
-        if num.is_empty() {
-            continue;
-        }
-        let num = num.parse().unwrap();
-        array.push(num);
-    }
-    println!(
-        "split {} numbers cost {}ms",
-        array.len(),
-        SystemTime::elapsed(&start).as_millis()
-    );
+//     let start = SystemTime::now();
+//     let mut array: Vec<i32> = Vec::new();
+//     for num in content.split(',') {
+//         let num = num.trim();
+//         if num.is_empty() {
+//             continue;
+//         }
+//         let num = num.parse().unwrap();
+//         array.push(num);
+//     }
+//     println!(
+//         "split {} numbers cost {}ms",
+//         array.len(),
+//         SystemTime::elapsed(&start).as_millis()
+//     );
 
-    File::create("sort_data_1.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/sort_data_1.txt"))
-        .unwrap();
+//     File::create("sort_data_1.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/sort_data_1.txt"))
+//         .unwrap();
 
-    File::create("sort_data_2.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/sort_data_2.txt"))
-        .unwrap();
+//     File::create("sort_data_2.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/sort_data_2.txt"))
+//         .unwrap();
 
-    File::create("sort_data_3.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/sort_data_3.txt"))
-        .unwrap();
+//     File::create("sort_data_3.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/sort_data_3.txt"))
+//         .unwrap();
 
-    File::create("sort_data_4.txt")
-        .unwrap()
-        .write_str(include_str!("../../../image_content/sort_data_4.txt"))
-        .unwrap();
-}
+//     File::create("sort_data_4.txt")
+//         .unwrap()
+//         .write_str(include_str!("../../../image_content/sort_data_4.txt"))
+//         .unwrap();
+// }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
@@ -123,11 +123,11 @@ pub fn main() -> Result<()> {
         Err("seek failed")?
     }
 
-    init_input_file();
+    // init_input_file();
 
-    println!(
-        "simple_file exec: {}ms",
-        SystemTime::elapsed(&start_time).as_millis()
-    );
+    // println!(
+    //     "simple_file exec: {}ms",
+    //     SystemTime::elapsed(&start_time).as_millis()
+    // );
     Ok(().into())
 }
