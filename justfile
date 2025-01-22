@@ -196,4 +196,4 @@ measure_avg isol_file:
     done ;
 
 gen_data:
-    sudo ./scripts/gen_data.py
+    sudo -E ./scripts/gen_data.py
