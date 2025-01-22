@@ -20,4 +20,4 @@ mpk = ["ms_std/mpk"]
 pkey_per_func = ["mpk"]
 file-based = ["ms_std/file-based"]
 
-default = ["pkey_per_func"]
+default = []
