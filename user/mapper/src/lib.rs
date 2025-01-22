@@ -71,7 +71,7 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     let mut f = File::open(&file_name)?;
     let mut content = String::new();
     // let content = get_input_from_mem(&file_name);
-    // f.read_to_string(&mut content).expect("read file failed.");
+    f.read_to_string(&mut content).expect("read file failed.");
 
     println!(
         "read_end, cost: {}ms",
@@ -131,7 +131,7 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     }
 
     println!(
-        "shuffle _end, cost {}ms",
+        "shuffle end, cost {}ms",
         SystemTime::elapsed(&start).as_millis()
     );
 

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, thread::sleep, time::Duration};
 
 use clap::{arg, Parser};
 use derive_more::Display;
@@ -46,6 +46,10 @@ struct Args {
     /// show metrics json.
     #[arg(long, default_value_t = MetricOpt::None)]
     metrics: MetricOpt,
+
+    /// block after workflow execution.
+    #[arg(short, long, default_value_t = false)]
+    non_exit: bool,
 }
 
 fn build_all_isol(args: &Args) -> Vec<Arc<Isolation>> {
@@ -140,6 +144,12 @@ fn main() {
 
         if !matches!(args.metrics, MetricOpt::None) {
             isol.metric.analyze(&args.metrics.to_analyze());
+        }
+    }
+
+    if args.non_exit {
+        loop {
+            sleep(Duration::from_secs(1));
         }
     }
 }

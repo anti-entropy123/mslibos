@@ -65,7 +65,8 @@ impl MetricBucket {
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_micros();
-                let vm_rss_kb = get_current_vm_rss_kb();
+                // let vm_rss_kb = get_current_vm_rss_kb();
+                let vm_rss_kb = 0;
 
                 inner.mem_metrics.push((timestamp, vm_rss_kb))
             }
