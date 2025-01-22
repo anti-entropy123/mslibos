@@ -10,7 +10,8 @@ use ms_std::{
 use ms_std_proc_macro::FaasData;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(Default, FaasData)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     array: heapless::Vec<u32, { 20 * 1024 * 1024 }>,
@@ -26,11 +27,12 @@ struct Pivots {
 
 #[no_mangle]
 pub fn main() -> Result<()> {
+    let my_id = args::get("id").unwrap();
     println!(
-        "com_start2: {}",
+        "splitter id: {}, com_start2: {}",
+        my_id,
         SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
     );
-    let my_id = args::get("id").unwrap();
 
     let numbers: DataBuffer<VecArg> =
         DataBuffer::from_buffer_slot(format!("sorter-resp-part-{}", my_id)).unwrap();
@@ -48,6 +50,7 @@ pub fn main() -> Result<()> {
             DataBuffer::with_slot(format!("splitter-{}-resp-part-{}", my_id, idx));
         #[cfg(feature = "pkey_per_func")]
         {
+            part.array.resize(partition.len(), 0).unwrap();
             for (idx, item) in part.array.iter_mut().enumerate() {
                 *item = partition[idx];
             }

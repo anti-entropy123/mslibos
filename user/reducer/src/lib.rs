@@ -18,7 +18,8 @@ use serde::{Deserialize, Serialize};
 
 extern crate alloc;
 
-#[derive(FaasData, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(Default, FaasData)]
 struct Mapper2Reducer {
     #[cfg(feature = "pkey_per_func")]
     shuffle: heapless::FnvIndexMap<heapless::String<32>, u32, 1024>,

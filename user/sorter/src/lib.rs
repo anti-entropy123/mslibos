@@ -4,13 +4,16 @@ use alloc::{format, string::String, vec::Vec};
 
 use ms_std::{
     args,
+    fs::File,
+    io::Read,
     prelude::*,
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(Default, FaasData)]
 struct Reader2Sorter {
     #[cfg(feature = "pkey_per_func")]
     content: heapless::String<{ 110 * 1024 * 1024 }>,
@@ -18,7 +21,8 @@ struct Reader2Sorter {
     content: String,
 }
 
-#[derive(Default, FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, , Deserialize))]
+#[derive(Default, FaasData)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]
     array: heapless::Vec<u32, { 20 * 1024 * 1024 }>,
@@ -48,18 +52,27 @@ pub fn main() -> Result<()> {
         n.parse().unwrap()
     };
 
+    ///////////// file_reader ////////////////
+    // let mut input_file = File::open(&format!("sort_data_{}.txt", my_id)).unwrap();
+    // let mut content = String::new();
+    // input_file.read_to_string(&mut content).unwrap();
+
+    // let mut input: DataBuffer<Reader2Sorter> =
+    //     DataBuffer::with_slot(format!("input-part-{}", my_id));
+
+    // input.content = content;
+    // drop(input);
+    /////////////////////////////////////////
+
     let input: DataBuffer<Reader2Sorter> =
         DataBuffer::from_buffer_slot(format!("input-part-{}", my_id)).unwrap();
-
-    println!(
-        "sorter: input-part-{}, input length={}",
-        my_id,
-        input.content.len()
-    );
+    let content = input.content.as_str();
 
     let mut buffer: DataBuffer<VecArg> =
         DataBuffer::with_slot(format!("sorter-resp-part-{}", my_id));
-    for num in input.content.split(',') {
+
+    let start = SystemTime::now();
+    for num in content.split(',') {
         let num = num.trim();
         if num.is_empty() {
             continue;
@@ -70,7 +83,20 @@ pub fn main() -> Result<()> {
         buffer.array.push(num);
     }
 
+    println!(
+        "sorter: input-part-{}, input length={}. split word cost: {}ms",
+        my_id,
+        input.content.len(),
+        SystemTime::elapsed(&start).as_millis(),
+    );
+
+    let start = SystemTime::now();
     buffer.array.sort();
+    println!(
+        "numbers array length is {}, sort cost {}ms",
+        buffer.array.len(),
+        SystemTime::elapsed(&start).as_millis()
+    );
 
     if my_id.eq("0") {
         // let mut pivots: DataBuffer<VecArg> = ;

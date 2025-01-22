@@ -3,7 +3,7 @@ extern crate alloc;
 use std::path::PathBuf;
 
 use alloc::vec;
-use ms_std::libos::libos;
+use ms_std::{libos::libos, sync::UPSafeCell};
 use spin::Mutex;
 
 use crate::{
@@ -14,9 +14,14 @@ use ms_hostcall::{
     fdtab::{FdtabError, FdtabResult},
     types::{DirEntry, Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec},
 };
+
+#[cfg(feature = "use-ramdisk")]
 use ruxdriver::init_drivers;
+#[cfg(feature = "use-ramdisk")]
+use ruxfs::init_blkfs;
+
 use ruxfdtable::{FileLike, RuxStat};
-use ruxfs::{fops::OpenOptions, init_blkfs, init_filesystems, prepare_commonfs};
+use ruxfs::{fops::OpenOptions, init_filesystems, init_tempfs, prepare_commonfs};
 
 fn convert(ruxstat: RuxStat) -> Stat {
     return Stat {
@@ -62,28 +67,34 @@ fn get_fs_image_path() -> PathBuf {
         .join(image_path)
 }
 
-fn init() {
+fn init() -> bool {
+    #[cfg(feature = "use-ramdisk")]
     let all_devices = init_drivers(get_fs_image_path().to_str().unwrap());
     #[cfg(feature = "log")]
     println!("block devices nums: {}", all_devices.block.len());
+
+    #[cfg(feature = "use-ramdisk")]
     let mount_point = init_blkfs(all_devices.block);
+    #[cfg(not(feature = "use-ramdisk"))]
+    let mount_point = init_tempfs();
     let mut mount_points = vec![mount_point];
     prepare_commonfs(&mut mount_points);
     init_filesystems(mount_points);
     #[cfg(feature = "log")]
     println!("ruxfs init ok");
+
+    true
 }
 
 lazy_static::lazy_static! {
-    static ref MUST_EXIC: Mutex<bool> = {
-        init();
-        Mutex::new(true)
+    static ref MUST_EXIC: bool = {
+        init()
     };
 }
 
 #[no_mangle]
 pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     #[cfg(feature = "log")]
     {
         println!("ruxfdtab: open path={:?}", path);
@@ -115,13 +126,15 @@ pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
 
 #[no_mangle]
 pub fn write(fd: Fd, buf: &[u8]) -> FdtabResult<Size> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     // libos!(stdout(format!("fd: {}, buf: {:?}", fd, buf).as_bytes()));
     let f = get_file_like(fd)?;
 
     let result = f
         .write(buf)
         .map_err(|e| FdtabError::RuxfsError(e.to_string()));
+
+    #[cfg(feature = "use-ramdisk")]
     f.flush().unwrap();
 
     result
@@ -129,7 +142,7 @@ pub fn write(fd: Fd, buf: &[u8]) -> FdtabResult<Size> {
 
 #[no_mangle]
 pub fn read(fd: Fd, buf: &mut [u8]) -> FdtabResult<Size> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     get_file_like(fd)?
         .read(buf)
         .map_err(|e| FdtabError::RuxfsError(e.to_string()))
@@ -137,13 +150,13 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> FdtabResult<Size> {
 
 #[no_mangle]
 pub fn close(fd: Fd) -> FdtabResult<()> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     close_file_like(fd)
 }
 
 #[no_mangle]
 pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     fs::File::from_fd(fd)?
         .inner
         .lock()
@@ -155,7 +168,7 @@ pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
 
 #[no_mangle]
 pub fn stat(fd: Fd) -> FdtabResult<Stat> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     let stat = fs::File::from_fd(fd)?
         .stat()
         .map_err(|e| FdtabError::RuxfsError(e.to_string()))?;
@@ -168,7 +181,7 @@ pub fn stat(fd: Fd) -> FdtabResult<Stat> {
 
 #[no_mangle]
 pub fn readdir(path: &str) -> FdtabResult<Vec<DirEntry>> {
-    let _exec = MUST_EXIC.lock();
+    let _exec = *MUST_EXIC;
     #[cfg(feature = "log")]
     println!("[DEBUG] ruxfs read_dir: {:?}", path);
 

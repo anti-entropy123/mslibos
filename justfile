@@ -15,7 +15,7 @@ mpk_flag := if enable_mpk == "1" {
     } 
 } else { "" }
 
-mpk_feature_flag := if mpk_flag == "" { "" } else { "--features {{mpk_flag}}" }
+mpk_feature_flag := if mpk_flag == "" { "" } else { "--features " + mpk_flag }
 
 buffer_feature_flag := if enable_file_buffer == "1" { "--features file-based" } else { "" }
 
@@ -58,6 +58,9 @@ long_chain:
     done
 
     just rust_func array_sum
+
+simple_file:
+    just rust_func simple_file
 
 all_libos:
     ./scripts/build_all_common{{ if enable_mpk == "1" { "_mpk" } else { "" } }}.sh {{ release_flag }}
@@ -191,3 +194,6 @@ measure_avg isol_file:
         total_dur_rounded=$(printf "%.3f\n" "$total_dur") ;\
         echo "$total_dur_rounded ," ;\
     done ;
+
+gen_data:
+    sudo ./scripts/gen_data.py

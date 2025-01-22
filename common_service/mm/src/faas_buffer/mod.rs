@@ -23,7 +23,11 @@ lazy_static! {
 
 #[no_mangle]
 pub fn buffer_alloc(slot: &str, l: Layout, fingerprint: u64) -> MMResult<usize> {
-    let addr = BUFFER_ALLOCATOR.lock().allocate_first_fit(l).unwrap();
+    let addr = BUFFER_ALLOCATOR
+        .lock()
+        .allocate_first_fit(l)
+        .expect("alloc mem failed");
+    
     let addr = addr.as_ptr() as usize;
 
     BUFFER_REGISTER

@@ -32,7 +32,8 @@ extern crate alloc;
 //     content: String,
 // }
 
-#[derive(FaasData, Serialize, Deserialize)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+#[derive(FaasData)]
 struct Mapper2Reducer {
     #[cfg(feature = "pkey_per_func")]
     shuffle: heapless::FnvIndexMap<heapless::String<32>, u32, 1024>,
@@ -65,39 +66,41 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     //     DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
     // println!("access_buffer_long={}", reader.content.len());
 
+    let start = SystemTime::now();
     let file_name = format!("fake_data_{}.txt", my_id);
     let mut f = File::open(&file_name)?;
     let mut content = String::new();
+    // let content = get_input_from_mem(&file_name);
+    // f.read_to_string(&mut content).expect("read file failed.");
+
     println!(
-        "read_start: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
+        "read_end, cost: {}ms",
+        SystemTime::elapsed(&start).as_millis()
     );
-    f.read_to_string(&mut content).expect("read file failed.");
-    println!(
-        "read_end: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
-    );
+    let start = SystemTime::now();
 
     let mut counter = HashMap::new();
-    println!(
-        "comput_start: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
-    );
     for line in content.lines() {
-        let words = line.trim().split(' ');
-        // .filter(|word| word.chars().all(char::is_alphanumeric));
+        let words = line
+            .trim()
+            .split(' ')
+            .filter(|word| word.chars().all(char::is_alphanumeric));
 
         for word in words {
-            for word in word.split('.') {
-                let old_count = *counter.entry(word).or_insert(0u32);
-                counter.insert(word, old_count + 1);
-            }
+            let old_count = *counter.entry(word).or_insert(0u32);
+            //     for word in word.split('.') {
+            //         let old_count = *counter.entry(word).or_insert(0u32);
+            //         counter.insert(word, old_count + 1);
+            // }
+            counter.insert(word, old_count + 1);
         }
     }
     println!(
-        "comput_end: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
+        "split word end, cost: {}ms",
+        SystemTime::elapsed(&start).as_millis()
     );
+    let start = SystemTime::now();
+
     let total: u32 = counter.values().sum();
     // 打印总和
     println!("The sum of all values is: {}", total);
@@ -112,11 +115,6 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
         data_buffers.push(buffer);
     }
 
-    ms_std::println!("the counter nums is {}", counter.len());
-    println!(
-        "register_start: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
-    );
     for (word, count) in counter {
         let shuffle_idx = getidx(word, reducer_num);
 
@@ -133,8 +131,8 @@ fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
     }
 
     println!(
-        "register_end: {}",
-        SystemTime::now().duration_since(UNIX_EPOCH).as_micros() as f64 / 1000000f64
+        "shuffle _end, cost {}ms",
+        SystemTime::elapsed(&start).as_millis()
     );
 
     Ok(().into())
@@ -151,3 +149,26 @@ pub fn main() -> Result<()> {
 
     mapper_func(my_id, reducer_num)
 }
+
+// fn get_input_from_mem(filename: &str) -> &'static str {
+//     match filename {
+//         "fake_data_0.txt" => {
+//             include_str!("../../../image_content/fake_data_0.txt")
+//         }
+//         "fake_data_1.txt" => {
+//             include_str!("../../../image_content/fake_data_1.txt")
+//         }
+//         "fake_data_2.txt" => {
+//             include_str!("../../../image_content/fake_data_2.txt")
+//         }
+//         "fake_data_3.txt" => {
+//             include_str!("../../../image_content/fake_data_3.txt")
+//         }
+//         "fake_data_4.txt" => {
+//             include_str!("../../../image_content/fake_data_4.txt")
+//         }
+//         _ => {
+//             panic!("unknown filename")
+//         }
+//     }
+// }
