@@ -1,15 +1,15 @@
 #![no_std]
 #![allow(clippy::result_unit_err)]
 
-extern crate alloc;
-
-use alloc::string::String;
-
-use ms_std::{agent::FaaSFuncResult as Result, net::TcpStream, println};
+use ms_std::{
+    io::{Read, Write},
+    net::TcpStream,
+    prelude::*,
+};
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    let mut stream = TcpStream::connect("www.baidu.com".into())?;
+    let mut stream = TcpStream::connect("example.com")?;
     println!("tcp connection created.");
     stream.write_all(b"GET / HTTP/1.0\r\n\r\n")?;
     let mut buffer = [0; 4096];
