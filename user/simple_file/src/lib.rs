@@ -6,6 +6,8 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
+
+#[allow(unused_imports)]
 use ms_std::{
     agent::FaaSFuncResult as Result,
     fs::File,
@@ -85,13 +87,13 @@ use ms_std::{
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    let start_time = SystemTime::now();
+    // let start_time = SystemTime::now();
     let path = "lines.txt";
 
     /////////////////// test create/write/read. ///////////////////
     let data = "Rust LibOS Cool.";
     let mut output = File::create(path)?;
-    write!(output, "{}", data).expect("");
+    output.write_str(data).expect("");
     // drop(output);
 
     let mut input_file = File::open(path)?;

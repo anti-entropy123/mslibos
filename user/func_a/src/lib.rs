@@ -3,6 +3,8 @@
 extern crate alloc;
 
 use alloc::{borrow::ToOwned, vec::Vec};
+
+#[allow(unused_imports)]
 use ms_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,

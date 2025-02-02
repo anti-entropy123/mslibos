@@ -4,19 +4,22 @@ use core::{
 };
 
 use alloc::vec::Vec;
-use ms_hostcall::{fdtab::FdtabError, types::Fd};
+use ms_hostcall::{fdtab::FdtabError, socket::SmoltcpError, types::Fd};
 
-use crate::{io::Write, libos::libos};
+use crate::{
+    io::{Read, Write},
+    libos::libos,
+};
 
 pub struct TcpStream {
     raw_fd: Fd,
 }
 
 impl TcpStream {
-    pub fn connect(addr: SocketAddr) -> Result<Self, FdtabError> {
+    pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<Self, FdtabError> {
         // println!("connect to {}", addr);
 
-        let sockaddrv4 = match addr.inner {
+        let sockaddrv4 = match addr.to_socket_addrs()?.inner {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
         };
@@ -26,20 +29,20 @@ impl TcpStream {
         Ok(stream)
     }
 
-    pub fn write_all(&mut self, data: &[u8]) -> Result<(), FdtabError> {
-        let _ = libos!(write(self.raw_fd, data))?;
-        // println!("TcpStream write {} bytes.", data.len());
-        Ok(())
-    }
-
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, FdtabError> {
-        libos!(read(self.raw_fd, buf))
-    }
+    // fn write_str(&mut self, s: &str) -> core::fmt::Result {
+    //     self.write_all(s.as_bytes()).map_err(|_| core::fmt::Error)
+    // }
 }
 
 impl Write for TcpStream {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_all(s.as_bytes()).map_err(|_| core::fmt::Error)
+    fn write(&mut self, buf: &[u8]) -> Result<usize, FdtabError> {
+        libos!(write(self.raw_fd, buf))
+    }
+}
+
+impl Read for TcpStream {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, FdtabError> {
+        libos!(read(self.raw_fd, buf))
     }
 }
 
@@ -68,8 +71,8 @@ pub struct TcpListener {
 }
 
 impl TcpListener {
-    pub fn bind(url: &str) -> Result<Self, FdtabError> {
-        let addr: SocketAddr = url.into();
+    pub fn bind<A: ToSocketAddrs>(url: A) -> Result<Self, FdtabError> {
+        let addr: SocketAddr = url.to_socket_addrs().unwrap();
         let sockaddrv4 = match addr.inner {
             core::net::SocketAddr::V4(addr) => addr,
             core::net::SocketAddr::V6(_) => todo!(),
@@ -106,12 +109,16 @@ impl Display for SocketAddr {
     }
 }
 
-impl From<&str> for SocketAddr {
-    fn from(value: &str) -> Self {
+pub trait ToSocketAddrs {
+    fn to_socket_addrs(&self) -> Result<SocketAddr, SmoltcpError>;
+}
+
+impl ToSocketAddrs for &str {
+    fn to_socket_addrs(&self) -> Result<SocketAddr, SmoltcpError> {
         let mut sockaddr = SocketAddr::default();
 
         let (ip, port) = {
-            let target_tuple: Vec<&str> = value.split(':').collect();
+            let target_tuple: Vec<&str> = self.split(':').collect();
             let host_str = target_tuple[0];
             let addr = if let Ok(addr) = host_str.parse() {
                 addr
@@ -129,6 +136,6 @@ impl From<&str> for SocketAddr {
 
         sockaddr.inner = core::net::SocketAddr::from(SocketAddrV4::new(ip, port));
 
-        sockaddr
+        Ok(sockaddr)
     }
 }

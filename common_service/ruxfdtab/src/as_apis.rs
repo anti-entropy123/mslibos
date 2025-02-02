@@ -3,8 +3,7 @@ extern crate alloc;
 use std::path::PathBuf;
 
 use alloc::vec;
-use ms_std::{libos::libos, sync::UPSafeCell};
-use spin::Mutex;
+use ms_std::{libos::libos};
 
 use crate::{
     fd_ops::{close_file_like, get_file_like},
@@ -21,6 +20,8 @@ use ruxdriver::init_drivers;
 use ruxfs::init_blkfs;
 
 use ruxfdtable::{FileLike, RuxStat};
+
+#[allow(unused_imports)]
 use ruxfs::{fops::OpenOptions, init_filesystems, init_tempfs, prepare_commonfs};
 
 fn convert(ruxstat: RuxStat) -> Stat {

@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, fs, io::BufReader, path::PathBuf};
 use anyhow;
 use log::{debug, warn};
 use ms_hostcall::types::ServiceName;
+#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 
 use std::io;

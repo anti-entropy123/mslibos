@@ -4,7 +4,7 @@ use ms_std::args;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
-        use ms_std::{agent::FaaSFuncResult as Result, println, libos::libos, fs::File};
+        use ms_std::{agent::FaaSFuncResult as Result, println, libos::libos};
         extern crate alloc;
     } else {
         type Result<T> = core::result::Result<T, String>;

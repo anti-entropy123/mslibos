@@ -8,6 +8,8 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+
+#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]

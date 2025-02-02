@@ -6,7 +6,6 @@ use ms_hostcall::{
 use crate::{
     io::{Read, Write},
     libos::libos,
-    println,
 };
 
 pub struct File {
@@ -47,15 +46,15 @@ impl File {
     pub fn metadata(&self) -> FdtabResult<Stat> {
         libos!(stat(self.raw_fd))
     }
+
+    pub fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.write_all(s.as_bytes()).map_err(|_| core::fmt::Error)
+    }
 }
 
 impl Write for File {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        if libos!(write(self.raw_fd, s.as_bytes())).is_err() {
-            Err(core::fmt::Error)?
-        }
-
-        Ok(())
+    fn write(&mut self, buf: &[u8]) -> Result<usize, FdtabError> {
+        libos!(write(self.raw_fd, buf))
     }
 }
 

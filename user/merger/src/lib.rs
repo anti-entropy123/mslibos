@@ -7,6 +7,8 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+
+#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "pkey_per_func")]
@@ -74,6 +76,7 @@ fn merge_partitions(partitions: Vec<&NumberArray>, dst: &mut NumberArray) {
 
         match min_partition {
             Some(partition_idx) => {
+                #[allow(unused_variables)]
                 let ret = dst.push(min_value);
                 #[cfg(feature = "pkey_per_func")]
                 {

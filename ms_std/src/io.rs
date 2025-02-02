@@ -1,5 +1,3 @@
-pub use core::fmt::Write;
-
 use alloc::{
     string::{String, ToString},
     vec::Vec,
@@ -32,5 +30,22 @@ pub trait Read {
 
         *buf = String::from_utf8_lossy(&v_buf).to_string();
         Ok(buf.len())
+    }
+}
+
+pub trait Write {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, FdtabError>;
+
+    fn write_all(&mut self, mut buf: &[u8]) -> Result<(), FdtabError> {
+        while !buf.is_empty() {
+            match self.write(buf) {
+                Ok(0) => {
+                    panic!("write data failed")
+                }
+                Ok(n) => buf = &buf[n..],
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(())
     }
 }
