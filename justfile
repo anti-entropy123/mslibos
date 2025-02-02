@@ -142,3 +142,11 @@ measure_avg isol_file:
 
 gen_data:
     sudo -E ./scripts/gen_data.py
+
+cold_start_latency:
+    just all_libos
+    just rust_func hello_world
+    just rust_func load_all
+    ./scripts/del_tap.sh
+    @echo 'cold start with on-demand loading'
+    cargo run {{ release_flag }} -- --files isol_config/load_all.json

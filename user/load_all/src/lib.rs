@@ -16,7 +16,7 @@ cfg_if::cfg_if! {
 pub fn main() -> Result<()> {
     println!("Hello, world! id: {}", args::get("id").unwrap());
 
-    libos!(addrinfo("localhost")).unwrap();
+    let _ = libos!(addrinfo("localhost"));
 
     Ok(().into())
 }
