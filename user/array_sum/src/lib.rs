@@ -4,16 +4,16 @@ extern crate alloc;
 
 // use alloc::vec::Vec;
 use alloc::{format, string::String};
-// use ms_std::{
+// use as_std::{
 //     agent::{DataBuffer, FaaSFuncResult as Result},
 //     println,
 //     time::{SystemTime, UNIX_EPOCH},
 // };
-use ms_std::{
+use as_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     args, println,
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, FaasData, Serialize, Deserialize)]

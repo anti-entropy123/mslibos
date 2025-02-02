@@ -1,10 +1,10 @@
 #![cfg_attr(feature = "with_libos", no_std)]
 
-use ms_std::args;
+use as_std::args;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "with_libos")] {
-        use ms_std::{agent::FaaSFuncResult as Result, println, libos::libos};
+        use as_std::{agent::FaaSFuncResult as Result, println, libos::libos};
         extern crate alloc;
     } else {
         type Result<T> = core::result::Result<T, String>;

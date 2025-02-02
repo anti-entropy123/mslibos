@@ -3,12 +3,12 @@
 extern crate alloc;
 
 use alloc::{borrow::ToOwned, vec::Vec};
-use ms_std::{
+use as_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     println,
     time::SystemTime,
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 
 const DATA_SIZE: usize = 1024 * 1024 * 16 / 8;
 

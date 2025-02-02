@@ -20,11 +20,11 @@ use smoltcp::{
 };
 
 use crate::setup_tap::exec_tap_setup;
-use ms_hostcall::{
+use as_hostcall::{
     socket::{SmoltcpError, SmoltcpResult},
     types::{NetdevName, SockFd},
 };
-use ms_std::init_context;
+use as_std::init_context;
 
 pub mod apis;
 pub mod logs;

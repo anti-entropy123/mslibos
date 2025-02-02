@@ -1,7 +1,7 @@
 #![no_std]
 #![allow(clippy::result_unit_err)]
 
-use ms_std::{
+use as_std::{
     io::{Read, Write},
     net::TcpStream,
     prelude::*,

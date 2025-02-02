@@ -4,7 +4,7 @@ extern crate alloc;
 use alloc::string::ToString;
 use spin::Mutex;
 
-use ms_std::{agent::FaaSFuncResult as Result, args, println, libos::libos};
+use as_std::{agent::FaaSFuncResult as Result, args, println, libos::libos};
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;

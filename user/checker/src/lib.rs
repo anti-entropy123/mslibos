@@ -3,12 +3,12 @@
 
 use alloc::{format, vec::Vec};
 
-use ms_std::{
+use as_std::{
     args,
     prelude::*,
     time::{SystemTime, UNIX_EPOCH},
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 
 #[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
 #[derive(Default, FaasData)]

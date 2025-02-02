@@ -10,8 +10,8 @@ build = "build.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = ["panic_def", "alloc_def"] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
+as_std = { path = "../../as_std", features = ["panic_def", "alloc_def"] }
+as_hostcall = { path = "../../as_hostcall", features = ["signal"] }
 
 wasmtime_wasi_api = { path = "../../wasmtime_wasi_api" }
 
@@ -19,4 +19,4 @@ lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 spin = "0.9.8"
 
 [features]
-mpk = ["ms_std/mpk"]
+mpk = ["as_std/mpk"]

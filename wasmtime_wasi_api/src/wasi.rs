@@ -5,7 +5,7 @@ extern crate alloc;
 use core::mem::forget;
 
 #[cfg(feature = "log")]
-use ms_std::println;
+use as_std::println;
 #[cfg(feature = "log")]
 use alloc::format;
 
@@ -15,8 +15,8 @@ use sjlj::{longjmp, JumpBuf};
 use spin::{Mutex, MutexGuard};
 use wasmtime::Caller;
 
-use ms_hostcall::{fdtab::FdtabResult, types::{DirEntry, Fd, OpenFlags, OpenMode, Stat}};
-use ms_std::{
+use as_hostcall::{fdtab::FdtabResult, types::{DirEntry, Fd, OpenFlags, OpenMode, Stat}};
+use as_std::{
     libos::libos,
     time::{SystemTime, UNIX_EPOCH},
 };

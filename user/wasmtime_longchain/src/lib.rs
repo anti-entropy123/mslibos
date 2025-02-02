@@ -6,9 +6,9 @@ use core::mem::forget;
 use alloc::{string::{String, ToString}, vec::Vec, borrow::ToOwned};
 use spin::Mutex;
 
-use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::{DataBuffer, FaaSFuncResult as Result}, args, println, libos::libos, time::{SystemTime, UNIX_EPOCH}};
-use ms_std_proc_macro::FaasData;
+use as_hostcall::types::{OpenFlags, OpenMode};
+use as_std::{agent::{DataBuffer, FaaSFuncResult as Result}, args, println, libos::libos, time::{SystemTime, UNIX_EPOCH}};
+use as_std_proc_macro::FaasData;
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};
 use wasmtime::Store;
