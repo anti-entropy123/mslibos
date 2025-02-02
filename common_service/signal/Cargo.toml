@@ -9,9 +9,9 @@ crate-type = ["dylib"]
 
 [dependencies]
 nc = { version = "0.9.5", default-features = false }
-ms_std = { path = "../../ms_std", features = [] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
+as_std = { path = "../../as_std", features = [] }
+as_hostcall = { path = "../../as_hostcall", features = ["signal"] }
 
 [features]
-mpk = ["ms_std/mpk"]
+mpk = ["as_std/mpk"]
 default = []

@@ -9,8 +9,8 @@ build = "../../build_user.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
-ms_std = { path = "../../ms_std", features = ["panic_def", "alloc_def"] }
-ms_hostcall = { path = "../../ms_hostcall", features = ["signal"] }
+as_std = { path = "../../as_std", features = ["panic_def", "alloc_def"] }
+as_hostcall = { path = "../../as_hostcall", features = ["signal"] }
 sjlj = { version="0.1.3" }
 wasmtime = { version = "=21.0.0", default-features = false, features = [
     "runtime",
@@ -19,6 +19,6 @@ wasmtime = { version = "=21.0.0", default-features = false, features = [
 ] }
 
 [features]
-mpk = ["ms_std/mpk"]
+mpk = ["as_std/mpk"]
 
 default = []

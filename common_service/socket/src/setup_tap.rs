@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use ms_hostcall::types::NetdevName;
+use as_hostcall::types::NetdevName;
 
 fn gen_sudo_command() -> Command {
     let mut comd = Command::new("sudo");

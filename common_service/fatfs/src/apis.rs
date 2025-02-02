@@ -3,7 +3,7 @@ use std::{
     mem::ManuallyDrop,
 };
 
-use ms_hostcall::{
+use as_hostcall::{
     fatfs::{FatfsError, FatfsResult},
     types::{Fd, OpenFlags, Size, Stat, TimeSpec},
 };

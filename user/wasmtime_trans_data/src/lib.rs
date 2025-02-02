@@ -6,8 +6,8 @@ use core::mem::forget;
 use alloc::{string::{String, ToString}, vec::Vec};
 use spin::Mutex;
 
-use ms_hostcall::types::{OpenFlags, OpenMode};
-use ms_std::{agent::FaaSFuncResult as Result, args, println, libos::libos, time::{SystemTime, UNIX_EPOCH}};
+use as_hostcall::types::{OpenFlags, OpenMode};
+use as_std::{agent::FaaSFuncResult as Result, args, println, libos::libos, time::{SystemTime, UNIX_EPOCH}};
 
 
 use wasmtime_wasi_api::{wasmtime, LibosCtx};

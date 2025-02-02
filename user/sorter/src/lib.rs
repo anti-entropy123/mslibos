@@ -4,14 +4,14 @@ use alloc::{format, string::String, vec::Vec};
 
 
 #[allow(unused_imports)]
-use ms_std::{
+use as_std::{
     args,
     fs::File,
     io::Read,
     prelude::*,
     time::{SystemTime, UNIX_EPOCH},
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 
 #[allow(unused_imports)]
 use serde::{Deserialize, Serialize};

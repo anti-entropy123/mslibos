@@ -2,13 +2,13 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 
-use ms_std::agent::DataBuffer;
+use as_std::agent::DataBuffer;
 #[cfg(feature = "log")]
-use ms_std::{
+use as_std::{
     println,
     time::{SystemTime, UNIX_EPOCH},
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 use wasmtime::Caller;
 
 use crate::LibosCtx;

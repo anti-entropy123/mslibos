@@ -13,12 +13,12 @@ use smoltcp::{
     wire::{DnsQueryType, Ipv4Address},
 };
 
-use ms_hostcall::{
+use as_hostcall::{
     socket::{SmoltcpError, SmoltcpResult},
     types::{Size, SockFd},
 };
 #[cfg(feature = "log")]
-use ms_std::println;
+use as_std::println;
 
 use crate::{acquire_iface, acquire_sockets, from_sockfd, iface_poll, to_sockfd, try_phy_wait};
 

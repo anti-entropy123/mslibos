@@ -8,8 +8,8 @@ crate-type = ["dylib"]
 
 
 [dependencies]
-ms_std = { path = "../../ms_std" }
-ms_hostcall = { path = "../../ms_hostcall", features = ["fatfs"] }
+as_std = { path = "../../as_std" }
+as_hostcall = { path = "../../as_hostcall", features = ["fatfs"] }
 
 axerrno = { git = "https://github.com/anti-entropy123/ruxos/" }
 # axerrno = { path = "/home/yjn/rust_project/ruxos/crates/axerrno" }
@@ -33,7 +33,7 @@ spin = "0.9.8"
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 
 [features]
-mpk = ["ms_std/mpk"]
+mpk = ["as_std/mpk"]
 use-ramdisk = ["ruxfs/use-ramdisk", "ruxfs/full", "ruxdriver"]
 log = []
 

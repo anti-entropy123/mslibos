@@ -3,6 +3,40 @@
 version = 3
 
 [[package]]
+name = "as_hostcall"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "derive_more",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "as_std"
+version = "0.1.0"
+dependencies = [
+ "as_hostcall",
+ "as_std_proc_macro",
+ "cfg-if",
+ "heapless",
+ "linked_list_allocator",
+ "serde",
+ "serde_json",
+ "spin",
+ "thiserror-no-std",
+ "unwinding",
+]
+
+[[package]]
+name = "as_std_proc_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -49,8 +83,8 @@ dependencies = [
 name = "fdtab"
 version = "0.1.0"
 dependencies = [
- "ms_hostcall",
- "ms_std",
+ "as_hostcall",
+ "as_std",
  "spin",
 ]
 
@@ -115,40 +149,6 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
-
-[[package]]
-name = "ms_hostcall"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "derive_more",
- "thiserror-no-std",
-]
-
-[[package]]
-name = "ms_std"
-version = "0.1.0"
-dependencies = [
- "cfg-if",
- "heapless",
- "linked_list_allocator",
- "ms_hostcall",
- "ms_std_proc_macro",
- "serde",
- "serde_json",
- "spin",
- "thiserror-no-std",
- "unwinding",
-]
-
-[[package]]
-name = "ms_std_proc_macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
 
 [[package]]
 name = "proc-macro2"

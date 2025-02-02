@@ -1,5 +1,5 @@
-use ms_hostcall::signal::SigAction;
-pub use ms_std;
+use as_hostcall::signal::SigAction;
+pub use as_std;
 use nc::{self, sigset_t};
 
 #[no_mangle]

@@ -1,7 +1,7 @@
 #![no_std]
 
 use alloc::{string::ToString, vec::Vec};
-use ms_std::{agent::FaaSFuncResult as Result, args, println};
+use as_std::{agent::FaaSFuncResult as Result, args, println};
 use wasmtime::{component::Func, Engine, Extern, Instance, Linker, Module, Store};
 use wasmtime::{AsContext, Caller};
 mod capis;

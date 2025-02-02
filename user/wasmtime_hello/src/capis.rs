@@ -3,9 +3,9 @@
 extern crate sjlj;
 use core::ptr::{null, null_mut};
 
-use ms_hostcall::{mm::{MMResult, ProtFlags}, signal::{SigAction, SigInfo, Sigset, Ucontext}};
-use ms_std::libos::libos;
-use ms_std::println;
+use as_hostcall::{mm::{MMResult, ProtFlags}, signal::{SigAction, SigInfo, Sigset, Ucontext}};
+use as_std::libos::libos;
+use as_std::println;
 use sjlj::{JumpBuf, longjmp, setjmp};
 
 // Flags to either `wasmtime_mmap_{new,remap}` or `wasmtime_mprotect`.

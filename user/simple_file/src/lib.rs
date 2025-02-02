@@ -8,7 +8,7 @@ use alloc::{
 };
 
 #[allow(unused_imports)]
-use ms_std::{
+use as_std::{
     agent::FaaSFuncResult as Result,
     fs::File,
     io::{Read, Write},

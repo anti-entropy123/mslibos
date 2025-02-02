@@ -99,6 +99,54 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d5a26814d8dcb93b0e5a0ff3c6d80a8843bafb21b39e8e18a6f05471870e110"
 
 [[package]]
+name = "as_hostcall"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.6.0",
+ "derive_more",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "as_std"
+version = "0.1.0"
+dependencies = [
+ "as_hostcall",
+ "as_std_proc_macro",
+ "cfg-if",
+ "heapless",
+ "linked_list_allocator",
+ "serde",
+ "serde_json",
+ "spin 0.9.8",
+ "thiserror-no-std",
+ "unwinding",
+]
+
+[[package]]
+name = "as_std_proc_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "asvisor"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "derive_more",
+ "env_logger",
+ "libasvisor",
+ "log",
+ "thiserror-no-std",
+ "tokio",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -553,7 +601,7 @@ dependencies = [
 name = "gen-file"
 version = "0.1.0"
 dependencies = [
- "libmsvisor",
+ "libasvisor",
 ]
 
 [[package]]
@@ -754,6 +802,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
+name = "libasvisor"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "as_hostcall",
+ "env_logger",
+ "heapless",
+ "lazy_static",
+ "libloading",
+ "log",
+ "nix",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "xmas-elf",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -774,24 +840,6 @@ name = "libm"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
-
-[[package]]
-name = "libmsvisor"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "env_logger",
- "heapless",
- "lazy_static",
- "libloading",
- "log",
- "ms_hostcall",
- "nix",
- "serde",
- "serde_json",
- "thiserror",
- "xmas-elf",
-]
 
 [[package]]
 name = "linked_list_allocator"
@@ -896,60 +944,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ms_hostcall"
-version = "0.1.0"
-dependencies = [
- "bitflags 2.6.0",
- "derive_more",
- "thiserror-no-std",
-]
-
-[[package]]
-name = "ms_std"
-version = "0.1.0"
-dependencies = [
- "cfg-if",
- "heapless",
- "linked_list_allocator",
- "ms_hostcall",
- "ms_std_proc_macro",
- "serde",
- "serde_json",
- "spin 0.9.8",
- "thiserror-no-std",
- "unwinding",
-]
-
-[[package]]
-name = "ms_std_proc_macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.96",
-]
-
-[[package]]
-name = "msvisor"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "derive_more",
- "env_logger",
- "libmsvisor",
- "log",
- "thiserror-no-std",
- "tokio",
-]
-
-[[package]]
 name = "msvisor-d"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "libmsvisor",
+ "libasvisor",
  "log",
  "serde",
  "tokio",
@@ -1797,11 +1797,11 @@ dependencies = [
 name = "wasmtime_wasi_api"
 version = "0.1.0"
 dependencies = [
+ "as_hostcall",
+ "as_std",
+ "as_std_proc_macro",
  "hashbrown 0.14.5",
  "lazy_static",
- "ms_hostcall",
- "ms_std",
- "ms_std_proc_macro",
  "sjlj",
  "spin 0.9.8",
  "wasmtime",

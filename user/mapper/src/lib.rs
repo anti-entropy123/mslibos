@@ -14,8 +14,8 @@ use hashbrown::HashMap;
 #[cfg(feature = "pkey_per_func")]
 use heapless::FnvIndexMap;
 
-pub use ms_hostcall::Verify;
-use ms_std::{
+pub use as_hostcall::Verify;
+use as_std::{
     agent::{DataBuffer, FaaSFuncResult as Result},
     args,
     fs::File,
@@ -23,7 +23,7 @@ use ms_std::{
     println,
     time::{SystemTime},
 };
-use ms_std_proc_macro::FaasData;
+use as_std_proc_macro::FaasData;
 
 #[allow(unused_imports)]
 use serde::{Deserialize, Serialize};

@@ -4,11 +4,11 @@ use core::alloc::Layout;
 
 use alloc::borrow::ToOwned;
 use libc::c_void;
-use ms_hostcall::{
+use as_hostcall::{
     mm::{MMError, MMResult, ProtFlags},
     types::Fd,
 };
-use ms_std::libos::libos;
+use as_std::libos::libos;
 
 const PAGE_SIZE: usize = 0x1000;
 

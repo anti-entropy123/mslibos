@@ -3,13 +3,13 @@ extern crate alloc;
 use std::path::PathBuf;
 
 use alloc::vec;
-use ms_std::{libos::libos};
+use as_std::{libos::libos};
 
 use crate::{
     fd_ops::{close_file_like, get_file_like},
     fs,
 };
-use ms_hostcall::{
+use as_hostcall::{
     fdtab::{FdtabError, FdtabResult},
     types::{DirEntry, Fd, OpenFlags, OpenMode, Size, Stat, TimeSpec},
 };
@@ -54,7 +54,7 @@ fn convert(ruxstat: RuxStat) -> Stat {
 }
 
 fn get_fs_image_path() -> PathBuf {
-    let image_path = match libos!(fs_image(ms_std::init_context::isolation_ctx().isol_id)) {
+    let image_path = match libos!(fs_image(as_std::init_context::isolation_ctx().isol_id)) {
         Some(s) => s,
         None => "fs_images/fatfs.img".to_owned(),
     };
