@@ -6,7 +6,6 @@ use ms_hostcall::{
 use crate::{
     io::{Read, Write},
     libos::libos,
-    println,
 };
 
 pub struct File {

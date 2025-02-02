@@ -29,9 +29,9 @@ impl TcpStream {
         Ok(stream)
     }
 
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_all(s.as_bytes()).map_err(|_| core::fmt::Error)
-    }
+    // fn write_str(&mut self, s: &str) -> core::fmt::Result {
+    //     self.write_all(s.as_bytes()).map_err(|_| core::fmt::Error)
+    // }
 }
 
 impl Write for TcpStream {

@@ -1,4 +1,6 @@
 #![no_std]
+
+#[allow(unused_imports)]
 use core::str::FromStr;
 
 use alloc::{
@@ -14,6 +16,8 @@ use ms_std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use ms_std_proc_macro::FaasData;
+
+#[allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 
 extern crate alloc;
