@@ -53,7 +53,7 @@ parallel_sort:
     done
 
 long_chain:
-    for name in time fdtab stdio mm; do \
+    for name in time stdio mm; do \
     just libos $name; \
     done
 
@@ -78,56 +78,49 @@ cc_flags_p1 := "-Wl,--gc-sections -nostdlib -Wl,--whole-archive"
 cc_flags_p2 := "-Wl,--no-whole-archive -shared"
 target := "x86_64-unknown-none"
 
-wasm_func func_name:
-    cd user/{{ func_name }} \
-        && cargo build \
-            --target {{target}} {{mpk_feature_flag}}  \
-        && cc {{cc_flags_p1}} \
-            target/{{target}}/debug/lib{{ func_name }}.a \
-            {{cc_flags_p2}} \
-            -o target/{{target}}/debug/lib{{ func_name }}.so
+profile := if enable_release == "1" { 
+    "release"
+} else { 
+    "debug"
+}
 
 symbol_link func_name:
-    @ln -s $(pwd)/user/{{ func_name }}/target/{{target}}/debug/lib{{ func_name }}.so target/debug/
+    @ln -s $(pwd)/user/{{ func_name }}/target/{{target}}/{{profile}}/lib{{ func_name }}.so target/{{profile}}/
 
+wasm_func func_name:
+    cd user/{{ func_name }} \
+        && cargo build {{ release_flag }} \
+            --target {{target}} {{mpk_feature_flag}}  \
+        && cc {{cc_flags_p1}} \
+            target/{{target}}/{{profile}}/lib{{ func_name }}.a \
+            {{cc_flags_p2}} \
+            -o target/{{target}}/{{profile}}/lib{{ func_name }}.so
+    
+    @-rm target/{{profile}}/lib{{ func_name }}.so
+    just symbol_link {{ func_name }}
 
-wasmtime_wordcount: 
+c_wordcount: 
     just wasm_func wasmtime_mapper
     just wasm_func wasmtime_reducer
-    @-rm target/debug/libwasmtime_mapper.so
-    @-rm target/debug/libwasmtime_reducer.so
-    just symbol_link wasmtime_mapper
-    just symbol_link wasmtime_reducer
 
-wasmtime_parallel_sort:
+c_parallel_sort:
     just wasm_func wasmtime_sorter
     just wasm_func wasmtime_spliter
     just wasm_func wasmtime_merger
     just wasm_func wasmtime_checker
 
-    @-rm target/debug/libwasmtime_sorter.so
-    @-rm target/debug/libwasmtime_spliter.so
-    @-rm target/debug/libwasmtime_merger.so
-    @-rm target/debug/libwasmtime_checker.so
-    
-    just symbol_link wasmtime_sorter
-    just symbol_link wasmtime_spliter
-    just symbol_link wasmtime_merger
-    just symbol_link wasmtime_checker
-    
-all_c_wasm: wasmtime_wordcount wasmtime_parallel_sort
+c_long_chain:
+    just wasm_func wasmtime_longchain
 
-cpython_wordcount: 
+all_c_wasm: c_wordcount c_parallel_sort c_long_chain
+
+python_wordcount: 
     just wasm_func wasmtime_cpython_wordcount
-    @-rm target/debug/libwasmtime_cpython_wordcount.so
-    just symbol_link wasmtime_cpython_wordcount
 
-cpython_parallel_sort:
+python_parallel_sort:
     just wasm_func wasmtime_cpython_parallel_sort
-    @-rm target/debug/libwasmtime_cpython_parallel_sort.so
-    just symbol_link wasmtime_cpython_parallel_sort
 
-all_py_wasm: cpython_wordcount cpython_parallel_sort
+all_py_wasm: python_wordcount python_parallel_sort
 
 all_wasm: all_c_wasm all_py_wasm
 
@@ -147,6 +140,45 @@ cold_start_latency:
     just all_libos
     just rust_func hello_world
     just rust_func load_all
-    ./scripts/del_tap.sh
-    @echo 'cold start with on-demand loading'
-    cargo run {{ release_flag }} -- --files isol_config/load_all.json
+    @-./scripts/del_tap.sh 2>/dev/null
+
+    @echo '\ncold start with on-demand loading'
+    cargo run {{ release_flag }} -- --files isol_config/base_config.json --metrics total-dur 2>&1 | grep 'ms'
+    @echo '\ncold start without on-demand loading'
+    cargo run {{ release_flag }} -- --files isol_config/load_all.json --metrics total-dur 2>&1 | grep 'ms'
+
+data_transfer_latency: all_libos
+    for data_size in '4*1024' '64*1024' '1024*1024' '16*1024*1024' '256*1024*1024'; do \
+        echo $data_size > user/data_size.config; \
+        just pass_args 1>/dev/null 2>/dev/null; \
+        cargo run {{ release_flag }} -- --files isol_config/pass_complex_args.json 2>&1 | grep 'bytes'; \
+        echo ''; \
+    done
+
+end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
+    -sudo mount fs_image 2>/dev/null
+    
+    sudo -E ./scripts/gen_data.py 3 '100 * 1024 * 1024' 0 0
+    @echo 'word count cost: '
+    cargo run {{ release_flag }} -- --files isol_config/map_reduce_large_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+    sudo -E ./scripts/gen_data.py 0 0 3 '25 * 1024 * 1024'
+    @echo 'parallel sorting cost: '
+    cargo run {{ release_flag }} -- --files isol_config/parallel_sort_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+    @echo 'function chain cost: '
+    cargo run {{ release_flag }} -- --files isol_config/long_chain_n15.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+    # C applications.
+    @echo 'C word count cost: '
+    cargo run {{ release_flag }} -- --files isol_config/wasmtime_wordcount_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+    @echo 'C parallel sorting cost: '
+    cargo run {{ release_flag }} -- --files isol_config/wasmtime_parallel_sort_c3.json --metrics total-dur 2>&1  | grep 'total_dur'
+
+    @echo 'C function chain cost: '
+    cargo run {{ release_flag }} -- --files isol_config/wasmtime_longchain.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+breakdown: all_libos map_reduce parallel_sort long_chain
+    @echo 'base'
+    

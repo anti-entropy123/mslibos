@@ -23,7 +23,7 @@ struct Arraysum {
 }
 
 #[allow(clippy::identity_op)]
-const DATA_SIZE: usize = 1024 * 1024 * 1;
+const DATA_SIZE: usize = include!("../../function_chain_data_size.config");
 
 #[allow(clippy::result_unit_err)]
 #[no_mangle]
