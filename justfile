@@ -120,7 +120,10 @@ python_wordcount:
 python_parallel_sort:
     just wasm_func wasmtime_cpython_parallel_sort
 
-all_py_wasm: python_wordcount python_parallel_sort
+python_long_chain:
+    just wasm_func wasmtime_cpython_func
+
+all_py_wasm: python_wordcount python_parallel_sort python_long_chain
 
 all_wasm: all_c_wasm all_py_wasm
 
@@ -135,6 +138,10 @@ measure_avg isol_file:
 
 gen_data:
     sudo -E ./scripts/gen_data.py
+
+init:
+    rustup target add x86_64-unknown-linux-musl
+    [ -f fs_images/fatfs.img ] || unzip fs_images/fatfs.zip -d fs_images
 
 cold_start_latency:
     just all_libos
@@ -155,7 +162,7 @@ data_transfer_latency: all_libos
         echo ''; \
     done
 
-end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
+end_to_end_latency: all_libos map_reduce parallel_sort long_chain
     -sudo mount fs_image 2>/dev/null
     sudo -E ./scripts/gen_data.py 3 '100 * 1024 * 1024' 3 '25 * 1024 * 1024'
     
@@ -168,6 +175,10 @@ end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
     @echo 'function chain cost: '
     cargo run {{ release_flag }} -- --files isol_config/long_chain_n15.json --metrics total-dur 2>&1 | grep 'total_dur'
 
+    just c_end_to_end_latency
+    just py_end_to_end_latency
+
+c_end_to_end_latency: all_libos all_c_wasm
     # C applications.
     @echo 'C word count cost: '
     cargo run {{ release_flag }} -- --files isol_config/wasmtime_wordcount_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
@@ -177,6 +188,19 @@ end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
 
     @echo 'C function chain cost: '
     cargo run {{ release_flag }} -- --files isol_config/wasmtime_longchain.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+py_end_to_end_latency: all_libos all_py_wasm
+    # Python applications.
+    -sudo mount fs_image 2>/dev/null
+    sudo -E ./scripts/gen_data.py 1 '1 * 1024 * 1024' 1 '1 * 1024 * 1024'
+    @echo 'Python word count cost: '
+    cargo run --release -- --files isol_config/wasmtime_cpython_wordcount_c1.json --metrics total-dur 2>&1 | grep 'total_dur'
+    
+    @echo 'Python parallel sorting cost: '
+    cargo run --release -- --files isol_config/wasmtime_cpython_parallel_sort_c1.json --metrics total-dur 2>&1 | grep 'total_dur'
+    
+    @echo 'Python long chain cost: '
+    cargo run --release -- --files isol_config/wasmtime_cpython_functionchain_n5.json --metrics total-dur 2>&1 | grep 'total_dur'
 
 breakdown: all_libos
     -sudo mount fs_image 2>/dev/null
@@ -213,7 +237,7 @@ breakdown: all_libos
     cargo run {{ release_flag }} -- --files isol_config/long_chain_n15.json --metrics total-dur 2>&1 | grep 'total_dur'
 
 p99: all_libos parallel_sort
-    -sudo mount fs_image 2>/dev/null
+    -mount fs_image 2>/dev/null
     sudo -E ./scripts/gen_data.py 0 0 3 '25 * 1024 * 1024'
 
     @echo 'p99 10'
@@ -224,25 +248,29 @@ p99: all_libos parallel_sort
     ./p99tester 40 | grep 'p99'
     @echo 'p99 80'
     ./p99tester 80 | grep 'p99'
-    @echo 'p99 160'
-    ./p99tester 160 | grep 'p99'
 
 resource_consume: all_libos parallel_sort
     -sudo mount fs_image 2>/dev/null
     sudo -E ./scripts/gen_data.py 0 0 5 '25 * 1024 * 1024'
 
+    @sleep 3
     @echo 'resource instances 20'
-    ./resourcetester 20
+    ./resourcetester 20 | grep 'total consume mem:'
     mv monitor.log as_parallel_sort_resouce_c5_25_20.txt
 
+    @sleep 3
     @echo 'resource instances 40'
-    ./resourcetester 40
+    ./resourcetester 40 | grep 'total consume mem:'
     mv monitor.log as_parallel_sort_resouce_c5_25_40.txt
 
+    @sleep 3
     @echo 'resource instances 60'
-    ./resourcetester 60
+    ./resourcetester 60 | grep 'total consume mem:'
     mv monitor.log as_parallel_sort_resouce_c5_25_60.txt
 
+    @sleep 3
     @echo 'resource instances 80'
-    ./resourcetester 80
+    ./resourcetester 80 | grep 'total consume mem:'
     mv monitor.log as_parallel_sort_resouce_c5_25_80.txt
+
+    ./scripts/comp_resource.py

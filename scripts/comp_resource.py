@@ -26,7 +26,7 @@ def comp(name):
         for line in lines:
             fields = line.strip().split(' ')
             timestamp = datetime.strptime(
-                fields[0] + ' ' + fields[1].replace(',', ''), "%Y-%m-%d %H:%M:%S")
+                fields[0] + ' ' + fields[1].replace(',', ''), "%Y-%m-%d %H:%M:%S.%f")
 
             ts = timestamp.timestamp()
             tss.append(ts)
@@ -51,17 +51,17 @@ def comp(name):
 
         cpu_min, cpu_q1, cpu_median, cpu_q3, cpu_max = five_number_summary(
             cpus)
-        mem_min, mem_q1, mem_median, mem_q3, mem_max = five_number_summary(
-            mems)
+        # mem_min, mem_q1, mem_median, mem_q3, mem_max = five_number_summary(
+        #     mems)
 
-        print(f"执行耗时: {tss[-1]-tss[0]}ms")
-        print("cpu累积量", sum(cpus) - cpu_min * len(cpus))
-        print("user cpu累积量", sum(user_cpus) - min(user_cpus) * len(user_cpus))
-        print("system cpu累积量", sum(sys_cpus) - min(sys_cpus) * len(sys_cpus))
-        print("cpu五数概括:", cpu_min, cpu_q1, cpu_median, cpu_q3, cpu_max)
+        # print(f"执行耗时: {tss[-1]-tss[0]}ms")
+        print("cpu consume:", sum(cpus) - cpu_min * len(cpus))
+        print("user cpu consume", sum(user_cpus) - min(user_cpus) * len(user_cpus))
+        print("system cpu consume", sum(sys_cpus) - min(sys_cpus) * len(sys_cpus))
+        # print("cpu五数概括:", cpu_min, cpu_q1, cpu_median, cpu_q3, cpu_max)
 
-        print("mem均值:", sum(mems)/len(mems) - min(mems))
-        print("mem五数概括:", mem_min, mem_q1, mem_median, mem_q3, mem_max)
+        # print("mem均值:", sum(mems)/len(mems) - min(mems))
+        # print("mem五数概括:", mem_min, mem_q1, mem_median, mem_q3, mem_max)
         print()
 
 
@@ -80,7 +80,6 @@ comp("as_parallel_sort_resouce_c5_25_20.txt")
 comp("as_parallel_sort_resouce_c5_25_40.txt")
 comp("as_parallel_sort_resouce_c5_25_60.txt")
 comp("as_parallel_sort_resouce_c5_25_80.txt")
-comp("as_parallel_sort_resouce_c5_25_100.txt")
 
 # comp("faastlane_parallel_sort_resouce_c5_25_20.txt")
 # comp("faastlane_parallel_sort_resouce_c5_25_40.txt")
