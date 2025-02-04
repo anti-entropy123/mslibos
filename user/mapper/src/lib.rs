@@ -21,7 +21,7 @@ use as_std::{
     fs::File,
     io::Read,
     println,
-    time::{SystemTime},
+    time::SystemTime,
 };
 use as_std_proc_macro::FaasData;
 
@@ -30,10 +30,12 @@ use serde::{Deserialize, Serialize};
 
 extern crate alloc;
 
-// #[derive(Default, FaasData)]
-// struct Reader2Mapper {
-//     content: String,
-// }
+
+#[derive(Default, FaasData)]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
+struct Reader2Mapper {
+    content: String,
+}
 
 #[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
 #[derive(FaasData)]
@@ -65,16 +67,20 @@ pub fn getidx(word: &str, reducer_num: u64) -> u64 {
 }
 
 fn mapper_func(my_id: &str, reducer_num: u64) -> Result<()> {
+    let start = SystemTime::now();
+
     // let reader: DataBuffer<Reader2Mapper> =
     //     DataBuffer::from_buffer_slot(format!("part-{}", my_id)).expect("missing input data.");
     // println!("access_buffer_long={}", reader.content.len());
+    // let content = &reader.content;
 
-    let start = SystemTime::now();
+    /////// file reader //////
     let file_name = format!("fake_data_{}.txt", my_id);
     let mut f = File::open(&file_name)?;
     let mut content = String::new();
     // let content = get_input_from_mem(&file_name);
     f.read_to_string(&mut content).expect("read file failed.");
+    //////////////////////////
 
     println!(
         "read_end, cost: {}ms",

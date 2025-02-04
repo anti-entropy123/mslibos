@@ -60,20 +60,20 @@ def comp(name):
         print("system cpu累积量", sum(sys_cpus) - min(sys_cpus) * len(sys_cpus))
         print("cpu五数概括:", cpu_min, cpu_q1, cpu_median, cpu_q3, cpu_max)
 
-        print("mem均值:", sum(mems)/len(mems))
+        print("mem均值:", sum(mems)/len(mems) - min(mems))
         print("mem五数概括:", mem_min, mem_q1, mem_median, mem_q3, mem_max)
         print()
 
 
-comp("as_map_reduce_resouce_c5_10_20.txt")
-comp("as_map_reduce_resouce_c5_10_40.txt")
-comp("as_map_reduce_resouce_c5_10_60.txt")
-comp("as_map_reduce_resouce_c5_10_80.txt")
+# comp("as_map_reduce_resouce_c5_10_20.txt")
+# comp("as_map_reduce_resouce_c5_10_40.txt")
+# comp("as_map_reduce_resouce_c5_10_60.txt")
+# comp("as_map_reduce_resouce_c5_10_80.txt")
 
-comp("faastlane_map_reduce_resouce_c5_10_20.txt")
-comp("faastlane_map_reduce_resouce_c5_10_40.txt")
-comp("faastlane_map_reduce_resouce_c5_10_60.txt")
-comp("faastlane_map_reduce_resouce_c5_10_80.txt")
+# comp("faastlane_map_reduce_resouce_c5_10_20.txt")
+# comp("faastlane_map_reduce_resouce_c5_10_40.txt")
+# comp("faastlane_map_reduce_resouce_c5_10_60.txt")
+# comp("faastlane_map_reduce_resouce_c5_10_80.txt")
 
 
 comp("as_parallel_sort_resouce_c5_25_20.txt")
@@ -82,7 +82,7 @@ comp("as_parallel_sort_resouce_c5_25_60.txt")
 comp("as_parallel_sort_resouce_c5_25_80.txt")
 comp("as_parallel_sort_resouce_c5_25_100.txt")
 
-comp("faastlane_parallel_sort_resouce_c5_25_20.txt")
-comp("faastlane_parallel_sort_resouce_c5_25_40.txt")
-comp("faastlane_parallel_sort_resouce_c5_25_60.txt")
-comp("faastlane_parallel_sort_resouce_c5_25_80.txt")
+# comp("faastlane_parallel_sort_resouce_c5_25_20.txt")
+# comp("faastlane_parallel_sort_resouce_c5_25_40.txt")
+# comp("faastlane_parallel_sort_resouce_c5_25_60.txt")
+# comp("faastlane_parallel_sort_resouce_c5_25_80.txt")

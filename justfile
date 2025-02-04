@@ -157,12 +157,11 @@ data_transfer_latency: all_libos
 
 end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
     -sudo mount fs_image 2>/dev/null
+    sudo -E ./scripts/gen_data.py 3 '100 * 1024 * 1024' 3 '25 * 1024 * 1024'
     
-    sudo -E ./scripts/gen_data.py 3 '100 * 1024 * 1024' 0 0
     @echo 'word count cost: '
     cargo run {{ release_flag }} -- --files isol_config/map_reduce_large_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
 
-    sudo -E ./scripts/gen_data.py 0 0 3 '25 * 1024 * 1024'
     @echo 'parallel sorting cost: '
     cargo run {{ release_flag }} -- --files isol_config/parallel_sort_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
 
@@ -179,6 +178,71 @@ end_to_end_latency: all_libos map_reduce parallel_sort long_chain all_c_wasm
     @echo 'C function chain cost: '
     cargo run {{ release_flag }} -- --files isol_config/wasmtime_longchain.json --metrics total-dur 2>&1 | grep 'total_dur'
 
-breakdown: all_libos map_reduce parallel_sort long_chain
-    @echo 'base'
+breakdown: all_libos
+    -sudo mount fs_image 2>/dev/null
+    -sudo ./scripts/del_tap.sh
+    sudo -E ./scripts/gen_data.py 5 '10 * 1024 * 1024' 5 '1 * 1024 * 1024'
+    @echo '1 * 1024 * 1024' > user/function_chain_data_size.config
+
+    @echo 'base (-on-demand-loding, -reference-passing)'
+    for func_name in 'mapper' 'reducer' 'file_reader' 'sorter' 'splitter' 'merger' 'array_sum'; do \
+        cargo build {{ release_flag }} {{ mpk_feature_flag }} --features file-based --manifest-path user/${func_name}/Cargo.toml; \
+    done ;
+
+    cargo run {{ release_flag }} -- --files isol_config/map_reduce_load_all.json --metrics total-dur 2>&1 | grep 'total_dur'
+    sudo rm -f ./image_content/*.imd
+    cargo run {{ release_flag }} -- --files isol_config/parallel_sort_load_all.json --metrics total-dur 2>&1 | grep 'total_dur'
+    sudo rm -f ./image_content/*.imd
+    cargo run {{ release_flag }} -- --files isol_config/long_chain_load_all.json --metrics total-dur 2>&1 | grep 'total_dur'
+    sudo rm -f ./image_content/*.imd
+
+    @echo '\n+on-demand-loding (-reference-passing)'
+    cargo run {{ release_flag }} -- --files isol_config/map_reduce_large_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+    sudo rm -f ./image_content/*.imd
+    cargo run {{ release_flag }} -- --files isol_config/parallel_sort_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+    sudo rm -f ./image_content/*.imd
+    cargo run {{ release_flag }} -- --files isol_config/long_chain_n15.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+    @echo '\n+both'
+    for func_name in 'mapper' 'reducer' 'file_reader' 'sorter' 'splitter' 'merger' 'array_sum'; do \
+        cargo build {{ release_flag }} {{ mpk_feature_flag }} --manifest-path user/${func_name}/Cargo.toml; \
+    done ;
     
+    cargo run {{ release_flag }} -- --files isol_config/map_reduce_large_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+    cargo run {{ release_flag }} -- --files isol_config/parallel_sort_c3.json --metrics total-dur 2>&1 | grep 'total_dur'
+    cargo run {{ release_flag }} -- --files isol_config/long_chain_n15.json --metrics total-dur 2>&1 | grep 'total_dur'
+
+p99: all_libos parallel_sort
+    -sudo mount fs_image 2>/dev/null
+    sudo -E ./scripts/gen_data.py 0 0 3 '25 * 1024 * 1024'
+
+    @echo 'p99 10'
+    ./p99tester 10 | grep 'p99'
+    @echo 'p99 20'
+    ./p99tester 20 | grep 'p99'
+    @echo 'p99 40'
+    ./p99tester 40 | grep 'p99'
+    @echo 'p99 80'
+    ./p99tester 80 | grep 'p99'
+    @echo 'p99 160'
+    ./p99tester 160 | grep 'p99'
+
+resource_consume: all_libos parallel_sort
+    -sudo mount fs_image 2>/dev/null
+    sudo -E ./scripts/gen_data.py 0 0 5 '25 * 1024 * 1024'
+
+    @echo 'resource instances 20'
+    ./resourcetester 20
+    mv monitor.log as_parallel_sort_resouce_c5_25_20.txt
+
+    @echo 'resource instances 40'
+    ./resourcetester 40
+    mv monitor.log as_parallel_sort_resouce_c5_25_40.txt
+
+    @echo 'resource instances 60'
+    ./resourcetester 60
+    mv monitor.log as_parallel_sort_resouce_c5_25_60.txt
+
+    @echo 'resource instances 80'
+    ./resourcetester 80
+    mv monitor.log as_parallel_sort_resouce_c5_25_80.txt
