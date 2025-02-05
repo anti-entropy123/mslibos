@@ -17,20 +17,20 @@ build and testing processes. This document guides users in reproducing the exper
 
 **Software dependencies**. To build AlloyStack’s LibOS and Rust functions, the toolchain must be installed via rustup. To build C and Python functions, gcc (version 11.4.0) need to be installed. To run automated tests and perform data analysis, [just](https://github.com/casey/just) and python3 need to be installed.
 
-AlloyStack and its benchmarks are \href{https://github.com/anti-entropy123/AlloyStack}{open-sourced} and can be obtained via git clone. The code repository is structured as follows:
+AlloyStack and its benchmarks are [open-sourced](https://github.com/anti-entropy123/AlloyStack) and can be obtained via git clone. The code repository is structured as follows:
 
 ```
 AlloyStack/
-  |- libasvisor/ # source code of as-visor
-  |- as_std/ # source code of as-std
-  |- common_service/
-       \- ... # as-libos modules
-  |- user/
-       \- ... # source code of benchmarks
-  |- isol_config/
-       \- *.json # workflow specification files
-  |- fs_images/
-       \- *.img # file system images
+├── libasvisor/ # source code of as-visor
+├── as_std/ # source code of as-std
+├── common_service/
+│   └── ... # as-libos modules
+├── user/
+│   └── ... # source code of benchmarks
+├── isol_config/
+│   └── *.json # workflow specification files
+├── fs_images/
+│   └── *.img # file system images
 ```
 
 
