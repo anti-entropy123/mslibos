@@ -13,7 +13,7 @@ use as_std::{
 use as_std_proc_macro::FaasData;
 
 // const DATA_SIZE: usize = 1024 * 1024 * 256 / 8;
-const DATA_SIZE: usize = 1024 * 1024 * 16 / 8;
+const DATA_SIZE: usize = include!("../../data_size.config") / 8;
 
 #[derive(FaasData, serde::Serialize, serde::Deserialize)]
 struct VecArg {
@@ -22,9 +22,8 @@ struct VecArg {
 
 impl Default for VecArg {
     fn default() -> Self {
-        Self {
-            data: Vec::with_capacity(DATA_SIZE),
-        }
+        let data = Vec::with_capacity(DATA_SIZE);
+        Self { data }
     }
 }
 
@@ -32,11 +31,13 @@ impl Default for VecArg {
 #[no_mangle]
 pub fn main() -> Result<()> {
     let mut d = DataBuffer::<VecArg>::with_slot("Conference".to_owned());
+    d.data.resize(DATA_SIZE, 0);
 
     for (idx, val) in &mut d.data.iter_mut().enumerate() {
         *val = (idx % (u64::MAX - 1) as usize) as u64
     }
 
+    println!("write {} bytes", d.data.len() * 8);
     // let register_start = SystemTime::now().duration_since(UNIX_EPOCH).as_nanos();
     // let result = DataBuffer::<VecArg>::from_buffer_slot("Conference".to_owned());
 

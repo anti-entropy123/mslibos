@@ -35,6 +35,7 @@ lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 [features]
 mpk = ["as_std/mpk"]
 use-ramdisk = ["ruxfs/use-ramdisk", "ruxfs/full", "ruxdriver"]
+lock = []
 log = []
 
-default = ["use-ramdisk"]
+default = ["use-ramdisk", "lock"]

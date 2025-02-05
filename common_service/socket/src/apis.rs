@@ -37,7 +37,10 @@ pub fn addrinfo(name: &str) -> SmoltcpResult<Ipv4Addr> {
         let dns_socket = sockets.get_mut::<dns::Socket>(dns_handle);
         let query = dns_socket
             .start_query(iface.context(), name, DnsQueryType::A)
-            .map_err(|e| SmoltcpError::SmoltcpErr(e.to_string()))?;
+            .map_err(|e| {
+                println!("query err: {}", e);
+                SmoltcpError::DNSQueryFailed
+            })?;
 
         (dns_handle, query)
     };

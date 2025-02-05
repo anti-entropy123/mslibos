@@ -20,4 +20,4 @@ cfg-if = "1.0.0"
 with_libos = ["as_std", "as_hostcall"]
 measure_mem = ["with_libos"]
 mpk = ["as_std/mpk"]
-default = ["measure_mem"]
+default = ["with_libos"]

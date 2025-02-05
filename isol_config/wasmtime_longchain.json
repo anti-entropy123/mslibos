@@ -1,148 +1,112 @@
 {
-    "services": [
-      [
-        "fdtab",
-        "libruxfdtab.so"
-      ],
-      [
-        "stdio",
-        "libstdio.so"
-      ],
-      [
-        "mm",
-        "libmm.so"
-      ],
-      [
-        "time",
-        "libtime.so"
-      ],
-      [
-        "fatfs",
-        "libfatfs.so"
-      ]
+  "services": [
+    [
+      "fdtab",
+      "libruxfdtab.so"
     ],
-    "apps": [
-      [
-        "func1",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func2",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func3",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func4",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func5",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func6",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func7",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func8",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func9",
-        "libwasmtime_func.so"
-      ],
-      [
-        "func10",
-        "libwasmtime_func.so"
-      ]
+    [
+      "stdio",
+      "libstdio.so"
     ],
-    "groups": [
-      {
-        "list": [
-          "func1"
-        ],
-        "args": {
-          "func_num": "0"
-        }
-      },
-      {
-        "list": [
-          "func2"
-        ],
-        "args": {
-          "func_num": "1"
-        }
-      },
-      {
-        "list": [
-          "func3"
-        ],
-        "args": {
-          "func_num": "2"
-        }
-      },
-      {
-        "list": [
-          "func4"
-        ],
-        "args": {
-          "func_num": "3"
-        }
-      },
-      {
-        "list": [
-          "func5"
-        ],
-        "args": {
-          "func_num": "4"
-        }
-      },
-      {
-        "list": [
-          "func6"
-        ],
-        "args": {
-          "func_num": "5"
-        }
-      },
-      {
-        "list": [
-          "func7"
-        ],
-        "args": {
-          "func_num": "6"
-        }
-      },
-      {
-        "list": [
-          "func8"
-        ],
-        "args": {
-          "func_num": "7"
-        }
-      },
-      {
-        "list": [
-          "func9"
-        ],
-        "args": {
-          "func_num": "8"
-        }
-      },
-      {
-        "list": [
-          "func10"
-        ],
-        "args": {
-          "func_num": "9"
-        }
-      }
+    [
+      "mm",
+      "libmm.so"
+    ],
+    [
+      "time",
+      "libtime.so"
+    ],
+    [
+      "fatfs",
+      "libfatfs.so"
     ]
-  }
+  ],
+  "apps": [
+    [
+      "func1",
+      "libwasmtime_longchain.so"
+    ]
+  ],
+  "groups": [
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "0"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "1"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "2"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "3"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "4"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "5"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "6"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "7"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "8"
+      }
+    },
+    {
+      "list": [
+        "func1"
+      ],
+      "args": {
+        "func_num": "9"
+      }
+    }
+  ]
+}

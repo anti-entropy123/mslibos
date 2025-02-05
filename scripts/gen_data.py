@@ -41,5 +41,13 @@ def gen_parallel_sort(file_num: int, total_size: int):
 
 
 if __name__ == "__main__":
-    gen_parallel_sort(3, 25 * 1024 * 1024)
-    # gen_word_count(3, 100 * 1024 * 1024)
+    import sys
+    wc_args = 3, 100 * 1024 * 1024
+    if len(sys.argv) == 5 and eval(sys.argv[1]) and eval(sys.argv[2]):
+        wc_args = [eval(s) for s in sys.argv[1:3]]
+        gen_word_count(*wc_args)
+
+    ps_args = 3, 25 * 1024 * 1024
+    if len(sys.argv) == 5 and eval(sys.argv[3]) and eval(sys.argv[4]):
+        ps_args = [eval(s) for s in sys.argv[3:5]]
+        gen_parallel_sort(*ps_args)

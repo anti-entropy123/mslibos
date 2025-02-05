@@ -25,7 +25,7 @@ struct Reader2Sorter {
     content: String,
 }
 
-#[cfg_attr(feature = "file-based", derive(Serialize, , Deserialize))]
+#[cfg_attr(feature = "file-based", derive(Serialize, Deserialize))]
 #[derive(Default, FaasData)]
 struct VecArg {
     #[cfg(feature = "pkey_per_func")]

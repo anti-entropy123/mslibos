@@ -3,7 +3,8 @@ extern crate alloc;
 use std::path::PathBuf;
 
 use alloc::vec;
-use as_std::{libos::libos};
+use as_std::libos::libos;
+use spin::Mutex;
 
 use crate::{
     fd_ops::{close_file_like, get_file_like},
@@ -93,9 +94,15 @@ lazy_static::lazy_static! {
     };
 }
 
+#[cfg(feature = "lock")]
+static GLOBAL_LOCK: Mutex<()> = Mutex::new(());
+
 #[no_mangle]
 pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     #[cfg(feature = "log")]
     {
         println!("ruxfdtab: open path={:?}", path);
@@ -128,6 +135,9 @@ pub fn open(path: &str, flags: OpenFlags, mode: OpenMode) -> FdtabResult<Fd> {
 #[no_mangle]
 pub fn write(fd: Fd, buf: &[u8]) -> FdtabResult<Size> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     // libos!(stdout(format!("fd: {}, buf: {:?}", fd, buf).as_bytes()));
     let f = get_file_like(fd)?;
 
@@ -144,6 +154,9 @@ pub fn write(fd: Fd, buf: &[u8]) -> FdtabResult<Size> {
 #[no_mangle]
 pub fn read(fd: Fd, buf: &mut [u8]) -> FdtabResult<Size> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     get_file_like(fd)?
         .read(buf)
         .map_err(|e| FdtabError::RuxfsError(e.to_string()))
@@ -152,12 +165,18 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> FdtabResult<Size> {
 #[no_mangle]
 pub fn close(fd: Fd) -> FdtabResult<()> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     close_file_like(fd)
 }
 
 #[no_mangle]
 pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     fs::File::from_fd(fd)?
         .inner
         .lock()
@@ -170,6 +189,9 @@ pub fn lseek(fd: Fd, pos: u32) -> FdtabResult<()> {
 #[no_mangle]
 pub fn stat(fd: Fd) -> FdtabResult<Stat> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
+
     let stat = fs::File::from_fd(fd)?
         .stat()
         .map_err(|e| FdtabError::RuxfsError(e.to_string()))?;
@@ -183,6 +205,8 @@ pub fn stat(fd: Fd) -> FdtabResult<Stat> {
 #[no_mangle]
 pub fn readdir(path: &str) -> FdtabResult<Vec<DirEntry>> {
     let _exec = *MUST_EXIC;
+    #[cfg(feature = "lock")]
+    let _lock = GLOBAL_LOCK.lock();
     #[cfg(feature = "log")]
     println!("[DEBUG] ruxfs read_dir: {:?}", path);
 
