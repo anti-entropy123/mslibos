@@ -140,6 +140,7 @@ gen_data:
     sudo -E ./scripts/gen_data.py
 
 init:
+    rustup override set 'nightly-2023-12-01'
     rustup target add x86_64-unknown-linux-musl
     [ -f fs_images/fatfs.img ] || unzip fs_images/fatfs.zip -d fs_images
 
