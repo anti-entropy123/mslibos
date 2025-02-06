@@ -7,17 +7,26 @@ use std::{
 
 use as_hostcall::types::NetdevName;
 
-fn gen_sudo_command() -> Command {
+fn gen_sudo_command(program: &str) -> Command {
     let mut comd = Command::new("sudo");
     comd.arg("-S")
         // .arg("-n")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    comd.arg(program);
     comd
 }
 
-fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
+fn gen_command(program: &str) -> Command {
+    let mut comd = Command::new(program);
+    comd.stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    comd
+}
+
+fn gen_tap_setup(netdev_name: &NetdevName, need_sudo: bool) -> Vec<Command> {
     let mut commands = vec![];
     let subnet_mask_str = format!("{}/{}", netdev_name.subnet, netdev_name.mask);
     let ipv4_mask_str = {
@@ -29,11 +38,16 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
         format!("{}/{}", ipaddr, netdev_name.mask)
     };
 
+    let get_comd = if need_sudo {
+        gen_sudo_command
+    } else {
+        gen_command
+    };
+
     // sudo -S ip tuntap add name tap0 mode tap user $USER
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("ip")
-            .arg("tuntap")
+        let mut comd = get_comd("ip");
+        comd.arg("tuntap")
             .arg("add")
             .arg("name")
             .arg(&netdev_name.name)
@@ -46,20 +60,15 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
 
     // sudo -S ip link set tap0 up
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("ip")
-            .arg("link")
-            .arg("set")
-            .arg(&netdev_name.name)
-            .arg("up");
+        let mut comd = get_comd("ip");
+        comd.arg("link").arg("set").arg(&netdev_name.name).arg("up");
         comd
     });
 
     // sudo -S ip addr add 192.168.69.100/24 dev tap0
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("ip")
-            .arg("addr")
+        let mut comd = get_comd("ip");
+        comd.arg("addr")
             .arg("add")
             .arg(&ipv4_mask_str)
             .arg("dev")
@@ -69,9 +78,8 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
 
     // sudo -S iptables -t nat -A POSTROUTING -s 192.168.69.0/24 -j MASQUERADE
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("iptables")
-            .arg("-t")
+        let mut comd = get_comd("iptables");
+        comd.arg("-t")
             .arg("nat")
             .arg("-A")
             .arg("POSTROUTING")
@@ -84,9 +92,8 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
 
     // sudo -S iptables -A FORWARD -i tap0 -s 192.168.69.0/24 -j ACCEPT
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("iptables")
-            .arg("-A")
+        let mut comd = get_comd("iptables");
+        comd.arg("-A")
             .arg("FORWARD")
             .arg("-i")
             .arg(&netdev_name.name)
@@ -99,9 +106,8 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
 
     // sudo -S iptables -A FORWARD -o tap0 -d 192.168.69.0/24 -j ACCEPT
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("iptables")
-            .arg("-A")
+        let mut comd = get_comd("iptables");
+        comd.arg("-A")
             .arg("FORWARD")
             .arg("-o")
             .arg(&netdev_name.name)
@@ -117,11 +123,14 @@ fn gen_tap_setup(netdev_name: &NetdevName) -> Vec<Command> {
 
 #[test]
 fn test_gen_tap_setup() {
-    let result = gen_tap_setup(&NetdevName {
-        name: "tap0".to_string(),
-        subnet: Ipv4Addr::new(192, 168, 69, 0),
-        mask: 24,
-    });
+    let result = gen_tap_setup(
+        &NetdevName {
+            name: "tap0".to_string(),
+            subnet: Ipv4Addr::new(192, 168, 69, 0),
+            mask: 24,
+        },
+        true,
+    );
     assert_eq!(
         format!("{:?}", result[0]),
         format!(
@@ -156,31 +165,34 @@ fn test_gen_tap_setup() {
     );
 }
 
-fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
-    // println!(
-    //     "exec_sudo_commands, pid={}, thread_id={:?}",
-    //     std::process::id(),
-    //     std::thread::current().id()
-    // );
-    let mut passwd = env::var("SUDO_PASSWD").expect("can't get root permission");
-    if !passwd.ends_with('\n') {
-        passwd += "\n";
+fn exec_sudo_commands(commands: Vec<Command>, need_sudo: bool) -> Result<(), String> {
+    let mut passwd = String::new();
+
+    if need_sudo {
+        passwd = env::var("SUDO_PASSWD").expect("can't get root permission");
+        if !passwd.ends_with('\n') {
+            passwd += "\n";
+        }
+        // println!("the sudo passwd: {}", passwd);
+        // assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
     }
 
-    // println!("the sudo passwd: {}", passwd);
-    // assert_eq!(passwd.as_bytes(), b"cptbtptp\n");
     for mut comd in commands {
         // println!("The next cmd: {:?}", comd);
         let mut child = comd
             .spawn()
             .unwrap_or_else(|_| panic!("exec: {:?} failed", comd));
-        child
-            .stdin
-            .as_mut()
-            .ok_or("Failed")
-            .unwrap()
-            .write_all(passwd.as_bytes())
-            .unwrap();
+
+        if need_sudo {
+            child
+                .stdin
+                .as_mut()
+                .ok_or("Failed")
+                .unwrap()
+                .write_all(passwd.as_bytes())
+                .unwrap();
+        }
+
         let result = child.wait().unwrap();
         if result.success() {
             continue;
@@ -204,18 +216,25 @@ fn exec_sudo_commands(commands: Vec<Command>) -> Result<(), String> {
 }
 
 pub fn exec_tap_setup(netdev_name: &NetdevName) -> Result<(), String> {
-    let commands = gen_tap_setup(netdev_name);
-    exec_sudo_commands(commands)
+    let need_sudo = unsafe { libc::getuid() } != 0;
+
+    let commands = gen_tap_setup(netdev_name, need_sudo);
+    exec_sudo_commands(commands, need_sudo)
 }
 
-fn gen_tap_cleanup(netdev_name: &NetdevName) -> Vec<Command> {
+fn gen_tap_cleanup(netdev_name: &NetdevName, need_sudo: bool) -> Vec<Command> {
     let mut commands = vec![];
+
+    let get_comd = if need_sudo {
+        gen_sudo_command
+    } else {
+        gen_command
+    };
 
     // ip link set tap0 down
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("ip")
-            .arg("link")
+        let mut comd = get_comd("ip");
+        comd.arg("link")
             .arg("set")
             .arg(&netdev_name.name)
             .arg("down");
@@ -225,9 +244,8 @@ fn gen_tap_cleanup(netdev_name: &NetdevName) -> Vec<Command> {
 
     // ip tuntap del dev tap0 mode tap
     commands.push({
-        let mut comd = gen_sudo_command();
-        comd.arg("ip")
-            .arg("tuntap")
+        let mut comd = get_comd("ip");
+        comd.arg("tuntap")
             .arg("del")
             .arg("dev")
             .arg(&netdev_name.name)
@@ -242,11 +260,14 @@ fn gen_tap_cleanup(netdev_name: &NetdevName) -> Vec<Command> {
 
 #[test]
 fn test_gen_tap_cleanup() {
-    let result = gen_tap_cleanup(&NetdevName {
-        name: "tap0".to_string(),
-        subnet: Ipv4Addr::new(192, 168, 69, 0),
-        mask: 24,
-    });
+    let result = gen_tap_cleanup(
+        &NetdevName {
+            name: "tap0".to_string(),
+            subnet: Ipv4Addr::new(192, 168, 69, 0),
+            mask: 24,
+        },
+        true,
+    );
 
     assert_eq!(
         format!("{:?}", result[0]),
@@ -266,6 +287,8 @@ fn test_gen_tap_cleanup() {
 }
 
 pub fn exec_tap_cleanup(netdev_name: &NetdevName) -> Result<(), String> {
-    let commands = gen_tap_cleanup(netdev_name);
-    exec_sudo_commands(commands)
+    let need_sudo = unsafe { libc::getuid() } != 0;
+
+    let commands = gen_tap_cleanup(netdev_name, need_sudo);
+    exec_sudo_commands(commands, need_sudo)
 }

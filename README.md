@@ -29,8 +29,8 @@ AlloyStack/
 │   └── ... # source code of benchmarks
 ├── isol_config/
 │   └── *.json # workflow specification files
-├── fs_images/
-│   └── *.img # file system images
+└── fs_images/
+    └── *.img # file system images
 ```
 
 
